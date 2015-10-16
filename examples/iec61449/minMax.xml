@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE FBType SYSTEM "../data/Schemas/LibraryElement.dtd">
+<FBType Name="minMax" Comment="Basic Function Block Type" Namespace="Loytec.HVAC">
+  <Attribute Name="Configuration.FB.IDCounter" Value="0" />
+  <Identification Standard="61499-2" />
+  <VersionInfo Organization="nxtControl GmbH" Version="0.0" Author="herrric" Date="11.10.2011" Remarks="Template" />
+  <InterfaceList>
+    <EventInputs>
+      <Event Name="REQ" Comment="Normal Execution Request">
+        <With Var="in1" />
+        <With Var="in2" />
+      </Event>
+    </EventInputs>
+    <EventOutputs>
+      <Event Name="CNF" Comment="Execution Confirmation">
+        <With Var="minOut" />
+        <With Var="maxOut" />
+        <With Var="avgOut" />
+      </Event>
+    </EventOutputs>
+    <InputVars>
+      <VarDeclaration Name="in1" Type="REAL" Comment="Input event qualifier" />
+      <VarDeclaration Name="in2" Type="REAL" />
+    </InputVars>
+    <OutputVars>
+      <VarDeclaration Name="minOut" Type="REAL" Comment="Output event qualifier" />
+      <VarDeclaration Name="maxOut" Type="REAL" />
+      <VarDeclaration Name="avgOut" Type="REAL" />
+    </OutputVars>
+  </InterfaceList>
+  <BasicFB>
+    <ECC>
+      <ECState Name="START" Comment="Initial State" x="552.9412" y="429.4117" />
+      <ECState Name="REQ" Comment="Normal execution" x="217.647" y="752.9412">
+        <ECAction Algorithm="REQ" Output="CNF" />
+      </ECState>
+      <ECTransition Source="START" Destination="REQ" Condition="REQ" x="447.8488" y="648.3352" />
+      <ECTransition Source="REQ" Destination="START" Condition="1" x="372.8767" y="512.7991" />
+    </ECC>
+    <Algorithm Name="REQ" Comment="Normally executed algorithm">
+      <ST Text="minOut := MIN(in1, in2);&#xD;&#xA;maxOut := MAX(in1, in2);&#xD;&#xA;avgOut := (in1 + in2) / 2;" />
+    </Algorithm>
+  </BasicFB>
+</FBType>
