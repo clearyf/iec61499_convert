@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE FBType SYSTEM "../data/Schemas/LibraryElement.dtd">
+<FBType GUID="3F3AA011104A74CF" Name="Toggle" Comment="Basic Function Block Type" Namespace="Main">
+  <Attribute Name="Configuration.FB.IDCounter" Value="0" />
+  <Identification Standard="61499-2" />
+  <VersionInfo Organization="nxtControl GmbH" Version="0.0" Author="embsys" Date="10/14/2015" Remarks="Template" />
+  <InterfaceList>
+    <EventInputs>
+      <Event Name="Toggle" Comment="Normal Execution Request" />
+    </EventInputs>
+    <EventOutputs>
+      <Event Name="Update" Comment="Execution Confirmation">
+        <With Var="Value" />
+      </Event>
+    </EventOutputs>
+    <OutputVars>
+      <VarDeclaration Name="Value" Type="BOOL" Comment="Output event qualifier" />
+    </OutputVars>
+  </InterfaceList>
+  <BasicFB>
+    <ECC>
+      <ECState Name="START" Comment="Initial State" x="552.9412" y="429.4117" />
+      <ECState Name="On" Comment="Normal execution" x="217.647" y="752.9412">
+        <ECAction Algorithm="TurnOn" Output="Update" />
+      </ECState>
+      <ECState Name="Off" x="1140" y="824">
+        <ECAction Algorithm="TurnOff" Output="Update" />
+      </ECState>
+      <ECTransition Source="START" Destination="Off" Condition="1" x="899.8514" y="561.8021">
+        <Attribute Name="Configuration.Transaction.BezierPoints" Value="207.5789,123.8394,243.5675,148.0289" />
+      </ECTransition>
+      <ECTransition Source="Off" Destination="On" Condition="Toggle" x="678.83" y="869.2891">
+        <Attribute Name="Configuration.Transaction.BezierPoints" Value="201.675,224.5806,137.74,219.655" />
+      </ECTransition>
+      <ECTransition Source="On" Destination="Off" Condition="Toggle" x="684.591" y="707.8542">
+        <Attribute Name="Configuration.Transaction.BezierPoints" Value="139.6603,169.7288,203.5953,174.6544" />
+      </ECTransition>
+    </ECC>
+    <Algorithm Name="TurnOn" Comment="Normally executed algorithm">
+      <ST Text="Value:=TRUE;" />
+    </Algorithm>
+    <Algorithm Name="TurnOff">
+      <ST Text="Value:=FALSE;" />
+    </Algorithm>
+  </BasicFB>
+</FBType>
