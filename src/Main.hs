@@ -7,8 +7,8 @@ module Main where
 import BasePrelude hiding (orElse)
 import Text.XML.HXT.Core
        (ArrowXml, SysConfig, XmlTree, constA, deep, isElem, getAttrValue,
-        hasName, listA, getChildren, getText, getName, no, orElse,
-        readDocument, runX, withValidate)
+        hasName, listA, getChildren, getName, no, orElse, readDocument,
+        runX, withValidate)
 
 -- This represents the expected objects in the XML structure.
 data FunctionBlock = FunctionBlock
@@ -26,19 +26,31 @@ data InterfaceList = InterfaceList
   deriving (Show)
 
 data BasicFunctionBlock = BasicFunctionBlock
-  { ecStates :: [ECC]
-  , ecAlgorithms :: [ECAlgorithm]
+  { bfbElements :: [ECCElement]
+  , bfbAlgorithms :: [ECAlgorithm]
   }
   deriving (Show)
 
-data ECC = ECC
+data ECCElement
+  = ECCState ECState
+  | ECCTransition ECTransition
+  deriving (Show)
+
+data ECState = ECState
   { ecStateName :: String
   , ecStateComment :: String
-  , ecStateActions :: [ECActions]
+  , ecStateActions :: [ECAction]
   }
   deriving (Show)
 
-data ECActions = ECActions
+data ECTransition = ECTransition
+  { ecTransitionSource :: String
+  , ecTransitionDestination :: String
+  , ecTransitionCondition :: String
+  }
+  deriving (Show)
+
+data ECAction = ECAction
   { ecActionAlgorithm :: String
   , ecActionOutput :: String
   }
@@ -103,6 +115,31 @@ getVariable = atTag "VarDeclaration" >>>
 getListAtElem :: ArrowXml a => a XmlTree c -> String -> a XmlTree [c]
 getListAtElem f tag = (listA f <<< deep (hasName tag)) `orElse` constA []
 
+getECCElement :: ArrowXml a => a XmlTree ECCElement
+getECCElement = getECState `orElse` getECTransition
+
+getECState :: ArrowXml a => a XmlTree ECCElement
+getECState = atTag "ECState" >>>
+  proc x -> do name <- getAttrValue "Name" -< x
+               comment <- getAttrValue "Comment" -< x
+               actions <- (listA getECAction) `orElse` constA [] -< x
+               returnA -< ECCState (ECState name comment actions)
+
+getECAction :: ArrowXml a => a XmlTree ECAction
+getECAction = atTag "ECAction" >>>
+  proc x -> do algorithm <- getAttrValue "Algorithm" -< x
+               output <- getAttrValue "Output" -< x
+               returnA -< ECAction algorithm output
+
+getECTransition :: ArrowXml a => a XmlTree ECCElement
+getECTransition = atTag "ECTransition" >>>
+  proc x -> do source <- getAttrValue "Source" -< x
+               destination <- getAttrValue "Destination" -< x
+               condition <- getAttrValue "Condition" -< x
+               returnA -<
+                 ECCTransition (ECTransition source destination condition)
+
+getAlgorithm :: ArrowXml a => a XmlTree ECAlgorithm
 getAlgorithm = atTag "Algorithm" >>>
   proc x -> do name <- getAttrValue "Name" -< x
                comment <- getAttrValue "Comment" -< x
@@ -121,11 +158,14 @@ getFunctionBlock =
                outputs <- getListAtElem getEvent "EventOutputs" -< ilist
                inputVars <- getListAtElem getVariable "InputVars" -< ilist
                outputVars <- getListAtElem getVariable "OutputVars" -< ilist
---               fb <- getText <<< getChildren <<< deep (hasName "BasicFB") -< x
+               -- We again presume the ECC is there, and there may or
+               -- may not be a number of algorithms.
+               fb <- atTag "BasicFB" -< x
+               elements <- getListAtElem getECCElement "ECC" -< fb
                algorithms <- getListAtElem getAlgorithm "BasicFB" -< x
                returnA -< FunctionBlock
                             (InterfaceList inputs outputs inputVars outputVars)
-                            (BasicFunctionBlock [] algorithms)
+                            (BasicFunctionBlock elements algorithms)
 
 xmlOptions :: [SysConfig]
 xmlOptions = [withValidate no]
