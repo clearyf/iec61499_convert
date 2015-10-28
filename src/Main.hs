@@ -103,6 +103,13 @@ getVariable = atTag "VarDeclaration" >>>
 getListAtElem :: ArrowXml a => a XmlTree c -> String -> a XmlTree [c]
 getListAtElem f tag = (listA f <<< deep (hasName tag)) `orElse` constA []
 
+getAlgorithm = atTag "Algorithm" >>>
+  proc x -> do name <- getAttrValue "Name" -< x
+               comment <- getAttrValue "Comment" -< x
+               st <- atTag "ST" -< x
+               stText <- getAttrValue "Text" -< st
+               returnA -< ECAlgorithm name comment stText
+
 getFunctionBlock :: ArrowXml a => a XmlTree FunctionBlock
 getFunctionBlock =
   atTag "FBType" >>>
@@ -115,9 +122,10 @@ getFunctionBlock =
                inputVars <- getListAtElem getVariable "InputVars" -< ilist
                outputVars <- getListAtElem getVariable "OutputVars" -< ilist
 --               fb <- getText <<< getChildren <<< deep (hasName "BasicFB") -< x
+               algorithms <- getListAtElem getAlgorithm "BasicFB" -< x
                returnA -< FunctionBlock
                             (InterfaceList inputs outputs inputVars outputVars)
-                            (BasicFunctionBlock [] [])
+                            (BasicFunctionBlock [] algorithms)
 
 xmlOptions :: [SysConfig]
 xmlOptions = [withValidate no]
