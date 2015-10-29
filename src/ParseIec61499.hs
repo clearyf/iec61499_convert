@@ -150,7 +150,7 @@ getAlgorithm = atTag "Algorithm" >>>
 getFunctionBlock :: ArrowXml a => a XmlTree FunctionBlock
 getFunctionBlock =
   atTag "FBType" >>>
-  proc x -> do ilist <- deep (hasName "InterfaceList") -< x
+  proc x -> do ilist <- atTag "InterfaceList" -< x
                -- We can presume that there is always an interface
                -- list element, but some or all of the children of the
                -- interface list may be missing.
@@ -161,7 +161,7 @@ getFunctionBlock =
                -- We again presume the ECC is there, and there may or
                -- may not be a number of algorithms.
                fb <- atTag "BasicFB" -< x
-               elements <- listA getECCElement <<< atTag "ECC" -< fb
+               elements <- getListAtElem getECCElement "ECC" -< fb
                algorithms <- getListAtElem getAlgorithm "BasicFB" -< x
                returnA -< FunctionBlock
                             (InterfaceList inputs outputs inputVars outputVars)
