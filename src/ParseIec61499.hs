@@ -68,6 +68,7 @@ data ECAlgorithm = ECAlgorithm
 
 data Event = Event
   { eventName :: String
+  , eventComment :: String
   , eventVariables :: [String]
   }
   deriving (Show,Eq)
@@ -105,8 +106,9 @@ getEventVars = atTag "With" >>> getAttrValue "Var"
 getEvent :: ArrowXml a => a XmlTree Event
 getEvent = atTag "Event" >>>
   proc x -> do name <- getAttrValue "Name" -< x
+               comment <- getAttrValueOrEmpty "Comment" -< x
                vars <- listA getEventVars -< x
-               returnA -< Event name vars
+               returnA -< Event name comment vars
 
 getVariable :: ArrowXml a => a XmlTree Variable
 getVariable = atTag "VarDeclaration" >>>

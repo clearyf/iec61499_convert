@@ -26,9 +26,11 @@ toggleFunctionBlock =
   [FunctionBlock {interfaceList =
                     InterfaceList {eventInputs =
                                      [Event {eventName = "Toggle"
+                                            ,eventComment = "Normal Execution Request"
                                             ,eventVariables = []}]
                                   ,eventOutputs =
                                      [Event {eventName = "Update"
+                                            ,eventComment = "Execution Confirmation"
                                             ,eventVariables =
                                                ["Value"]}]
                                   ,inputVariables = []
