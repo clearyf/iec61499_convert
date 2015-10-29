@@ -1,5 +1,4 @@
 {-# LANGUAGE NoImplicitPrelude #-}
-{-# LANGUAGE Arrows #-}
 {-# LANGUAGE NoMonomorphismRestriction #-}
 module ParseIec61499
        (readFunctionBlock, FunctionBlock(..), InterfaceList(..),
@@ -10,8 +9,10 @@ module ParseIec61499
 
 import BasePrelude hiding (orElse)
 import Text.XML.HXT.Core
-       (ArrowXml, SysConfig, XmlTree, constA, deep, isElem, getAttrValue,
-        hasName, listA, no, orElse, readDocument, runX, withValidate)
+       (ArrowXml, SysConfig, XmlTree, arr2, arr3, arr4, constA, deep,
+        isElem, getAttrValue, hasName, listA, no, orElse, readDocument,
+        runX, withValidate)
+-- import Control.Arrow.ArrowList
 
 -- This represents the expected objects in the XML structure.
 data FunctionBlock = FunctionBlock
@@ -104,18 +105,18 @@ getEventVars :: ArrowXml a => a XmlTree String
 getEventVars = atTag "With" >>> getAttrValue "Var"
 
 getEvent :: ArrowXml a => a XmlTree Event
-getEvent = atTag "Event" >>>
-  proc x -> do name <- getAttrValue "Name" -< x
-               comment <- getAttrValueOrEmpty "Comment" -< x
-               vars <- listA getEventVars -< x
-               returnA -< Event name comment vars
+getEvent =
+  atTag "Event" >>>
+  getAttrValue "Name" &&& getAttrValueOrEmpty "Comment" &&& listA getEventVars >>>
+  arr3 Event
 
 getVariable :: ArrowXml a => a XmlTree Variable
-getVariable = atTag "VarDeclaration" >>>
-  proc x -> do name <- getAttrValue "Name" -< x
-               vartype <- getAttrValue "Type" -< x
-               comment <- getAttrValueOrEmpty "Comment" -< x
-               returnA -< Variable name (vartypeFromString vartype) comment
+getVariable =
+  atTag "VarDeclaration" >>>
+  getAttrValue "Name" &&&
+  (getAttrValue "Type" >>> arr vartypeFromString) &&&
+  getAttrValueOrEmpty "Comment" >>>
+  arr3 Variable
 
 getListAtElem :: ArrowXml a => a XmlTree c -> String -> a XmlTree [c]
 getListAtElem f tag = (listA f <<< deep (hasName tag)) `orElse` constA []
@@ -124,53 +125,54 @@ getECCElement :: ArrowXml a => a XmlTree ECCElement
 getECCElement = getECState <+> getECTransition
 
 getECState :: ArrowXml a => a XmlTree ECCElement
-getECState = atTag "ECState" >>>
-  proc x -> do name <- getAttrValue "Name" -< x
-               comment <- getAttrValue "Comment" -< x
-               actions <- (listA getECAction) `orElse` constA [] -< x
-               returnA -< ECCState (ECState name comment actions)
+getECState =
+  atTag "ECState" >>>
+  getAttrValue "Name" &&&
+  getAttrValue "Comment" &&& (listA getECAction) `orElse` constA [] >>>
+  arr3 ECState >>> arr ECCState
 
 getECAction :: ArrowXml a => a XmlTree ECAction
-getECAction = atTag "ECAction" >>>
-  proc x -> do algorithm <- getAttrValue "Algorithm" -< x
-               output <- getAttrValue "Output" -< x
-               returnA -< ECAction algorithm output
+getECAction =
+  atTag "ECAction" >>>
+  getAttrValue "Algorithm" &&& getAttrValue "Output" >>> arr2 ECAction
 
 getECTransition :: ArrowXml a => a XmlTree ECCElement
-getECTransition = atTag "ECTransition" >>>
-  proc x -> do source <- getAttrValue "Source" -< x
-               destination <- getAttrValue "Destination" -< x
-               condition <- getAttrValue "Condition" -< x
-               returnA -<
-                 ECCTransition (ECTransition source destination condition)
+getECTransition =
+  atTag "ECTransition" >>>
+  getAttrValue "Source" &&&
+  getAttrValue "Destination" &&& getAttrValue "Condition" >>>
+  arr3 ECTransition >>> arr ECCTransition
 
 getAlgorithm :: ArrowXml a => a XmlTree ECAlgorithm
-getAlgorithm = atTag "Algorithm" >>>
-  proc x -> do name <- getAttrValue "Name" -< x
-               comment <- getAttrValueOrEmpty "Comment" -< x
-               st <- atTag "ST" -< x
-               stText <- getAttrValue "Text" -< st
-               returnA -< ECAlgorithm name comment stText
+getAlgorithm =
+  atTag "Algorithm" >>>
+  getAttrValue "Name" &&&
+  getAttrValueOrEmpty "Comment" &&& (atTag "ST" >>> getAttrValue "Text") >>>
+  arr3 ECAlgorithm
+
+-- We can presume that there is always an interface list element, but
+-- some or all of the children of the interface list may be missing.
+getInterfaceList :: ArrowXml a => a XmlTree InterfaceList
+getInterfaceList =
+  atTag "InterfaceList" >>>
+  getListAtElem getEvent "EventInputs" &&&
+  getListAtElem getEvent "EventOutputs" &&&
+  getListAtElem getVariable "InputVars" &&&
+  getListAtElem getVariable "OutputVars" >>>
+  arr4 InterfaceList
+
+-- We again presume the ECC is there, and there may or may not be a
+-- number of algorithms.
+getBasicFunctionBlock :: ArrowXml a => a XmlTree BasicFunctionBlock
+getBasicFunctionBlock =
+  atTag "BasicFB" >>>
+  getListAtElem getECCElement "ECC" &&& (listA getAlgorithm `orElse` constA []) >>>
+  arr2 BasicFunctionBlock
 
 getFunctionBlock :: ArrowXml a => a XmlTree FunctionBlock
 getFunctionBlock =
   atTag "FBType" >>>
-  proc x -> do ilist <- atTag "InterfaceList" -< x
-               -- We can presume that there is always an interface
-               -- list element, but some or all of the children of the
-               -- interface list may be missing.
-               inputs <- getListAtElem getEvent "EventInputs" -< ilist
-               outputs <- getListAtElem getEvent "EventOutputs" -< ilist
-               inputVars <- getListAtElem getVariable "InputVars" -< ilist
-               outputVars <- getListAtElem getVariable "OutputVars" -< ilist
-               -- We again presume the ECC is there, and there may or
-               -- may not be a number of algorithms.
-               fb <- atTag "BasicFB" -< x
-               elements <- getListAtElem getECCElement "ECC" -< fb
-               algorithms <- getListAtElem getAlgorithm "BasicFB" -< x
-               returnA -< FunctionBlock
-                            (InterfaceList inputs outputs inputVars outputVars)
-                            (BasicFunctionBlock elements algorithms)
+  getInterfaceList &&& getBasicFunctionBlock >>> arr2 FunctionBlock
 
 xmlOptions :: [SysConfig]
 xmlOptions = [withValidate no]
