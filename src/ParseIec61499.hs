@@ -96,6 +96,9 @@ vartypeFromString str
 atTag :: ArrowXml a => String -> a XmlTree XmlTree
 atTag tag = deep (isElem >>> hasName tag)
 
+getAttrValueOrEmpty :: ArrowXml a => String -> a XmlTree String
+getAttrValueOrEmpty str = (getAttrValue str) `orElse` (constA "")
+
 getEventVars :: ArrowXml a => a XmlTree String
 getEventVars = atTag "With" >>> getAttrValue "Var"
 
@@ -109,7 +112,7 @@ getVariable :: ArrowXml a => a XmlTree Variable
 getVariable = atTag "VarDeclaration" >>>
   proc x -> do name <- getAttrValue "Name" -< x
                vartype <- getAttrValue "Type" -< x
-               comment <- getAttrValue "Comment" -< x
+               comment <- getAttrValueOrEmpty "Comment" -< x
                returnA -< Variable name (vartypeFromString vartype) comment
 
 getListAtElem :: ArrowXml a => a XmlTree c -> String -> a XmlTree [c]
@@ -142,7 +145,7 @@ getECTransition = atTag "ECTransition" >>>
 getAlgorithm :: ArrowXml a => a XmlTree ECAlgorithm
 getAlgorithm = atTag "Algorithm" >>>
   proc x -> do name <- getAttrValue "Name" -< x
-               comment <- getAttrValue "Comment" -< x
+               comment <- getAttrValueOrEmpty "Comment" -< x
                st <- atTag "ST" -< x
                stText <- getAttrValue "Text" -< st
                returnA -< ECAlgorithm name comment stText
