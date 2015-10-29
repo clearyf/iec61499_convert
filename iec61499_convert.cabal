@@ -36,6 +36,7 @@ test-suite test_iec61499_convert
   ghc-options:         -Wall
   build-depends:       base >= 4.7
                      , base-prelude >= 0.1.19
+                     , hxt >= 9.3.1.15
                      , hspec >= 2.1.10
                      , hspec-core >= 2.1.10
   hs-source-dirs:      src
