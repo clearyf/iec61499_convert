@@ -34,7 +34,8 @@ toggleFile = "examples/iec61499/toggle_fb.xml"
 
 toggleFunctionBlock :: [FunctionBlock]
 toggleFunctionBlock =
-  [FunctionBlock {interfaceList =
+  [FunctionBlock {fbName = "Toggle"
+                 ,interfaceList =
                     InterfaceList {eventInputs =
                                      [Event {eventName = "Toggle"
                                             ,eventComment = "Normal Execution Request"

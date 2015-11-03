@@ -16,7 +16,8 @@ import ParseSt (parseSt, Statement)
 
 -- This represents the expected objects in the XML structure.
 data FunctionBlock = FunctionBlock
-  { interfaceList :: InterfaceList
+  { fbName :: String
+  , interfaceList :: InterfaceList
   , basicFb :: BasicFunctionBlock
   }
   deriving (Show,Eq)
@@ -181,7 +182,8 @@ getBasicFunctionBlock =
 getFunctionBlock :: ArrowXml a => a XmlTree FunctionBlock
 getFunctionBlock =
   atTag "FBType" >>>
-  getInterfaceList &&& getBasicFunctionBlock >>> arr2 FunctionBlock
+  getAttrValue "Name" &&& getInterfaceList &&& getBasicFunctionBlock >>>
+  arr3 FunctionBlock
 
 xmlOptions :: [SysConfig]
 xmlOptions = [withValidate no]
