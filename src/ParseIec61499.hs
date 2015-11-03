@@ -12,7 +12,7 @@ import Text.XML.HXT.Core
        (ArrowXml, SysConfig, XmlTree, arr2, arr3, arr4, constA, deep,
         isElem, getAttrValue, hasName, listA, no, orElse, readDocument,
         runX, withValidate)
--- import Control.Arrow.ArrowList
+import ParseSt (parseSt, Statement)
 
 -- This represents the expected objects in the XML structure.
 data FunctionBlock = FunctionBlock
@@ -63,7 +63,7 @@ data ECAction = ECAction
 data ECAlgorithm = ECAlgorithm
   { ecAlgorithmName :: String
   , ecAlgorithmComment :: String
-  , ecAlgorithmStText :: String
+  , ecAlgorithmStText :: [Statement]
   }
   deriving (Show,Eq)
 
@@ -143,11 +143,17 @@ getECTransition =
   getAttrValue "Destination" &&& getAttrValue "Condition" >>>
   arr3 ECTransition >>> arr ECCTransition
 
+getSt :: ArrowXml a => a String [Statement]
+getSt =
+  arr parseSt >>^
+  either (const (error "ST code in algorithm could not be parsed!")) id
+
 getAlgorithm :: ArrowXml a => a XmlTree ECAlgorithm
 getAlgorithm =
   atTag "Algorithm" >>>
   getAttrValue "Name" &&&
-  getAttrValueOrEmpty "Comment" &&& (atTag "ST" >>> getAttrValue "Text") >>>
+  getAttrValueOrEmpty "Comment" &&&
+  (atTag "ST" >>> getAttrValue "Text" >>> getSt) >>>
   arr3 ECAlgorithm
 
 -- We can presume that there is always an interface list element, but
