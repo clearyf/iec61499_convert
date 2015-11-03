@@ -5,18 +5,29 @@ import BasePrelude
 import Test.Hspec (hspec, describe, it, shouldBe, runIO)
 import Test.Hspec.Core.Spec (Spec)
 import ParseIec61499
+import ParseSt
 
 main :: IO ()
 main = hspec tests
 
 tests :: Spec
-tests = do describe "Parser" testParser
+tests = do describe "Parse IEC61499" testParseIec61499
+           describe "Parse ST" testParseSt
 
-testParser :: Spec
-testParser =
-  do toggleFunctionBlockFromFile <- runIO (readFunctionBlock toggleFile)
-     it "Parse Function Block"
+testParseIec61499 :: Spec
+testParseIec61499 =
+  do toggleFunctionBlockFromFile <-
+       runIO (readFunctionBlock toggleFile)
+     it "Function Block"
         (toggleFunctionBlockFromFile `shouldBe` toggleFunctionBlock)
+
+testParseSt :: Spec
+testParseSt =
+  do it "Simple Assigment"
+        (do parseSt "Value:=FALSE;" `shouldBe`
+              Right [Assignment "Value" "FALSE"]
+            parseSt "Value:=TRUE;i:=3;" `shouldBe`
+              Right [Assignment "Value" "TRUE",Assignment "i" "3"])
 
 toggleFile :: FilePath
 toggleFile = "examples/iec61499/toggle_fb.xml"
