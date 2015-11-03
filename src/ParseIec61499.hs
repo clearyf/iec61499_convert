@@ -107,14 +107,16 @@ getEventVars = atTag "With" >>> getAttrValue "Var"
 getEvent :: ArrowXml a => a XmlTree Event
 getEvent =
   atTag "Event" >>>
-  getAttrValue "Name" &&& getAttrValueOrEmpty "Comment" &&& listA getEventVars >>>
+  getAttrValue "Name" &&&
+  getAttrValueOrEmpty "Comment" &&&
+  listA getEventVars >>>
   arr3 Event
 
 getVariable :: ArrowXml a => a XmlTree Variable
 getVariable =
   atTag "VarDeclaration" >>>
   getAttrValue "Name" &&&
-  (getAttrValue "Type" >>> arr vartypeFromString) &&&
+  (getAttrValue "Type" >>^ vartypeFromString) &&&
   getAttrValueOrEmpty "Comment" >>>
   arr3 Variable
 
@@ -129,7 +131,7 @@ getECState =
   atTag "ECState" >>>
   getAttrValue "Name" &&&
   getAttrValue "Comment" &&& (listA getECAction) `orElse` constA [] >>>
-  arr3 ECState >>> arr ECCState
+  arr3 ECState >>^ ECCState
 
 getECAction :: ArrowXml a => a XmlTree ECAction
 getECAction =
@@ -141,7 +143,7 @@ getECTransition =
   atTag "ECTransition" >>>
   getAttrValue "Source" &&&
   getAttrValue "Destination" &&& getAttrValue "Condition" >>>
-  arr3 ECTransition >>> arr ECCTransition
+  arr3 ECTransition >>^ ECCTransition
 
 getSt :: ArrowXml a => a String [Statement]
 getSt =
@@ -172,7 +174,8 @@ getInterfaceList =
 getBasicFunctionBlock :: ArrowXml a => a XmlTree BasicFunctionBlock
 getBasicFunctionBlock =
   atTag "BasicFB" >>>
-  getListAtElem getECCElement "ECC" &&& (listA getAlgorithm `orElse` constA []) >>>
+  getListAtElem getECCElement "ECC" &&&
+  (listA getAlgorithm `orElse` constA []) >>>
   arr2 BasicFunctionBlock
 
 getFunctionBlock :: ArrowXml a => a XmlTree FunctionBlock
