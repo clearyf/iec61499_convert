@@ -35,6 +35,7 @@ parameterPrefix prefix var =
 
 createDecl :: FunctionBlock -> String
 createDecl fb =
+  "// Global declarations\n" <>
   mconcat (map (<> ";\n")
                (inputChannels fb <> outputChannels fb <> inputParameters fb <>
                 outputParameters fb))
@@ -52,7 +53,7 @@ templateDeclarations fb =
         ([mkelem "name"
                  [sattr "x" "0",sattr "y" "0"]
                  [txt (fbName fb)]
-         ,eelem "declarations"] <>
+         ,selem "declarations" [txt "// Declarations\n"]] <>
          (getLocations fb) <>
          (insertInitialLocation fb) <>
          (insertTransitions fb))
@@ -145,8 +146,8 @@ insertTransitions fb =
           Map.fromList (zip (getStateNames fb) ids)
 
 createSystem :: FunctionBlock -> String
-createSystem fb = systemName <> "blk = " <> systemName <> "();\nsystem " <>
-                  systemName <> "blk;\n"
+createSystem fb = "// System setup\n" <> systemName <> "blk = " <> systemName <>
+                  "();\nsystem " <> systemName <> "blk;\n"
   where systemName = fbName fb
 
 systemDeclarations :: ArrowXml a => FunctionBlock -> a n XmlTree
