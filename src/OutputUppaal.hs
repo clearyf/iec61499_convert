@@ -10,11 +10,11 @@ import           Text.XML.HXT.Core
 
 inputChannels :: FunctionBlock -> [String]
 inputChannels =
-  map (("chan inChan" <>) . eventName) . eventInputs . interfaceList
+  map (("chan " <>) . eventName) . eventInputs . interfaceList
 
 outputChannels :: FunctionBlock -> [String]
 outputChannels =
-  map (("chan outChan" <>) . eventName) . eventOutputs . interfaceList
+  map (("chan " <>) . eventName) . eventOutputs . interfaceList
 
 convertVariableType :: IECVariable -> String
 convertVariableType IECBool = "bool"
@@ -23,11 +23,11 @@ convertVariableType IECReal = error "Uppaal doesn't support Real types!"
 
 inputParameters :: FunctionBlock -> [String]
 inputParameters =
-  map (parameterPrefix "inVar") . inputVariables . interfaceList
+  map (parameterPrefix "in") . inputVariables . interfaceList
 
 outputParameters :: FunctionBlock -> [String]
 outputParameters =
-  map (parameterPrefix "outVar") . outputVariables . interfaceList
+  map (parameterPrefix "out") . outputVariables . interfaceList
 
 parameterPrefix :: String -> Variable -> String
 parameterPrefix prefix var =
@@ -50,32 +50,46 @@ templateDeclarations :: ArrowXml a => FunctionBlock -> a n XmlTree
 templateDeclarations fb =
   selem "template"
         ([mkelem "name"
-                 [sattr "x" "5",sattr "y" "5"]
+                 [sattr "x" "0",sattr "y" "0"]
                  [txt (fbName fb)]
          ,eelem "declarations"] <>
          (getLocations fb) <>
          (insertInitialLocation fb) <>
          (insertTransitions fb))
 
--- The locations all have a id reference associated with them.  These
--- start at id0.
-getStates :: FunctionBlock -> [String]
-getStates fb = catMaybes (map extractState (bfbElements (basicFb fb)))
-  where extractState (ECCState state) = return (ecStateName state)
-        extractState _ = mzero
+getStates :: FunctionBlock -> [ECState]
+getStates fb =
+  catMaybes (map (extractState)
+                 (bfbElements (basicFb fb)))
+
+getStateNames :: FunctionBlock -> [String]
+getStateNames fb = map ecStateName (getStates fb)
+
+extractState :: MonadPlus m => ECCElement -> m ECState
+extractState (ECCState state) = return state
+extractState _ = mzero
 
 ids :: [String]
 ids = map (("id"<>) . show) ([0..]::[Int])
 
+-- The locations all have a id reference associated with them.  These
+-- start at id0.
 getLocations :: ArrowXml a => FunctionBlock -> [a n XmlTree]
-getLocations fb = zipWith makeLocation (getStates fb) ids
+getLocations fb = zipWith makeLocation (getStateNames fb) ids
 
 -- TOOD Fix coordinates.
 makeLocation :: ArrowXml a => String -> String -> a n XmlTree
 makeLocation name thisid =
   mkelem "location"
-         [sattr "id" thisid,sattr "x" "10",sattr "y" "10"]
+         [sattr "id" thisid,sattr "x" "0",sattr "y" "0"]
          [selem "name" [txt name]]
+
+-- TOOD Fix coordinates.
+makeUrgentLocation :: ArrowXml a => String -> String -> a n XmlTree
+makeUrgentLocation name thisid =
+  mkelem "location"
+         [sattr "id" thisid,sattr "x" "0",sattr "y" "0"]
+         [selem "name" [txt name],eelem "urgent"]
 
 -- TODO it's not quite clear how the initial state of the system is
 -- defined; either it's the first state listed in the structure, or
@@ -83,33 +97,52 @@ makeLocation name thisid =
 insertInitialLocation :: ArrowXml a => FunctionBlock -> [a n XmlTree]
 insertInitialLocation _ = [aelem "init" [sattr "ref" "id0"]]
 
-getTransitions :: FunctionBlock -> [(String,String)]
+getTransitions :: FunctionBlock -> [ECTransition]
 getTransitions fb =
-  catMaybes (map extractTr (bfbElements (basicFb fb)))
-  where extractTr (ECCTransition tr) =
-          return (ecTransitionSource tr,ecTransitionDestination tr)
-        extractTr _ = mzero
+  catMaybes (map extractTransition (bfbElements (basicFb fb)))
 
+getTransitionSrcDst :: FunctionBlock -> [(String,String)]
+getTransitionSrcDst fb =
+  map (\tr ->
+         (ecTransitionSource tr,ecTransitionDestination tr))
+      (getTransitions fb)
+
+extractTransition :: MonadPlus m => ECCElement -> m ECTransition
+extractTransition (ECCTransition tr) = return tr
+extractTransition _ = mzero
+
+-- Generate the synchronisation action for a destination state.
+-- IEC61499 has the transition events associated with the destination
+-- state, whereas in Uppaal the transitions and not the locations (the
+-- states) have the events.  TODO Don't use fromJust.
+getSync :: FunctionBlock -> String -> String
+getSync fb dst = mconcat (map (<>"!\n") outputs)
+  where
+    state = fromJust (find (\ x -> ecStateName x == dst) (getStates fb))
+    -- For each state create a list of output channels to fire.
+    outputs = nub (map ecActionOutput (ecStateActions state))
+
+-- TODO Fix coordinates.
 insertTransitions :: ArrowXml a => FunctionBlock -> [a n XmlTree]
 insertTransitions fb =
-  map makeTransition (getTransitions fb)
+  map makeTransition (getTransitionSrcDst fb)
   where makeTransition (src,dst) =
           selem "transition"
                 [aelem "source" [sattr "ref" (refMap ! src)]
                 ,aelem "target" [sattr "ref" (refMap ! dst)]
                 ,mkelem "label"
                         [sattr "kind" "synchronisation"
-                        ,sattr "x" "30"
-                        ,sattr "y" "30"]
-                        [txt "anEvent?"]
+                        ,sattr "x" "0"
+                        ,sattr "y" "0"]
+                        [txt (getSync fb dst)]
                 ,mkelem "label"
                         [sattr "kind" "assignment"
-                        ,sattr "x" "30"
-                        ,sattr "y" "30"]
-                        [txt "outValue := true"]
-                ,aelem "nail" [sattr "x" "20",sattr "y" "20"]]
+                        ,sattr "x" "0"
+                        ,sattr "y" "0"]
+                        [txt "TODO"]
+                ,aelem "nail" [sattr "x" "0",sattr "y" "0"]]
         refMap =
-          Map.fromList (zip (getStates fb) ids)
+          Map.fromList (zip (getStateNames fb) ids)
 
 createSystem :: FunctionBlock -> String
 createSystem fb = systemName <> "blk = " <> systemName <> "();\nsystem " <>
