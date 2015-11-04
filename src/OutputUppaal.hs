@@ -54,17 +54,14 @@ templateDeclarations fb =
                  [sattr "x" "0",sattr "y" "0"]
                  [txt (fbName fb)]
          ,selem "declarations" [txt "// Declarations\n"]] <>
-         (getLocations fb) <>
-         (insertInitialLocation fb) <>
-         (insertTransitions fb))
+         (makeLocations fb) <>
+         (makeInitialLocation fb) <>
+         (makeTransitions fb))
 
-getStates :: FunctionBlock -> [ECState]
-getStates fb =
+getBasicStates :: FunctionBlock -> [ECState]
+getBasicStates fb =
   catMaybes (map (extractState)
                  (bfbElements (basicFb fb)))
-
-getStateNames :: FunctionBlock -> [String]
-getStateNames fb = map ecStateName (getStates fb)
 
 extractState :: MonadPlus m => ECCElement -> m ECState
 extractState (ECCState state) = return state
@@ -74,20 +71,42 @@ ids :: [String]
 ids = map (("id"<>) . show) ([0..]::[Int])
 
 -- The locations all have a id reference associated with them.  These
--- start at id0.
-getLocations :: ArrowXml a => FunctionBlock -> [a n XmlTree]
-getLocations fb = zipWith makeLocation (getStateNames fb) ids
+-- start at id0.  All states which have output actions associated with
+-- them require an additional "urgent" state to run the relevant
+-- algorithm and output the event (ie do "e!" in the sync block).
+
+data Location
+  = Location String
+  | UrgentLocation String
+  deriving (Show,Eq)
+
+-- Zip this function with ids to get the ids <-> states mapping.
+getAllLocations :: FunctionBlock -> [Location]
+getAllLocations fb = foldr f [] (getBasicStates fb)
+  where f state lst =
+          (Location (ecStateName state)) : (urgentActions state) <> lst
+        urgentActions state =
+          map (\action ->
+                 UrgentLocation
+                   (ecStateName state <> "_" <> ecActionAlgorithm action <> "_" <>
+                    ecActionOutput action))
+              (ecStateActions state)
+
+getAllStates :: FunctionBlock -> [String]
+getAllStates fb = map f (getAllLocations fb)
+  where f (Location s) = s
+        f (UrgentLocation s) = s
+
+makeLocations :: ArrowXml a => FunctionBlock -> [a n XmlTree]
+makeLocations fb = zipWith makeLocation (getAllLocations fb) ids
 
 -- TOOD Fix coordinates.
-makeLocation :: ArrowXml a => String -> String -> a n XmlTree
-makeLocation name thisid =
+makeLocation :: ArrowXml a => Location -> String -> a n XmlTree
+makeLocation (Location name) thisid =
   mkelem "location"
          [sattr "id" thisid,sattr "x" "0",sattr "y" "0"]
          [selem "name" [txt name]]
-
--- TOOD Fix coordinates.
-makeUrgentLocation :: ArrowXml a => String -> String -> a n XmlTree
-makeUrgentLocation name thisid =
+makeLocation (UrgentLocation name) thisid =
   mkelem "location"
          [sattr "id" thisid,sattr "x" "0",sattr "y" "0"]
          [selem "name" [txt name],eelem "urgent"]
@@ -95,8 +114,8 @@ makeUrgentLocation name thisid =
 -- TODO it's not quite clear how the initial state of the system is
 -- defined; either it's the first state listed in the structure, or
 -- it's the one called "START".  Take the first state...
-insertInitialLocation :: ArrowXml a => FunctionBlock -> [a n XmlTree]
-insertInitialLocation _ = [aelem "init" [sattr "ref" "id0"]]
+makeInitialLocation :: ArrowXml a => FunctionBlock -> [a n XmlTree]
+makeInitialLocation _ = [aelem "init" [sattr "ref" "id0"]]
 
 getTransitions :: FunctionBlock -> [ECTransition]
 getTransitions fb =
@@ -119,13 +138,13 @@ extractTransition _ = mzero
 getSync :: FunctionBlock -> String -> String
 getSync fb dst = mconcat (map (<>"!\n") outputs)
   where
-    state = fromJust (find (\ x -> ecStateName x == dst) (getStates fb))
+    state = fromJust (find (\ x -> ecStateName x == dst) (getBasicStates fb))
     -- For each state create a list of output channels to fire.
     outputs = nub (map ecActionOutput (ecStateActions state))
 
 -- TODO Fix coordinates.
-insertTransitions :: ArrowXml a => FunctionBlock -> [a n XmlTree]
-insertTransitions fb =
+makeTransitions :: ArrowXml a => FunctionBlock -> [a n XmlTree]
+makeTransitions fb =
   map makeTransition (getTransitionSrcDst fb)
   where makeTransition (src,dst) =
           selem "transition"
@@ -143,7 +162,7 @@ insertTransitions fb =
                         [txt "TODO"]
                 ,aelem "nail" [sattr "x" "0",sattr "y" "0"]]
         refMap =
-          Map.fromList (zip (getStateNames fb) ids)
+          Map.fromList (zip (getAllStates fb) ids)
 
 createSystem :: FunctionBlock -> String
 createSystem fb = "// System setup\n" <> systemName <> "blk = " <> systemName <>
