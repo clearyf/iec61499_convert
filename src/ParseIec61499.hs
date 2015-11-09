@@ -2,9 +2,9 @@
 {-# LANGUAGE NoMonomorphismRestriction #-}
 module ParseIec61499
        (readFunctionBlock, FunctionBlock(..), InterfaceList(..),
-        BasicFunctionBlock(..), ECCElement(..), ECState(..),
-        ECTransition(..), ECAction(..), ECAlgorithm(..), Event(..),
-        Variable(..), IECVariable(..))
+        BasicFunctionBlock(..), ECState(..), ECTransition(..),
+        ECAction(..), ECAlgorithm(..), Event(..), Variable(..),
+        IECVariable(..))
        where
 
 import BasePrelude hiding (orElse)
@@ -31,14 +31,10 @@ data InterfaceList = InterfaceList
   deriving (Show,Eq)
 
 data BasicFunctionBlock = BasicFunctionBlock
-  { bfbElements :: [ECCElement]
+  { bfbStates :: [ECState]
+  , bfbTransitions :: [ECTransition]
   , bfbAlgorithms :: [ECAlgorithm]
   }
-  deriving (Show,Eq)
-
-data ECCElement
-  = ECCState ECState
-  | ECCTransition ECTransition
   deriving (Show,Eq)
 
 data ECState = ECState
@@ -124,27 +120,27 @@ getVariable =
 getListAtElem :: ArrowXml a => a XmlTree c -> String -> a XmlTree [c]
 getListAtElem f tag = (listA f <<< deep (hasName tag)) `orElse` constA []
 
-getECCElement :: ArrowXml a => a XmlTree ECCElement
-getECCElement = getECState <+> getECTransition
+-- getECCElement :: ArrowXml a => a XmlTree ECCElement
+-- getECCElement = getECState <+> getECTransition
 
-getECState :: ArrowXml a => a XmlTree ECCElement
+getECState :: ArrowXml a => a XmlTree ECState
 getECState =
   atTag "ECState" >>>
   getAttrValue "Name" &&&
   getAttrValue "Comment" &&& (listA getECAction) `orElse` constA [] >>>
-  arr3 ECState >>^ ECCState
+  arr3 ECState
 
 getECAction :: ArrowXml a => a XmlTree ECAction
 getECAction =
   atTag "ECAction" >>>
   getAttrValue "Algorithm" &&& getAttrValue "Output" >>> arr2 ECAction
 
-getECTransition :: ArrowXml a => a XmlTree ECCElement
+getECTransition :: ArrowXml a => a XmlTree ECTransition
 getECTransition =
   atTag "ECTransition" >>>
   getAttrValue "Source" &&&
   getAttrValue "Destination" &&& getAttrValue "Condition" >>>
-  arr3 ECTransition >>^ ECCTransition
+  arr3 ECTransition
 
 getSt :: ArrowXml a => a String [Statement]
 getSt =
@@ -175,9 +171,10 @@ getInterfaceList =
 getBasicFunctionBlock :: ArrowXml a => a XmlTree BasicFunctionBlock
 getBasicFunctionBlock =
   atTag "BasicFB" >>>
-  getListAtElem getECCElement "ECC" &&&
+  getListAtElem getECState "ECC" &&&
+  getListAtElem getECTransition "ECC" &&&
   (listA getAlgorithm `orElse` constA []) >>>
-  arr2 BasicFunctionBlock
+  arr3 BasicFunctionBlock
 
 getFunctionBlock :: ArrowXml a => a XmlTree FunctionBlock
 getFunctionBlock =
