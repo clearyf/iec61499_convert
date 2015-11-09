@@ -1,4 +1,3 @@
-{-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE NoMonomorphismRestriction #-}
 module ParseIec61499
        (readFunctionBlock, FunctionBlock(..), InterfaceList(..),

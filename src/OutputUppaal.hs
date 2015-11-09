@@ -1,4 +1,3 @@
-{-# LANGUAGE NoImplicitPrelude #-}
 module OutputUppaal (outputUppaal,test) where
 
 import           BasePrelude

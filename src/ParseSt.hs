@@ -1,4 +1,3 @@
-{-# LANGUAGE NoImplicitPrelude #-}
 module ParseSt (parseSt, Statement(..)) where
 
 import BasePrelude

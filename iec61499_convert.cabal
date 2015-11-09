@@ -19,7 +19,7 @@ executable iec61499_convert
   main-is:             Main.hs
   -- other-modules:
   -- other-extensions:
-  ghc-options:         -Wall
+  ghc-options:         -Wall -XNoImplicitPrelude
   build-depends:       base >= 4.7
                      , base-prelude >= 0.1.19
                      , containers >= 0.5.6.2
@@ -35,7 +35,7 @@ test-suite test_iec61499_convert
   main-is:             Test.hs
   -- other-modules:
   -- other-extensions:
-  ghc-options:         -Wall
+  ghc-options:         -Wall -XNoImplicitPrelude
   build-depends:       base >= 4.7
                      , base-prelude >= 0.1.19
                      , containers >= 0.5.6.2

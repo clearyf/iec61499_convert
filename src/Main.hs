@@ -1,4 +1,3 @@
-{-# LANGUAGE NoImplicitPrelude #-}
 module Main where
 
 import BasePrelude hiding (orElse)
