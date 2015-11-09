@@ -30,7 +30,7 @@ assignment :: Parser Statement
 assignment = Assignment <$> identifier <* string ":=" <*> expression
 
 expression :: Parser String
-expression = many (satisfy (\c -> c /= ';'))
+expression = many (satisfy (/=';'))
 
 identifier :: Parser String
 identifier =
