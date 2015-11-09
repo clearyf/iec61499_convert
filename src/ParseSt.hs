@@ -27,10 +27,7 @@ statement :: Parser Statement
 statement = assignment
 
 assignment :: Parser Statement
-assignment = do lhs <- identifier
-                _ <- string ":="
-                rhs <- expression
-                return $! Assignment lhs rhs
+assignment = Assignment <$> identifier <* string ":=" <*> expression
 
 expression :: Parser String
 expression = many (satisfy (\c -> c /= ';'))
