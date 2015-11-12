@@ -16,6 +16,7 @@ data UppaalModel = UppaalModel
     , modelOutputVars :: [UppaalVar]
     , modelLocations :: [Location]
     , modelTransitions :: [Transition]
+    , modelDeclarations :: [String]
     } deriving (Show,Eq)
 
 data UppaalVar = UppaalVar String String deriving (Show,Eq)
@@ -31,6 +32,7 @@ fbToUppaalModel fb =
         (outputParameters fb)
         (locations fb)
         (transitions fb)
+        []
 
 --------------------------------------------------------------------------------
 -- 3. Handle events
