@@ -22,18 +22,6 @@ data UppaalModel = UppaalModel
 data UppaalVar = UppaalVar String String deriving (Show,Eq)
 newtype UppaalChan = UppaalChan String deriving (Show,Eq)
 
-fbToUppaalModel :: FunctionBlock -> UppaalModel
-fbToUppaalModel fb =
-    UppaalModel
-        (fbName fb)
-        (inputChannels fb)
-        (outputChannels fb)
-        (inputParameters fb)
-        (outputParameters fb)
-        (locations fb)
-        (transitions fb)
-        []
-
 --------------------------------------------------------------------------------
 -- 3. Handle events
 
