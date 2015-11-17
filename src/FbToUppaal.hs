@@ -147,7 +147,7 @@ makeUpdateStatement action
 makeSyncStatement :: ECAction -> String
 makeSyncStatement action
   | null (ecActionOutput action) = mempty
-  | otherwise = (ecActionOutput action) <> "?"
+  | otherwise = (ecActionOutput action) <> "!"
 
 createState :: (t -> String) -> t -> State Int AState
 createState f x = do

@@ -16,6 +16,7 @@ tests = do
     describe "Parse IEC61499" testParseIec61499
     describe "Parse ST" testParseSt
     describe "Function Block to Uppaal Model" testUppaalModel
+    describe "Uppaal Model to XML" testOutputUppaal
 
 testParseIec61499 :: Spec
 testParseIec61499 = do
@@ -32,6 +33,12 @@ testParseSt = do
                 Right [Assignment "Value" "FALSE"]
             parseSt "Value:=TRUE;i:=3;" `shouldBe`
                 Right [Assignment "Value" "TRUE", Assignment "i" "3"])
+
+testOutputUppaal :: Spec
+testOutputUppaal = do
+    outputModel <- runIO (outputUppaal uppaalModel)
+    modelFromXml <- runIO (readFile "examples/uppaal/noheaderToggle.xml")
+    it "toggle model" (outputModel `shouldBe` [modelFromXml])
 
 toggleFile :: FilePath
 toggleFile = "examples/iec61499/toggle_fb.xml"
@@ -178,7 +185,7 @@ uppaalModel =
                          , Transition
                            { transitionSrc = StateId "id1"
                            , transitionDest = StateId "id2"
-                           , transitionSync = "Update?"
+                           , transitionSync = "Update!"
                            , transitionUpdate = "TurnOn();"
                            }
                          , Transition
@@ -190,7 +197,7 @@ uppaalModel =
                          , Transition
                            { transitionSrc = StateId "id4"
                            , transitionDest = StateId "id5"
-                           , transitionSync = "Update?"
+                           , transitionSync = "Update!"
                            , transitionUpdate = "TurnOff();"
                            }
                          , Transition
