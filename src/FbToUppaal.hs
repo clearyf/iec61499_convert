@@ -23,14 +23,14 @@ fbToUppaalModel fb =
         (outputParameters fb)
         (locations fb)
         (transitions fb)
-        (map anAlgorithm (bfbAlgorithms (basicFb fb)))
+        (fmap anAlgorithm (bfbAlgorithms (basicFb fb)))
 
 --------------------------------------------------------------------------------
 -- Handle events
 
 extractChannels :: String -> (InterfaceList -> [Event]) -> FunctionBlock -> [UppaalChan]
 extractChannels prefix f =
-    map (UppaalChan . (prefix <>) . eventName) . f . interfaceList
+    fmap (UppaalChan . (prefix <>) . eventName) . f . interfaceList
 
 inputChannelPrefix :: String
 inputChannelPrefix = "ic_"
@@ -53,10 +53,10 @@ convertVariableType IECInt = "int"
 convertVariableType IECReal = error "Uppaal doesn't support Real types!"
 
 inputParameters :: FunctionBlock -> [UppaalVar]
-inputParameters = map createUppaalVar . inputVariables . interfaceList
+inputParameters = fmap createUppaalVar . inputVariables . interfaceList
 
 outputParameters :: FunctionBlock -> [UppaalVar]
-outputParameters = map createUppaalVar . outputVariables . interfaceList
+outputParameters = fmap createUppaalVar . outputVariables . interfaceList
 
 createUppaalVar :: Variable -> UppaalVar
 createUppaalVar var =
@@ -88,7 +88,7 @@ locations fb = doFold states
   where
     states = getStatesMap (getBasicStates fb)
     doFold (StateMap m) = foldMap f m
-    f (u,n) = (map UrgentLocation u) <> [Location n]
+    f (u,n) = (fmap UrgentLocation u) <> [Location n]
 
 newtype StateMap =
     StateMap (Map String ([AState], AState))
@@ -105,7 +105,7 @@ getStatesMap basicStates =
     StateMap
         (Map.fromList
              (zip
-                  (map ecStateName basicStates)
+                  (fmap ecStateName basicStates)
                   (evalState (mapM getLocationsFromState basicStates) 0)))
 
 getLocationsFromState :: ECState -> State Int ([AState],AState)
@@ -123,7 +123,7 @@ getLocationsFromState state = do
     pure (initState <> actionStates, destState)
 
 locationsToMap :: [Location] -> Map String StateId
-locationsToMap lst = Map.fromList (map f lst)
+locationsToMap lst = Map.fromList (fmap f lst)
   where
     f (UrgentLocation (AState s i)) = (s, i)
     f (Location (AState s i)) = (s, i)
@@ -131,7 +131,7 @@ locationsToMap lst = Map.fromList (map f lst)
 advancedTransitions :: Map String StateId -> ECState -> [Transition]
 advancedTransitions m s
   | null (ecStateActions s) = mempty
-  | otherwise = map makeTransition trTriples
+  | otherwise = fmap makeTransition trTriples
   where
     makeTransition (act,a,b) =
         Transition
@@ -144,7 +144,7 @@ advancedTransitions m s
     trTriples = zip3 acts trSrcs (tail trSrcs)
     trSrcs =
         ((locationStartPrefix s) :
-         (map (locationEventPrefix s) (ecStateActions s)) <> [ecStateName s])
+         (fmap (locationEventPrefix s) (ecStateActions s)) <> [ecStateName s])
 
 makeUpdateStatement :: ECAction -> String
 makeUpdateStatement action
@@ -170,7 +170,7 @@ transitions fb = basicTransitions <> otherTransitions
     states = getBasicStates fb
     statesMap = getStatesMap states
     -- Transitions which are defined in the input FunctionBlock.
-    basicTransitions = map createBasicTransition fbTransitions
+    basicTransitions = fmap createBasicTransition fbTransitions
     -- Transitions which are required to handle the urgent
     -- locations.  The list of required transitions is one
     -- transition from urgent state to the next and then one final

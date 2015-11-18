@@ -89,7 +89,7 @@ vartypeFromString str
   | capsStr == "REAL" = IECReal
   | capsStr == "INT" = IECInt
   | otherwise = error "Unhandled IEC variable type!"
-  where capsStr = map toUpper str
+  where capsStr = fmap toUpper str
 
 atTag :: ArrowXml a => String -> a XmlTree XmlTree
 atTag tag = deep (isElem >>> hasName tag)

@@ -75,16 +75,16 @@ outputUppaal um =
 -- The global declaration first.
 
 inputChannels :: UppaalModel -> [String]
-inputChannels um = map (\ (UppaalChan c) -> "chan " <> c) (modelInputEvents um)
+inputChannels um = fmap (\ (UppaalChan c) -> "chan " <> c) (modelInputEvents um)
 
 outputChannels :: UppaalModel -> [String]
-outputChannels um = map (\ (UppaalChan c) -> "chan " <> c) (modelOutputEvents um)
+outputChannels um = fmap (\ (UppaalChan c) -> "chan " <> c) (modelOutputEvents um)
 
 inputParameters :: UppaalModel -> [String]
-inputParameters um = map (\ (UppaalVar t v) -> t <> " " <> v) (modelInputVars um)
+inputParameters um = fmap (\ (UppaalVar t v) -> t <> " " <> v) (modelInputVars um)
 
 outputParameters :: UppaalModel -> [String]
-outputParameters um = map (\ (UppaalVar t v) -> t <> " " <> v) (modelOutputVars um)
+outputParameters um = fmap (\ (UppaalVar t v) -> t <> " " <> v) (modelOutputVars um)
 
 createGlobalDecl :: UppaalModel -> String
 createGlobalDecl um =
@@ -110,9 +110,9 @@ templateDecl um =
         "template"
         ([ mkelem "name" [sattr "x" "0", sattr "y" "0"] [txt (modelName um)]
          , selem "declaration" [txt "// Declarations\n"]] <>
-         (map makeLocationDecl (modelLocations um)) <>
+         (fmap makeLocationDecl (modelLocations um)) <>
          makeInitialLocation <>
-         (map makeTransitionDecl (modelTransitions um)))
+         (fmap makeTransitionDecl (modelTransitions um)))
 
 makeLocationDecl :: ArrowXml a => Location -> a n XmlTree
 makeLocationDecl (Location (AState n (StateId i))) =
