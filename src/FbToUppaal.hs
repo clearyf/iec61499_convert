@@ -11,7 +11,7 @@ import           ParseIec61499
        (ECTransition(..), ECState(..), FunctionBlock(..), IECVariable(..),
         InterfaceList(..), Event(..), Variable(..), ECAction(..),
         BasicFunctionBlock(..), ECAlgorithm(..))
-import           ParseSt (Statement(..))
+import           ParseSt (Statement(..), Symbol(..))
 
 fbToUppaalModel :: FunctionBlock -> UppaalModel
 fbToUppaalModel fb =
@@ -204,5 +204,16 @@ getDestId s (StateMap m)
       in i
 
 anAlgorithm :: ECAlgorithm -> String
-anAlgorithm al = "void " <> (ecAlgorithmName al) <> "()\n{\n" <> (foldMap st (ecAlgorithmStText al)) <> "}\n"
-  where st (Assignment lvalue rvalue) = "\t" <> lvalue <> " = " <> rvalue <> ";\n"
+anAlgorithm al =
+    "void " <> (ecAlgorithmName al) <> "()\n{\n" <>
+    (foldMap st (ecAlgorithmStText al)) <>
+    "}\n"
+  where
+    st (Assignment lvalue rvalue) =
+        "\t" <> lvalue <> " = " <>
+        mconcat (intersperse " " (fmap showSymbol rvalue)) <>
+        ";\n"
+    showSymbol (StBool True) = "true"
+    showSymbol (StBool False) = "false"
+    showSymbol (StVar str) = str
+    showSymbol (StInt i) = show i

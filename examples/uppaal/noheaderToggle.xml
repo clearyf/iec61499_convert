@@ -5,11 +5,11 @@ chan oc_Update;
 bool Value;
 void TurnOn()
 {
-	Value = TRUE;
+	Value = true;
 }
 void TurnOff()
 {
-	Value = FALSE;
+	Value = false;
 }
 </declaration>
   <template>

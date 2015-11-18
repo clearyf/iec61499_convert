@@ -30,9 +30,14 @@ testParseSt = do
     it
         "Simple Assigment"
         (do parseSt "Value:=FALSE;" `shouldBe`
-                Right [Assignment "Value" "FALSE"]
-            parseSt "Value:=TRUE;i:=3;" `shouldBe`
-                Right [Assignment "Value" "TRUE", Assignment "i" "3"])
+                Right [Assignment "Value" [StBool False]]
+            parseSt "Value := -303;" `shouldBe`
+                Right [Assignment "Value" [StInt (-303)]]
+            parseSt "Value := blah;" `shouldBe`
+                Right [Assignment "Value" [StVar "blah"]]
+            parseSt "Value := TRUE;\ni := 3;\n" `shouldBe`
+                Right
+                    [Assignment "Value" [StBool True], Assignment "i" [StInt 3]])
 
 testOutputUppaal :: Spec
 testOutputUppaal = do
@@ -105,12 +110,12 @@ toggleFunctionBlock =
         , bfbAlgorithms = [ ECAlgorithm
                             { ecAlgorithmName = "TurnOn"
                             , ecAlgorithmComment = "Normally executed algorithm"
-                            , ecAlgorithmStText = [Assignment "Value" "TRUE"]
+                            , ecAlgorithmStText = [Assignment "Value" [StBool True]]
                             }
                           , ECAlgorithm
                             { ecAlgorithmName = "TurnOff"
                             , ecAlgorithmComment = ""
-                            , ecAlgorithmStText = [Assignment "Value" "FALSE"]
+                            , ecAlgorithmStText = [Assignment "Value" [StBool False]]
                             }]
         }
       }]
@@ -206,6 +211,6 @@ uppaalModel =
                            , transitionSync = ""
                            , transitionUpdate = ""
                            }]
-    , modelDeclarations = [ "void TurnOn()\n{\n\tValue = TRUE;\n}\n"
-                          , "void TurnOff()\n{\n\tValue = FALSE;\n}\n"]
+    , modelDeclarations = [ "void TurnOn()\n{\n\tValue = true;\n}\n"
+                          , "void TurnOff()\n{\n\tValue = false;\n}\n"]
     }
