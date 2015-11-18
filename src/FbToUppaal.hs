@@ -26,19 +26,26 @@ fbToUppaalModel fb =
         (map anAlgorithm (bfbAlgorithms (basicFb fb)))
 
 --------------------------------------------------------------------------------
--- 3. Handle events
+-- Handle events
 
-extractChannels :: (InterfaceList -> [Event]) -> FunctionBlock -> [UppaalChan]
-extractChannels f = map (UppaalChan . eventName) . f . interfaceList
+extractChannels :: String -> (InterfaceList -> [Event]) -> FunctionBlock -> [UppaalChan]
+extractChannels prefix f =
+    map (UppaalChan . (prefix <>) . eventName) . f . interfaceList
+
+inputChannelPrefix :: String
+inputChannelPrefix = "ic_"
+
+outputChannelPrefix :: String
+outputChannelPrefix = "oc_"
 
 inputChannels :: FunctionBlock -> [UppaalChan]
-inputChannels = extractChannels eventInputs
+inputChannels = extractChannels inputChannelPrefix eventInputs
 
 outputChannels :: FunctionBlock -> [UppaalChan]
-outputChannels = extractChannels eventOutputs
+outputChannels = extractChannels outputChannelPrefix eventOutputs
 
 --------------------------------------------------------------------------------
--- 2. Handle variables
+-- Handle variables
 
 convertVariableType :: IECVariable -> String
 convertVariableType IECBool = "bool"
@@ -147,7 +154,7 @@ makeUpdateStatement action
 makeSyncStatement :: ECAction -> String
 makeSyncStatement action
   | null (ecActionOutput action) = mempty
-  | otherwise = (ecActionOutput action) <> "!"
+  | otherwise = outputChannelPrefix <> (ecActionOutput action) <> "!"
 
 createState :: (t -> String) -> t -> State Int AState
 createState f x = do
@@ -182,7 +189,7 @@ transitions fb = basicTransitions <> otherTransitions
 condToSync :: String -> String
 condToSync s
   | s == "1" = ""
-  | otherwise = s <> "?"
+  | otherwise = inputChannelPrefix <> s <> "?"
 
 getSrcId :: String -> StateMap -> StateId
 getSrcId s (StateMap m) =

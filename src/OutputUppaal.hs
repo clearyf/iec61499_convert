@@ -1,6 +1,7 @@
 module OutputUppaal
        (UppaalModel(..), AState(..), UppaalChan(..), UppaalVar(..),
-        Location(..), StateId(..), Transition(..), outputUppaal)
+        Location(..), StateId(..), Transition(..), outputUppaal,
+        outputUppaalToFile)
        where
 
 import           BasePrelude
@@ -46,11 +47,27 @@ data AState = AState
 -- the template declarations (locations & transitions) and finally the
 -- system declaration.
 
+-- uppaalDtd :: String
+-- uppaalDtd = "http://www.it.uu.se/research/group/darts/uppaal/flat-1_1.dtd"
+
+-- uppaalDecl :: String
+-- uppaalDecl = "-//Uppaal Team//DTD Flat System 1.1//EN"
+
+-- dtd = addDoctypeDecl "nta" uppaalDecl uppaalDtd
+
+outputUppaalToFile :: UppaalModel -> String -> IO [XmlTree]
+outputUppaalToFile um name =
+    runX
+        (root [] [mkelem "nta" [] [sections]] >>>
+         writeDocument [withXmlPi yes] name)
+  where
+    sections = globalDecl um <+> templateDecl um <+> systemDecl um
+
 outputUppaal :: UppaalModel -> IO [String]
 outputUppaal um =
     runX
         (root [] [mkelem "nta" [] [sections]] >>>
-         writeDocumentToString [withIndent yes])
+         writeDocumentToString [withIndent yes, withXmlPi yes])
   where
     sections = globalDecl um <+> templateDecl um <+> systemDecl um
 
@@ -81,7 +98,7 @@ createGlobalDecl um =
 -- The global declarations consist of the input/output events and
 -- input/output values.
 globalDecl :: ArrowXml a  => UppaalModel -> a n XmlTree
-globalDecl um = selem "declarations" [txt (createGlobalDecl um)]
+globalDecl um = selem "declaration" [txt (createGlobalDecl um)]
 
 --------------------------------------------------------------------------------
 -- The template declaration second.
@@ -92,7 +109,7 @@ templateDecl um =
     selem
         "template"
         ([ mkelem "name" [sattr "x" "0", sattr "y" "0"] [txt (modelName um)]
-         , selem "declarations" [txt "// Declarations\n"]] <>
+         , selem "declaration" [txt "// Declarations\n"]] <>
          (map makeLocationDecl (modelLocations um)) <>
          makeInitialLocation <>
          (map makeTransitionDecl (modelTransitions um)))
@@ -113,16 +130,26 @@ makeTransitionDecl :: ArrowXml a => Transition -> a n XmlTree
 makeTransitionDecl (Transition (StateId src) (StateId dest) sync update) =
     selem
         "transition"
-        [ aelem "source" [sattr "ref" src]
-        , aelem "target" [sattr "ref" dest]
-        , mkelem
-              "label"
-              [sattr "kind" "synchronisation", sattr "x" "0", sattr "y" "0"]
-              [txt sync]
-        , mkelem
-              "label"
-              [sattr "kind" "update", sattr "x" "0", sattr "y" "0"]
-              [txt update]]
+        ([aelem "source" [sattr "ref" src], aelem "target" [sattr "ref" dest]] <>
+         syncElem <>
+         updateElem)
+  where
+    syncElem =
+        if null sync
+            then mempty
+            else [ mkelem
+                       "label"
+                       [ sattr "kind" "synchronisation"
+                       , sattr "x" "0"
+                       , sattr "y" "0"]
+                       [txt sync]]
+    updateElem =
+        if null update
+            then mempty
+            else [ mkelem
+                       "label"
+                       [sattr "kind" "update", sattr "x" "0", sattr "y" "0"]
+                       [txt update]]
 
 -- TODO it's not quite clear how the initial state of the system is
 -- defined; either it's the first state listed in the structure, or

@@ -125,8 +125,8 @@ uppaalModel :: UppaalModel
 uppaalModel =
     UppaalModel
     { modelName = "Toggle"
-    , modelInputEvents = [UppaalChan "Toggle"]
-    , modelOutputEvents = [UppaalChan "Update"]
+    , modelInputEvents = [UppaalChan "ic_Toggle"]
+    , modelOutputEvents = [UppaalChan "oc_Update"]
     , modelInputVars = []
     , modelOutputVars = [UppaalVar "bool" "Value"]
     , modelLocations = [ UrgentLocation
@@ -173,19 +173,19 @@ uppaalModel =
                          , Transition
                            { transitionSrc = StateId "id6"
                            , transitionDest = StateId "id1"
-                           , transitionSync = "Toggle?"
+                           , transitionSync = "ic_Toggle?"
                            , transitionUpdate = ""
                            }
                          , Transition
                            { transitionSrc = StateId "id3"
                            , transitionDest = StateId "id4"
-                           , transitionSync = "Toggle?"
+                           , transitionSync = "ic_Toggle?"
                            , transitionUpdate = ""
                            }
                          , Transition
                            { transitionSrc = StateId "id1"
                            , transitionDest = StateId "id2"
-                           , transitionSync = "Update!"
+                           , transitionSync = "oc_Update!"
                            , transitionUpdate = "TurnOn();"
                            }
                          , Transition
@@ -197,7 +197,7 @@ uppaalModel =
                          , Transition
                            { transitionSrc = StateId "id4"
                            , transitionDest = StateId "id5"
-                           , transitionSync = "Update!"
+                           , transitionSync = "oc_Update!"
                            , transitionUpdate = "TurnOff();"
                            }
                          , Transition

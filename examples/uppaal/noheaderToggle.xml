@@ -1,7 +1,7 @@
 <nta>
-  <declarations>// Global declarations
-chan Toggle;
-chan Update;
+  <declaration>// Global declarations
+chan ic_Toggle;
+chan oc_Update;
 bool Value;
 void TurnOn()
 {
@@ -11,11 +11,11 @@ void TurnOff()
 {
 	Value = FALSE;
 }
-</declarations>
+</declaration>
   <template>
     <name x="0" y="0">Toggle</name>
-    <declarations>// Declarations
-</declarations>
+    <declaration>// Declarations
+</declaration>
     <location id="id4" x="0" y="0">
       <name x="0" y="0">__start_Off</name>
       <urgent/>
@@ -45,44 +45,36 @@ void TurnOff()
     <transition>
       <source ref="id0"/>
       <target ref="id4"/>
-      <label kind="synchronisation" x="0" y="0"/>
-      <label kind="update" x="0" y="0"/>
     </transition>
     <transition>
       <source ref="id6"/>
       <target ref="id1"/>
-      <label kind="synchronisation" x="0" y="0">Toggle?</label>
-      <label kind="update" x="0" y="0"/>
+      <label kind="synchronisation" x="0" y="0">ic_Toggle?</label>
     </transition>
     <transition>
       <source ref="id3"/>
       <target ref="id4"/>
-      <label kind="synchronisation" x="0" y="0">Toggle?</label>
-      <label kind="update" x="0" y="0"/>
+      <label kind="synchronisation" x="0" y="0">ic_Toggle?</label>
     </transition>
     <transition>
       <source ref="id1"/>
       <target ref="id2"/>
-      <label kind="synchronisation" x="0" y="0">Update!</label>
+      <label kind="synchronisation" x="0" y="0">oc_Update!</label>
       <label kind="update" x="0" y="0">TurnOn();</label>
     </transition>
     <transition>
       <source ref="id2"/>
       <target ref="id3"/>
-      <label kind="synchronisation" x="0" y="0"/>
-      <label kind="update" x="0" y="0"/>
     </transition>
     <transition>
       <source ref="id4"/>
       <target ref="id5"/>
-      <label kind="synchronisation" x="0" y="0">Update!</label>
+      <label kind="synchronisation" x="0" y="0">oc_Update!</label>
       <label kind="update" x="0" y="0">TurnOff();</label>
     </transition>
     <transition>
       <source ref="id5"/>
       <target ref="id6"/>
-      <label kind="synchronisation" x="0" y="0"/>
-      <label kind="update" x="0" y="0"/>
     </transition>
   </template>
   <system>// System setup
