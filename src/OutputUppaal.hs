@@ -118,16 +118,16 @@ templateDecl um =
          (fmap makeTransitionDecl (modelTransitions um)))
 
 makeLocationDecl :: ArrowXml a => Location -> a n XmlTree
-makeLocationDecl (Location (AState n i)) =
-    mkelem
-        "location"
-        [sattr "id" (showStateId i), sattr "x" "0", sattr "y" "0"]
-        [mkelem "name" [sattr "x" "0", sattr "y" "0"] [txt n]]
-makeLocationDecl (UrgentLocation (AState n i)) =
-    mkelem
-        "location"
-        [sattr "id" (showStateId i), sattr "x" "0", sattr "y" "0"]
-        [mkelem "name" [sattr "x" "0", sattr "y" "0"] [txt n], eelem "urgent"]
+makeLocationDecl l =
+    case l of
+        (Location s) -> mk s mempty
+        (UrgentLocation s) -> mk s [eelem "urgent"]
+  where
+    mk (AState n i) extra =
+        mkelem
+            "location"
+            [sattr "id" (showStateId i), sattr "x" "0", sattr "y" "0"]
+            ([mkelem "name" [sattr "x" "0", sattr "y" "0"] [txt n]] <> extra)
 
 makeTransitionDecl :: ArrowXml a => Transition -> a n XmlTree
 makeTransitionDecl (Transition src dest sync update) =
