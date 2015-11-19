@@ -110,12 +110,16 @@ toggleFunctionBlock =
         , bfbAlgorithms = [ ECAlgorithm
                             { ecAlgorithmName = "TurnOn"
                             , ecAlgorithmComment = "Normally executed algorithm"
-                            , ecAlgorithmStText = [Assignment "Value" [StBool True]]
+                            , ecAlgorithmStText = [ Assignment
+                                                        "Value"
+                                                        [StBool True]]
                             }
                           , ECAlgorithm
                             { ecAlgorithmName = "TurnOff"
                             , ecAlgorithmComment = ""
-                            , ecAlgorithmStText = [Assignment "Value" [StBool False]]
+                            , ecAlgorithmStText = [ Assignment
+                                                        "Value"
+                                                        [StBool False]]
                             }]
         }
       }]
