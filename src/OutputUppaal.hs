@@ -34,8 +34,8 @@ data Location
 data Transition = Transition
     { transitionSrc :: StateId
     , transitionDest :: StateId
-    , transitionSync :: String
-    , transitionUpdate :: String
+    , transitionSync :: Maybe String
+    , transitionUpdate :: Maybe String
     } deriving (Show,Eq)
 
 data AState = AState
@@ -135,25 +135,19 @@ makeTransitionDecl (Transition src dest sync update) =
         "transition"
         ([ aelem "source" [sattr "ref" (showStateId src)]
          , aelem "target" [sattr "ref" (showStateId dest)]] <>
-         syncElem <>
-         updateElem)
+         maybe mempty syncElem sync <>
+         maybe mempty updateElem update)
   where
-    syncElem =
-        if null sync
-            then mempty
-            else [ mkelem
-                       "label"
-                       [ sattr "kind" "synchronisation"
-                       , sattr "x" "0"
-                       , sattr "y" "0"]
-                       [txt sync]]
-    updateElem =
-        if null update
-            then mempty
-            else [ mkelem
-                       "label"
-                       [sattr "kind" "update", sattr "x" "0", sattr "y" "0"]
-                       [txt update]]
+    syncElem s =
+        [ mkelem
+              "label"
+              [sattr "kind" "synchronisation", sattr "x" "0", sattr "y" "0"]
+              [txt s]]
+    updateElem u =
+        [ mkelem
+              "label"
+              [sattr "kind" "update", sattr "x" "0", sattr "y" "0"]
+              [txt u]]
 
 -- TODO it's not quite clear how the initial state of the system is
 -- defined; either it's the first state listed in the structure, or

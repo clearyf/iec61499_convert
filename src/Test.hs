@@ -172,44 +172,44 @@ uppaalModel =
     , modelTransitions = [ Transition
                            { transitionSrc = StateId 0
                            , transitionDest = StateId 4
-                           , transitionSync = ""
-                           , transitionUpdate = ""
+                           , transitionSync = mzero
+                           , transitionUpdate = mzero
                            }
                          , Transition
                            { transitionSrc = StateId 6
                            , transitionDest = StateId 1
-                           , transitionSync = "ic_Toggle?"
-                           , transitionUpdate = ""
+                           , transitionSync = pure "ic_Toggle?"
+                           , transitionUpdate = mzero
                            }
                          , Transition
                            { transitionSrc = StateId 3
                            , transitionDest = StateId 4
-                           , transitionSync = "ic_Toggle?"
-                           , transitionUpdate = ""
+                           , transitionSync = pure "ic_Toggle?"
+                           , transitionUpdate = mzero
                            }
                          , Transition
                            { transitionSrc = StateId 1
                            , transitionDest = StateId 2
-                           , transitionSync = "oc_Update!"
-                           , transitionUpdate = "TurnOn();"
+                           , transitionSync = pure "oc_Update!"
+                           , transitionUpdate = pure "TurnOn();"
                            }
                          , Transition
                            { transitionSrc = StateId 2
                            , transitionDest = StateId 3
-                           , transitionSync = ""
-                           , transitionUpdate = ""
+                           , transitionSync = mzero
+                           , transitionUpdate = mzero
                            }
                          , Transition
                            { transitionSrc = StateId 4
                            , transitionDest = StateId 5
-                           , transitionSync = "oc_Update!"
-                           , transitionUpdate = "TurnOff();"
+                           , transitionSync = pure "oc_Update!"
+                           , transitionUpdate = pure "TurnOff();"
                            }
                          , Transition
                            { transitionSrc = StateId 5
                            , transitionDest = StateId 6
-                           , transitionSync = ""
-                           , transitionUpdate = ""
+                           , transitionSync = mzero
+                           , transitionUpdate = mzero
                            }]
     , modelDeclarations = [ "void TurnOn()\n{\n\tValue = true;\n}\n"
                           , "void TurnOff()\n{\n\tValue = false;\n}\n"]

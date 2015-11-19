@@ -146,15 +146,15 @@ advancedTransitions m s
         ((locationStartPrefix s) :
          (fmap (locationEventPrefix s) (ecStateActions s)) <> [ecStateName s])
 
-makeUpdateStatement :: ECAction -> String
+makeUpdateStatement :: MonadPlus m => ECAction -> m String
 makeUpdateStatement action
-  | null (ecActionAlgorithm action) = mempty
-  | otherwise = (ecActionAlgorithm action) <> "();"
+  | null (ecActionAlgorithm action) = mzero
+  | otherwise = pure ((ecActionAlgorithm action) <> "();")
 
-makeSyncStatement :: ECAction -> String
+makeSyncStatement :: MonadPlus m => ECAction -> m String
 makeSyncStatement action
-  | null (ecActionOutput action) = mempty
-  | otherwise = outputChannelPrefix <> (ecActionOutput action) <> "!"
+  | null (ecActionOutput action) = mzero
+  | otherwise = pure (outputChannelPrefix <> (ecActionOutput action) <> "!")
 
 createState :: (t -> String) -> t -> State Int AState
 createState f x = do
@@ -183,13 +183,13 @@ transitions fb = basicTransitions <> otherTransitions
             (getSrcId src statesMap)
             (getDestId dest statesMap)
             (condToSync cond)
-            mempty -- No update/advancedTransitions on the basic transition.
+            mzero -- No update/advancedTransitions on the basic transition.
 
 -- TODO What is a valid condition in IEC61499?  "1" == true.
-condToSync :: String -> String
+condToSync :: MonadPlus m => String -> m String
 condToSync s
-  | s == "1" = ""
-  | otherwise = inputChannelPrefix <> s <> "?"
+  | s == "1" = mzero
+  | otherwise = pure (inputChannelPrefix <> s <> "?")
 
 getSrcId :: String -> StateMap -> StateId
 getSrcId s (StateMap m) =
