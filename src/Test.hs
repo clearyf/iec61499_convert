@@ -137,77 +137,77 @@ uppaalModel =
     , modelLocations = [ UrgentLocation
                              (AState
                               { stateName = "__start_Off"
-                              , stateId = StateId "id4"
+                              , stateId = StateId 4
                               })
                        , UrgentLocation
                              (AState
                               { stateName = "__action_Off__Update_TurnOff_"
-                              , stateId = StateId "id5"
+                              , stateId = StateId 5
                               })
                        , Location
                              (AState
                               { stateName = "Off"
-                              , stateId = StateId "id6"
+                              , stateId = StateId 6
                               })
                        , UrgentLocation
                              (AState
                               { stateName = "__start_On"
-                              , stateId = StateId "id1"
+                              , stateId = StateId 1
                               })
                        , UrgentLocation
                              (AState
                               { stateName = "__action_On__Update_TurnOn_"
-                              , stateId = StateId "id2"
+                              , stateId = StateId 2
                               })
                        , Location
                              (AState
                               { stateName = "On"
-                              , stateId = StateId "id3"
+                              , stateId = StateId 3
                               })
                        , Location
                              (AState
                               { stateName = "START"
-                              , stateId = StateId "id0"
+                              , stateId = StateId 0
                               })]
     , modelTransitions = [ Transition
-                           { transitionSrc = StateId "id0"
-                           , transitionDest = StateId "id4"
+                           { transitionSrc = StateId 0
+                           , transitionDest = StateId 4
                            , transitionSync = ""
                            , transitionUpdate = ""
                            }
                          , Transition
-                           { transitionSrc = StateId "id6"
-                           , transitionDest = StateId "id1"
+                           { transitionSrc = StateId 6
+                           , transitionDest = StateId 1
                            , transitionSync = "ic_Toggle?"
                            , transitionUpdate = ""
                            }
                          , Transition
-                           { transitionSrc = StateId "id3"
-                           , transitionDest = StateId "id4"
+                           { transitionSrc = StateId 3
+                           , transitionDest = StateId 4
                            , transitionSync = "ic_Toggle?"
                            , transitionUpdate = ""
                            }
                          , Transition
-                           { transitionSrc = StateId "id1"
-                           , transitionDest = StateId "id2"
+                           { transitionSrc = StateId 1
+                           , transitionDest = StateId 2
                            , transitionSync = "oc_Update!"
                            , transitionUpdate = "TurnOn();"
                            }
                          , Transition
-                           { transitionSrc = StateId "id2"
-                           , transitionDest = StateId "id3"
+                           { transitionSrc = StateId 2
+                           , transitionDest = StateId 3
                            , transitionSync = ""
                            , transitionUpdate = ""
                            }
                          , Transition
-                           { transitionSrc = StateId "id4"
-                           , transitionDest = StateId "id5"
+                           { transitionSrc = StateId 4
+                           , transitionDest = StateId 5
                            , transitionSync = "oc_Update!"
                            , transitionUpdate = "TurnOff();"
                            }
                          , Transition
-                           { transitionSrc = StateId "id5"
-                           , transitionDest = StateId "id6"
+                           { transitionSrc = StateId 5
+                           , transitionDest = StateId 6
                            , transitionSync = ""
                            , transitionUpdate = ""
                            }]

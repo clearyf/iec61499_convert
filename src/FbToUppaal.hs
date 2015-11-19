@@ -98,7 +98,7 @@ getNextId :: State Int StateId
 getNextId = do
     num <- get
     put (num + 1)
-    pure (StateId ("id" <> (show num)))
+    pure (StateId num)
 
 getStatesMap :: [ECState] -> StateMap
 getStatesMap basicStates =

@@ -1,7 +1,7 @@
 module OutputUppaal
        (UppaalModel(..), AState(..), UppaalChan(..), UppaalVar(..),
         Location(..), StateId(..), Transition(..), outputUppaal,
-        outputUppaalToFile)
+        outputUppaalToFile, showStateId)
        where
 
 import           BasePrelude
@@ -21,7 +21,10 @@ data UppaalModel = UppaalModel
 data UppaalVar = UppaalVar String String deriving (Show,Eq)
 newtype UppaalChan = UppaalChan String deriving (Show,Eq)
 
-newtype StateId  = StateId  String deriving (Show,Eq)
+newtype StateId  = StateId Int deriving (Show,Eq)
+
+showStateId :: StateId -> String
+showStateId (StateId i) = "id" <> (show i)
 
 data Location
     = Location AState
@@ -115,22 +118,23 @@ templateDecl um =
          (fmap makeTransitionDecl (modelTransitions um)))
 
 makeLocationDecl :: ArrowXml a => Location -> a n XmlTree
-makeLocationDecl (Location (AState n (StateId i))) =
+makeLocationDecl (Location (AState n i)) =
     mkelem
         "location"
-        [sattr "id" i, sattr "x" "0", sattr "y" "0"]
+        [sattr "id" (showStateId i), sattr "x" "0", sattr "y" "0"]
         [mkelem "name" [sattr "x" "0", sattr "y" "0"] [txt n]]
-makeLocationDecl (UrgentLocation (AState n (StateId i))) =
+makeLocationDecl (UrgentLocation (AState n i)) =
     mkelem
         "location"
-        [sattr "id" i, sattr "x" "0", sattr "y" "0"]
+        [sattr "id" (showStateId i), sattr "x" "0", sattr "y" "0"]
         [mkelem "name" [sattr "x" "0", sattr "y" "0"] [txt n], eelem "urgent"]
 
 makeTransitionDecl :: ArrowXml a => Transition -> a n XmlTree
-makeTransitionDecl (Transition (StateId src) (StateId dest) sync update) =
+makeTransitionDecl (Transition src dest sync update) =
     selem
         "transition"
-        ([aelem "source" [sattr "ref" src], aelem "target" [sattr "ref" dest]] <>
+        ([ aelem "source" [sattr "ref" (showStateId src)]
+         , aelem "target" [sattr "ref" (showStateId dest)]] <>
          syncElem <>
          updateElem)
   where
