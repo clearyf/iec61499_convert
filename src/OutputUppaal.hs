@@ -61,7 +61,7 @@ data AState = AState
 outputUppaalToFile :: UppaalModel -> String -> IO [XmlTree]
 outputUppaalToFile um name =
     runX
-        (root [] [mkelem "nta" [] [sections]] >>>
+        (root [] [selem "nta" [sections]] >>>
          writeDocument [withXmlPi yes] name)
   where
     sections = globalDecl um <+> templateDecl um <+> systemDecl um
@@ -69,7 +69,7 @@ outputUppaalToFile um name =
 outputUppaal :: UppaalModel -> IO [String]
 outputUppaal um =
     runX
-        (root [] [mkelem "nta" [] [sections]] >>>
+        (root [] [selem "nta" [sections]] >>>
          writeDocumentToString [withIndent yes, withXmlPi yes])
   where
     sections = globalDecl um <+> templateDecl um <+> systemDecl um
