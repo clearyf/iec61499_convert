@@ -112,8 +112,8 @@ getLocationsFromState :: ECState -> State Int ([AState],AState)
 getLocationsFromState state = do
     initState <-
         if null (ecStateActions state)
-            then pure []
-            else fmap (: []) (createState locationStartPrefix state)
+            then pure mempty
+            else fmap (: mempty) (createState locationStartPrefix state)
     actionStates <-
         mapM
             (\x ->

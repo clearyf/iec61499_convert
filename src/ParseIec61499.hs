@@ -117,7 +117,7 @@ getVariable =
   arr3 Variable
 
 getListAtElem :: ArrowXml a => a XmlTree c -> String -> a XmlTree [c]
-getListAtElem f tag = (listA f <<< deep (hasName tag)) `orElse` constA []
+getListAtElem f tag = (listA f <<< deep (hasName tag)) `orElse` constA mempty
 
 -- getECCElement :: ArrowXml a => a XmlTree ECCElement
 -- getECCElement = getECState <+> getECTransition
@@ -126,7 +126,7 @@ getECState :: ArrowXml a => a XmlTree ECState
 getECState =
   atTag "ECState" >>>
   getAttrValue "Name" &&&
-  getAttrValue "Comment" &&& (listA getECAction) `orElse` constA [] >>>
+  getAttrValue "Comment" &&& (listA getECAction) `orElse` constA mempty >>>
   arr3 ECState
 
 getECAction :: ArrowXml a => a XmlTree ECAction
@@ -172,7 +172,7 @@ getBasicFunctionBlock =
   atTag "BasicFB" >>>
   getListAtElem getECState "ECC" &&&
   getListAtElem getECTransition "ECC" &&&
-  (listA getAlgorithm `orElse` constA []) >>>
+  (listA getAlgorithm `orElse` constA mempty) >>>
   arr3 BasicFunctionBlock
 
 getFunctionBlock :: ArrowXml a => a XmlTree FunctionBlock
