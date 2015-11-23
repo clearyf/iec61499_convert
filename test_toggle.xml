@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+</><!DOCTYPE nta PUBLIC "-//Uppaal Team//DTD Flat System 1.1//EN" "http://www.it.uu.se/research/group/darts/uppaal/flat-1_1.dtd">
+<//><nta><declarations>// Global declarations
+chan Toggle;
+chan Update;
+bool Value;
+void TurnOn()
+{
+	Value = TRUE;
+}
+void TurnOff()
+{
+	Value = FALSE;
+}
+</declarations><template><name x="0" y="0">Toggle</name><declaration>// Declarations
+</declaration><location id="id4" x="0" y="0"><name x="0" y="0">__start_Off</name><urgent/></location><location id="id5" x="0" y="0"><name x="0" y="0">__action_Off__Update_TurnOff_</name><urgent/></location><location id="id6" x="0" y="0"><name x="0" y="0">Off</name></location><location id="id1" x="0" y="0"><name x="0" y="0">__start_On</name><urgent/></location><location id="id2" x="0" y="0"><name x="0" y="0">__action_On__Update_TurnOn_</name><urgent/></location><location id="id3" x="0" y="0"><name x="0" y="0">On</name></location><location id="id0" x="0" y="0"><name x="0" y="0">START</name></location><init ref="id0"/><transition><source ref="id0"/><target ref="id4"/><label kind="synchronisation" x="0" y="0"></label><label kind="update" x="0" y="0"></label></transition><transition><source ref="id6"/><target ref="id1"/><label kind="synchronisation" x="0" y="0">Toggle?</label><label kind="update" x="0" y="0"></label></transition><transition><source ref="id3"/><target ref="id4"/><label kind="synchronisation" x="0" y="0">Toggle?</label><label kind="update" x="0" y="0"></label></transition><transition><source ref="id1"/><target ref="id2"/><label kind="synchronisation" x="0" y="0">Update!</label><label kind="update" x="0" y="0">TurnOn();</label></transition><transition><source ref="id2"/><target ref="id3"/><label kind="synchronisation" x="0" y="0"></label><label kind="update" x="0" y="0"></label></transition><transition><source ref="id4"/><target ref="id5"/><label kind="synchronisation" x="0" y="0">Update!</label><label kind="update" x="0" y="0">TurnOff();</label></transition><transition><source ref="id5"/><target ref="id6"/><label kind="synchronisation" x="0" y="0"></label><label kind="update" x="0" y="0"></label></transition></template><system>// System setup
+Toggleblk = Toggle();
+system Toggleblk;
+</system></nta>
