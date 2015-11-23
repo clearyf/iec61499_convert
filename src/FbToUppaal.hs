@@ -88,7 +88,7 @@ locations fb = doFold states
   where
     states = getStatesMap (getBasicStates fb)
     doFold (StateMap m) = foldMap f m
-    f (u,n) = (fmap UrgentLocation u) <> [Location n]
+    f (u,n) = fmap UrgentLocation u <> [Location n]
 
 newtype StateMap =
     StateMap (Map String ([AState], AState))
@@ -115,10 +115,7 @@ getLocationsFromState state = do
             then pure mempty
             else fmap (: mempty) (createState locationStartPrefix state)
     actionStates <-
-        mapM
-            (\x ->
-                  createState (locationEventPrefix state) x)
-            (ecStateActions state)
+        mapM (createState (locationEventPrefix state)) (ecStateActions state)
     destState <- createState ecStateName state
     pure (initState <> actionStates, destState)
 
@@ -140,21 +137,21 @@ advancedTransitions m s
             (makeSyncStatement act)
             (makeUpdateStatement act)
     emptyAction = ECAction mempty mempty
-    acts = (ecStateActions s) <> (repeat emptyAction)
+    acts = ecStateActions s <> repeat emptyAction
     trTriples = zip3 acts trSrcs (tail trSrcs)
     trSrcs =
-        ((locationStartPrefix s) :
-         (fmap (locationEventPrefix s) (ecStateActions s)) <> [ecStateName s])
+        locationStartPrefix s :
+        fmap (locationEventPrefix s) (ecStateActions s) <> [ecStateName s]
 
 makeUpdateStatement :: MonadPlus m => ECAction -> m String
 makeUpdateStatement action
   | null (ecActionAlgorithm action) = mzero
-  | otherwise = pure ((ecActionAlgorithm action) <> "();")
+  | otherwise = pure (ecActionAlgorithm action <> "();")
 
 makeSyncStatement :: MonadPlus m => ECAction -> m String
 makeSyncStatement action
   | null (ecActionOutput action) = mzero
-  | otherwise = pure (outputChannelPrefix <> (ecActionOutput action) <> "!")
+  | otherwise = pure (outputChannelPrefix <> ecActionOutput action <> "!")
 
 createState :: (t -> String) -> t -> State Int AState
 createState f x = do
@@ -205,8 +202,8 @@ getDestId s (StateMap m)
 
 anAlgorithm :: ECAlgorithm -> String
 anAlgorithm al =
-    "void " <> (ecAlgorithmName al) <> "()\n{\n" <>
-    (foldMap st (ecAlgorithmStText al)) <>
+    "void " <> ecAlgorithmName al <> "()\n{\n" <>
+    foldMap st (ecAlgorithmStText al) <>
     "}\n"
   where
     st (Assignment lvalue rvalue) =

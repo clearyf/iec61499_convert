@@ -24,7 +24,7 @@ newtype UppaalChan = UppaalChan String deriving (Show,Eq)
 newtype StateId  = StateId Int deriving (Show,Eq)
 
 showStateId :: StateId -> String
-showStateId (StateId i) = "id" <> (show i)
+showStateId (StateId i) = "id" <> show i
 
 data Location
     = Location AState
@@ -92,10 +92,10 @@ outputParameters um = fmap (\ (UppaalVar t v) -> t <> " " <> v) (modelOutputVars
 createGlobalDecl :: UppaalModel -> String
 createGlobalDecl um =
     "// Global declarations\n" <>
-    (foldMap
-         (<> ";\n")
-         (inputChannels um <> outputChannels um <> inputParameters um <>
-          outputParameters um)) <>
+    foldMap
+        (<> ";\n")
+        (inputChannels um <> outputChannels um <> inputParameters um <>
+         outputParameters um) <>
     mconcat (modelDeclarations um)
 
 -- The global declarations consist of the input/output events and
@@ -113,9 +113,9 @@ templateDecl um =
         "template"
         ([ mkelem "name" [sattr "x" "0", sattr "y" "0"] [txt (modelName um)]
          , selem "declaration" [txt "// Declarations\n"]] <>
-         (fmap makeLocationDecl (modelLocations um)) <>
+         fmap makeLocationDecl (modelLocations um) <>
          makeInitialLocation <>
-         (fmap makeTransitionDecl (modelTransitions um)))
+         fmap makeTransitionDecl (modelTransitions um))
 
 makeLocationDecl :: ArrowXml a => Location -> a n XmlTree
 makeLocationDecl l =

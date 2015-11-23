@@ -87,7 +87,7 @@ atTag :: ArrowXml a => String -> a XmlTree XmlTree
 atTag tag = deep (isElem >>> hasName tag)
 
 getAttrValueOrEmpty :: ArrowXml a => String -> a XmlTree String
-getAttrValueOrEmpty str = (getAttrValue str) `orElse` (constA "")
+getAttrValueOrEmpty str = getAttrValue str `orElse` constA ""
 
 getEventVars :: ArrowXml a => a XmlTree String
 getEventVars = atTag "With" >>> getAttrValue "Var"
@@ -114,7 +114,7 @@ getECState :: ArrowXml a => a XmlTree ECState
 getECState =
     atTag "ECState" >>>
     getAttrValue "Name" &&&
-    getAttrValue "Comment" &&& (listA getECAction) `orElse` constA mempty >>>
+    getAttrValue "Comment" &&& listA getECAction `orElse` constA mempty >>>
     arr3 ECState
 
 getECAction :: ArrowXml a => a XmlTree ECAction
