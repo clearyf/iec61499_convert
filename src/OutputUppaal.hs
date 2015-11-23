@@ -35,6 +35,7 @@ data Transition = Transition
     { transitionSrc :: StateId
     , transitionDest :: StateId
     , transitionSync :: Maybe String
+    , transitionGuard :: Maybe String
     , transitionUpdate :: Maybe String
     } deriving (Show,Eq)
 
@@ -130,12 +131,13 @@ makeLocationDecl l =
             ([mkelem "name" [sattr "x" "0", sattr "y" "0"] [txt n]] <> extra)
 
 makeTransitionDecl :: ArrowXml a => Transition -> a n XmlTree
-makeTransitionDecl (Transition src dest sync update) =
+makeTransitionDecl (Transition src dest sync guard' update) =
     selem
         "transition"
         ([ aelem "source" [sattr "ref" (showStateId src)]
          , aelem "target" [sattr "ref" (showStateId dest)]] <>
          maybe mempty syncElem sync <>
+         maybe mempty guardElem guard' <>
          maybe mempty updateElem update)
   where
     syncElem s =
@@ -143,6 +145,11 @@ makeTransitionDecl (Transition src dest sync update) =
               "label"
               [sattr "kind" "synchronisation", sattr "x" "0", sattr "y" "0"]
               [txt s]]
+    guardElem g =
+        [ mkelem
+              "label"
+              [sattr "kind" "guard", sattr "x" "0", sattr "y" "0"]
+              [txt g]]
     updateElem u =
         [ mkelem
               "label"

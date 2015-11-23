@@ -4,8 +4,8 @@ import           BasePrelude hiding (try)
 import           Data.Set (Set)
 import qualified Data.Set as Set
 import           Text.Megaparsec
-       (ParseError, between, char, choice, digitChar, letterChar, parse,
-        space, try)
+       (ParseError, between, char, choice, digitChar, letterChar, option,
+        parse, space, try)
 import qualified Text.Megaparsec.Lexer as L
 import           Text.Megaparsec.String (Parser)
 
@@ -20,6 +20,8 @@ data GuardCondition
     | GuardAnd
     | GuardOr
     | GuardNot
+    | GuardTrue
+    | GuardFalse
     deriving (Show,Eq)
 
 parseGuard :: Set String -> String -> Either ParseError Guard
@@ -54,6 +56,8 @@ parseElement =
         , try andSymbol
         , try orSymbol
         , try notSymbol
+        , try trueSymbol
+        , try falseSymbol
         , GuardVariable <$> identifier]
 
 identifier :: Parser String
@@ -69,6 +73,12 @@ orSymbol = (symbol "OR" <|> symbol "|") *> pure GuardOr
 
 notSymbol :: Parser GuardCondition
 notSymbol = (symbol "NOT" <|> symbol "!") *> pure GuardNot
+
+trueSymbol :: Parser GuardCondition
+trueSymbol = (symbol "TRUE" <|> symbol "1") *> pure GuardTrue
+
+falseSymbol :: Parser GuardCondition
+falseSymbol = (symbol "FALSE" <|> symbol "0") *> pure GuardFalse
 
 lexeme :: Parser a -> Parser a
 lexeme = L.lexeme space

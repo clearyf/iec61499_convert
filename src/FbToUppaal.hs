@@ -4,9 +4,11 @@ import           BasePrelude
 import           Control.Monad.Trans.State.Lazy (State, evalState, get, put)
 import           Data.Map.Strict ((!), Map)
 import qualified Data.Map.Strict as Map
+import qualified Data.Set as Set
 import           OutputUppaal
        (UppaalModel(..), AState(..), UppaalChan(..), UppaalVar(..),
         Location(..), StateId(..), Transition(..))
+import           ParseGuard (Guard(..), GuardCondition(..), parseGuard)
 import           ParseIec61499
        (ECTransition(..), ECState(..), FunctionBlock(..), IECVariable(..),
         InterfaceList(..), Event(..), Variable(..), ECAction(..),
@@ -135,6 +137,7 @@ advancedTransitions m s
             (m ! a)
             (m ! b)
             (makeSyncStatement act)
+            mzero -- Guard is always empty for advanced transitions.
             (makeUpdateStatement act)
     emptyAction = ECAction mempty mempty
     acts = ecStateActions s <> repeat emptyAction
@@ -175,18 +178,37 @@ transitions fb = basicTransitions <> otherTransitions
     otherTransitions =
         foldMap (advancedTransitions (locationsToMap (locations fb))) states
     fbTransitions = bfbTransitions (basicFb fb)
+    events = Set.fromList (fmap eventName (eventInputs (interfaceList fb)))
     createBasicTransition (ECTransition src dest cond) =
         Transition
             (getSrcId src statesMap)
             (getDestId dest statesMap)
-            (condToSync cond)
+            (guardToSync gd)
+            (guardToGuard gd)
             mzero -- No update/advancedTransitions on the basic transition.
+      where
+        gd =
+            either
+                (const (error ("Couldn't parse guard: " <> cond)))
+                id
+                (parseGuard events cond)
 
--- TODO What is a valid condition in IEC61499?  "1" == true.
-condToSync :: MonadPlus m => String -> m String
-condToSync s
-  | s == "1" = mzero
-  | otherwise = pure (inputChannelPrefix <> s <> "?")
+guardToSync :: Guard -> Maybe String
+guardToSync (Guard (Just s) _) = pure (inputChannelPrefix <> s <> "?")
+guardToSync _ = mzero
+
+guardToGuard :: Guard -> Maybe String
+guardToGuard (Guard _ (Just (GuardSubCondition [GuardTrue]))) = mzero
+guardToGuard (Guard _ (Just (GuardSubCondition e))) = pure (foldMap f e)
+  where
+    f (GuardAnd) = " & "
+    f (GuardOr) = " | "
+    f (GuardNot) = "!"
+    f (GuardTrue) = "true"
+    f (GuardFalse) = "false"
+    f (GuardVariable var) = var
+    f (GuardSubCondition child) = "(" <> foldMap f child <> ")"
+guardToGuard _ = mzero
 
 getSrcId :: String -> StateMap -> StateId
 getSrcId s (StateMap m) =
