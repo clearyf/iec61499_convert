@@ -1,20 +1,26 @@
+{-# LANGUAGE TupleSections #-}
 module ParseSt (parseSt, Statement(..), Symbol(..)) where
 
-import BasePrelude hiding (try)
-import Data.Functor.Identity (Identity)
-import Text.Megaparsec
-       (ParseError, ParsecT, char, digitChar, endBy, letterChar, parse,
-        space, spaceChar, string, try)
-import Text.Megaparsec.String (Parser)
+import           BasePrelude hiding (try)
+import           Data.Functor.Identity (Identity)
+import           Data.Set (Set)
+import qualified Data.Set as Set
+import           Text.Megaparsec
+       (ParseError, ParsecT, char, choice, digitChar, eof, letterChar,
+        manyTill, option, parse, someTill, space, spaceChar, string, try)
 import qualified Text.Megaparsec.Lexer as L
+import           Text.Megaparsec.String (Parser)
 
-data Statement =
-    Assignment String
-               [Symbol]
+data Statement
+    = Assignment String
+                 [Symbol]
+    | If [Symbol] [Statement]
+    | IfElse [Symbol] [Statement] [Statement]
     deriving (Show,Eq)
 
 data Symbol
     = StBool Bool
+    | StOp String
     | StVar String
     | StInt Integer
     deriving (Show,Eq)
@@ -23,16 +29,31 @@ parseSt :: String -> Either ParseError [Statement]
 parseSt = parse stParser "stdin"
 
 stParser :: Parser [Statement]
-stParser = statements
+stParser = space *> statementsTill eof
 
-statements :: Parser [Statement]
-statements = space *> statement `endBy` semicolon
+statementsTill :: Parser end -> Parser [Statement]
+statementsTill = manyTill (statement <* semicolon)
 
 semicolon :: Parser Char
 semicolon = lexeme (char ';')
 
 statement :: Parser Statement
-statement = assignment
+statement = parseIf <|> assignment
+
+parseIf :: Parser Statement
+parseIf =
+    createIf <$> parseIfToThen
+             <*> option Nothing (Just <$> try parseFirstBranch)
+             <*> parseLastBranch
+  where
+    parseIfToThen = symbol "IF" *> (lexeme identifier `someTill` try (symbol "THEN"))
+    parseFirstBranch = statementsTill (symbol "ELSE")
+    parseLastBranch = statementsTill (symbol "END_IF")
+    -- If the first branch can't be parsed because there is no "ELSE"
+    -- clause, then the "last" branch parsed is actually the true
+    -- branch and not the false one.
+    createIf a Nothing b = If a b
+    createIf a (Just b) c = IfElse a b c
 
 assignment :: Parser Statement
 assignment = Assignment <$> lexIdentifier <* assignmentOp <*> expression
@@ -44,7 +65,24 @@ expression :: Parser [Symbol]
 expression = lexeme (some identifier)
 
 identifier :: Parser Symbol
-identifier = try lexTrue <|> try lexFalse <|> number <|> variable
+identifier = number <|> operator <|> try lexTrue <|> try lexFalse <|> variable
+
+keywords :: Set String
+keywords = Set.fromList ["IF", "THEN", "ELSE", "END_IF"]
+
+theSymbol :: String -> a -> Parser a
+theSymbol sym result = symbol sym *> pure result
+
+lexTrue :: Parser Symbol
+lexTrue = theSymbol "TRUE" (StBool True)
+
+lexFalse :: Parser Symbol
+lexFalse = theSymbol "FALSE" (StBool False)
+
+operator :: Parser Symbol
+operator =
+    let f x = theSymbol x (StOp x)
+    in choice (fmap f ["+", "-", "*", "/", "=", "<", "<=", ">", ">="])
 
 lexNatNumber :: Parser Integer
 lexNatNumber = lexeme L.integer
@@ -56,8 +94,10 @@ number :: Parser Symbol
 number = StInt <$> lexNumber
 
 lexIdentifier :: Parser String
-lexIdentifier =
-  lexeme ((:) <$> letterChar <*> many (letterChar <|> digitChar <|> char '_'))
+lexIdentifier = do
+  word <- lexeme ((:) <$> letterChar <*> many (letterChar <|> digitChar <|> char '_'))
+  guard (not (Set.member word keywords))
+  pure word
 
 variable :: Parser Symbol
 variable = StVar <$> lexIdentifier
@@ -71,12 +111,6 @@ spaceConsumer =
 
 symbol :: String -> Parser String
 symbol = L.symbol spaceConsumer
-
-lexTrue :: Parser Symbol
-lexTrue = symbol "TRUE" *> pure (StBool True)
-
-lexFalse :: Parser Symbol
-lexFalse = symbol "FALSE" *> pure (StBool False)
 
 lexeme :: ParsecT String Identity a -> ParsecT String Identity a
 lexeme = L.lexeme spaceConsumer
