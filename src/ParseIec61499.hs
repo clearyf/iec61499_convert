@@ -10,7 +10,8 @@ import ParseSt (parseSt, Statement)
 import Text.XML.HXT.Core
        (ArrowXml, SysConfig, XmlTree, arr2, arr3, arr4, constA, deep,
         isElem, getAttrValue, hasName, listA, no, orElse, readDocument,
-        runX, withValidate)
+        root, runX, withOutputPLAIN, withValidate, writeDocumentToString,
+        xread)
 
 -- This represents the expected objects in the XML structure.
 data FunctionBlock = FunctionBlock
@@ -128,10 +129,27 @@ getECTransition =
     getAttrValue "Destination" &&& getAttrValue "Condition" >>>
     arr3 ECTransition
 
+-- Parses a string into an XmlTree, then writes it back out using the
+-- 'withOutputPLAIN' option which disables all entity substitutions.
+entityDecode :: String -> IO [String]
+entityDecode str =
+    runX
+        (root [] [constA str >>> xread] >>>
+         writeDocumentToString [withOutputPLAIN])
+
+-- Uses entityDecode, but throws an error if there was a problem, and
+-- uses unsafePerformIO to discard the IO monad.
+unescapeXml :: String -> String
+unescapeXml str =
+    case unsafePerformIO (entityDecode str) of
+        [a] -> a
+        _ -> error ("Couldn't decode entities: " <> str)
+
 getSt :: ArrowXml a => a String [Statement]
 getSt =
+    arr unescapeXml >>>
     arr parseSt >>^
-    either (const (error "ST code in algorithm could not be parsed!")) id
+    either (error . ("ST code in algorithm could not be parsed!" <>) . show) id
 
 getAlgorithm :: ArrowXml a => a XmlTree ECAlgorithm
 getAlgorithm =
