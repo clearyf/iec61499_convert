@@ -204,6 +204,7 @@ guardToGuard :: Guard -> Maybe String
 guardToGuard (Guard _ (Just (GuardSubCondition [GuardTrue]))) = mzero
 guardToGuard (Guard _ (Just (GuardSubCondition e))) = pure (foldMap f e)
   where
+    f (GuardEquals) = " = "
     f (GuardAnd) = " & "
     f (GuardOr) = " | "
     f (GuardNot) = "!"

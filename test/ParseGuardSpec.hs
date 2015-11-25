@@ -62,6 +62,18 @@ spec = do
                                   , GuardVariable "d"]
                             , GuardOr
                             , GuardVariable "e"]))))
+    it
+        "Event AND (variable = value)"
+        (parseGuard events "BUTTON AND (setpoint = value)" `shouldBe`
+         Right
+             (Guard
+                  (Just "BUTTON")
+                  (Just
+                       (GuardSubCondition
+                            [ GuardSubCondition
+                                  [ GuardVariable "setpoint"
+                                  , GuardEquals
+                                  , GuardVariable "value"]]))))
 
 events :: Set String
 events = Set.fromList ["BUTTON", "BLAH"]

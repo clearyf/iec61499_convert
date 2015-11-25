@@ -17,6 +17,7 @@ data Guard = Guard
 data GuardCondition
     = GuardSubCondition [GuardCondition]
     | GuardVariable String
+    | GuardEquals
     | GuardAnd
     | GuardOr
     | GuardNot
@@ -53,6 +54,7 @@ parseElement :: Parser GuardCondition
 parseElement =
     choice
         [ parens parseCondition
+        , try equalsSymbol
         , try andSymbol
         , try orSymbol
         , try notSymbol
@@ -64,6 +66,9 @@ identifier :: Parser String
 identifier =
     lexeme
         ((:) <$> letterChar <*> many (letterChar <|> digitChar <|> char '_'))
+
+equalsSymbol :: Parser GuardCondition
+equalsSymbol = (symbol "=") *> pure GuardEquals
 
 andSymbol :: Parser GuardCondition
 andSymbol = (symbol "AND" <|> symbol "&") *> pure GuardAnd
