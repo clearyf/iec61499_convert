@@ -1,7 +1,11 @@
 module FbToUppaal (fbToUppaalModel) where
 
 import           BasePrelude
+import           Control.Monad.Trans.Class (lift)
+import           Control.Monad.Trans.Reader (ask, runReaderT, withReaderT)
 import           Control.Monad.Trans.State.Lazy (State, evalState, get, put)
+import           Control.Monad.Trans.Writer.Lazy (execWriter, tell)
+import qualified Data.DList as DList
 import           Data.Map.Strict ((!), Map)
 import qualified Data.Map.Strict as Map
 import qualified Data.Set as Set
@@ -222,16 +226,34 @@ getDestId s (StateMap m)
       in i
 
 anAlgorithm :: ECAlgorithm -> String
-anAlgorithm al =
-    "void " <> ecAlgorithmName al <> "()\n{\n" <>
-    foldMap st (ecAlgorithmStText al) <>
-    "}\n"
+anAlgorithm al = foldMap (<>"\n") (execWriter (runReaderT writeFunction 0))
   where
-    st (Assignment lvalue rvalue) =
-        "\t" <> lvalue <> " = " <>
-        mconcat (intersperse " " (fmap showSymbol rvalue)) <>
-        ";\n"
+    -- The writer monad uses a DList so writeLine runs in constant
+    -- time; the 'foldMap (<>"\n)' simultaneously adds the newlines
+    -- and flattens the lists into one string.
+    writeLine l = do
+        n <- ask
+        lift (tell (DList.singleton (replicate n '\t' <> l)))
+    writeFunction = do
+        writeLine ("void " <> (ecAlgorithmName al) <> "()")
+        writeBlock (ecAlgorithmStText al)
+    writeBlock statements = do
+        writeLine "{"
+        withReaderT (1 +) (traverse_ writeStatement statements)
+        writeLine "}"
+    writeStatement (Assignment lvalue rvalue) =
+        writeLine (lvalue <> " = " <> showSymbols rvalue <> ";")
+    writeStatement (If cond branch) = do
+        writeLine ("if (" <> showSymbols cond <> ")")
+        writeBlock branch
+    writeStatement (IfElse cond branch1 branch2) = do
+        writeLine ("if (" <> showSymbols cond <> ")")
+        writeBlock branch1
+        writeLine "else"
+        writeBlock branch2
+    showSymbols = mconcat . intersperse " " . fmap showSymbol
     showSymbol (StBool True) = "true"
     showSymbol (StBool False) = "false"
     showSymbol (StVar str) = str
     showSymbol (StInt i) = show i
+    showSymbol (StOp op) = op
