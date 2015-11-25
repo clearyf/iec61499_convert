@@ -236,7 +236,7 @@ anAlgorithm al = foldMap (<>"\n") (execWriter (runReaderT writeFunction 0))
         n <- ask
         lift (tell (DList.singleton (replicate n '\t' <> l)))
     writeFunction = do
-        writeLine ("void " <> (ecAlgorithmName al) <> "()")
+        writeLine ("void " <> ecAlgorithmName al <> "()")
         writeBlock (ecAlgorithmStText al)
     writeBlock statements = do
         writeLine "{"

@@ -40,7 +40,7 @@ stripLeadingAnd x = pure x
 parseEvent :: Applicative f => Set String -> Parser (f String)
 parseEvent events = do
     word <- identifier
-    guard (elem word events)
+    guard (word `elem` events)
     pure (pure word)
 
 parens ::Parser a -> Parser a
@@ -67,7 +67,7 @@ identifier =
         ((:) <$> letterChar <*> many (letterChar <|> digitChar <|> char '_'))
 
 equalsSymbol :: Parser GuardCondition
-equalsSymbol = (symbol "=") *> pure GuardEquals
+equalsSymbol = symbol "=" *> pure GuardEquals
 
 andSymbol :: Parser GuardCondition
 andSymbol = (symbol "AND" <|> symbol "&") *> pure GuardAnd

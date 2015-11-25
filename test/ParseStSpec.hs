@@ -30,6 +30,6 @@ spec = do
                           [StVar "value", StOp "=", StInt 1]
                           [Assignment "out" [StBool True]]
                           [ IfElse
-                                     [StVar "value", StOp "=", StInt 0]
-                                     [Assignment "out" [StBool False]]
-                                     [Assignment "error" [StBool True]]]])
+                                [StVar "value", StOp "=", StInt 0]
+                                [Assignment "out" [StBool False]]
+                                [Assignment "error" [StBool True]]]])

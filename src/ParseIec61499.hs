@@ -1,4 +1,3 @@
-{-# LANGUAGE NoMonomorphismRestriction #-}
 module ParseIec61499
        (readFunctionBlock, FunctionBlock(..), InterfaceList(..),
         BasicFunctionBlock(..), ECState(..), ECTransition(..),
@@ -7,11 +6,11 @@ module ParseIec61499
        where
 
 import BasePrelude hiding (orElse)
+import ParseSt (parseSt, Statement)
 import Text.XML.HXT.Core
        (ArrowXml, SysConfig, XmlTree, arr2, arr3, arr4, constA, deep,
         isElem, getAttrValue, hasName, listA, no, orElse, readDocument,
         runX, withValidate)
-import ParseSt (parseSt, Statement)
 
 -- This represents the expected objects in the XML structure.
 data FunctionBlock = FunctionBlock
