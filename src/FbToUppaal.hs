@@ -205,6 +205,7 @@ guardToGuard (Guard _ (Just (GuardSubCondition [GuardTrue]))) = mzero
 guardToGuard (Guard _ (Just (GuardSubCondition e))) = pure (foldMap f e)
   where
     f (GuardEquals) = " = "
+    f (GuardApprox) = " <> " --TODO This is wrong!
     f (GuardAnd) = " & "
     f (GuardOr) = " | "
     f (GuardNot) = "!"

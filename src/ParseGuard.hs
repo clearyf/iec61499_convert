@@ -17,6 +17,7 @@ data GuardCondition
     = GuardSubCondition [GuardCondition]
     | GuardVariable String
     | GuardEquals
+    | GuardApprox
     | GuardAnd
     | GuardOr
     | GuardNot
@@ -53,6 +54,7 @@ parseElement :: Parser GuardCondition
 parseElement =
     choice
         [ parens parseCondition
+        , try approxSymbol
         , try equalsSymbol
         , try andSymbol
         , try orSymbol
@@ -68,6 +70,9 @@ identifier =
 
 equalsSymbol :: Parser GuardCondition
 equalsSymbol = symbol "=" *> pure GuardEquals
+
+approxSymbol :: Parser GuardCondition
+approxSymbol = symbol "<>" *> pure GuardApprox
 
 andSymbol :: Parser GuardCondition
 andSymbol = (symbol "AND" <|> symbol "&") *> pure GuardAnd
