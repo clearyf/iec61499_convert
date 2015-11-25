@@ -25,12 +25,12 @@ data GuardCondition
     deriving (Show,Eq)
 
 parseGuard :: Set String -> String -> Either ParseError Guard
-parseGuard events = parse (doParseGuard events) "stdin"
+parseGuard events str = parse (doParseGuard events) str str
 
 doParseGuard :: Set String -> Parser Guard
 doParseGuard events =
-    Guard <$> (try (parseEvent events) <|> pure empty) <*>
-    (stripLeadingAnd <$> parseCondition)
+    Guard <$> option Nothing (try (parseEvent events))
+          <*> (stripLeadingAnd <$> parseCondition)
 
 stripLeadingAnd :: (Alternative f) => GuardCondition -> f GuardCondition
 stripLeadingAnd (GuardSubCondition (GuardAnd:xs)) = pure (GuardSubCondition xs)

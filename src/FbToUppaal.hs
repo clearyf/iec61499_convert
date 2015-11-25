@@ -67,11 +67,11 @@ createUppaalVar var =
 --------------------------------------------------------------------------------
 -- 3. Handle Locations
 --
--- IEC61499 associates the advancedTransitions with the destination state, whereas
--- Uppaal associates the advancedTransitions with the transition.  As well as
--- that, each transition in Uppaal can either wait on a channel or
--- send on a channel, so each action in IEC61499 must become an
--- additional urgent state in Uppaal.
+-- IEC61499 associates the advancedTransitions with the destination
+-- state, whereas Uppaal associates the advancedTransitions with the
+-- transition.  As well as that, each transition in Uppaal can either
+-- wait on a channel or send on a channel, so each action in IEC61499
+-- must become an additional urgent state in Uppaal.
 
 -- For each output event in an action a secondary location is
 -- required.
@@ -170,14 +170,13 @@ transitions fb = basicTransitions <> otherTransitions
     states = getBasicStates fb
     statesMap = getStatesMap states
     -- Transitions which are defined in the input FunctionBlock.
-    basicTransitions = fmap createBasicTransition fbTransitions
+    basicTransitions = fmap createBasicTransition (bfbTransitions (basicFb fb))
     -- Transitions which are required to handle the urgent
     -- locations.  The list of required transitions is one
     -- transition from urgent state to the next and then one final
     -- transition to the end state.
     otherTransitions =
         foldMap (advancedTransitions (locationsToMap (locations fb))) states
-    fbTransitions = bfbTransitions (basicFb fb)
     events = Set.fromList (fmap eventName (eventInputs (interfaceList fb)))
     createBasicTransition (ECTransition src dest cond) =
         Transition
