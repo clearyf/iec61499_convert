@@ -7,7 +7,8 @@ import           Data.Set (Set)
 import qualified Data.Set as Set
 import           Text.Megaparsec
        (ParseError, ParsecT, char, choice, digitChar, eof, letterChar,
-        manyTill, option, parse, someTill, space, spaceChar, string, try)
+        lookAhead, manyTill, option, parse, someTill, space, spaceChar,
+        string, try)
 import qualified Text.Megaparsec.Lexer as L
 import           Text.Megaparsec.String (Parser)
 
@@ -32,13 +33,19 @@ stParser :: Parser [Statement]
 stParser = space *> statementsTill eof
 
 statementsTill :: Parser end -> Parser [Statement]
-statementsTill = manyTill (statement <* semicolon)
+statementsTill end = catMaybes <$> manyTill (statement <* semicolon) end
 
 semicolon :: Parser Char
 semicolon = lexeme (char ';')
 
-statement :: Parser Statement
-statement = parseIf <|> assignment
+-- Empty statements (bare semicolons) are always possible, so return
+-- Nothing for them.  Use lookAhead to check for the colon, as if it's
+-- there then it must be consumed in statementsTill, if statement
+-- returns Nothing.
+statement :: Parser (Maybe Statement)
+statement =
+    (lookAhead semicolon *> pure Nothing) <|>
+    (Just <$> (parseIf <|> assignment))
 
 parseIf :: Parser Statement
 parseIf =

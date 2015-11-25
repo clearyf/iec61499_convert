@@ -7,6 +7,9 @@ import ParseSt
 
 spec :: Spec
 spec = do
+    it "Empty Statements"
+        (do parseSt " ; ; ;" `shouldBe` Right []
+            parseSt " ; ; ; ;" `shouldBe` Right [])
     it
         "Simple Assigment"
         (do parseSt "Value:=FALSE;" `shouldBe`
