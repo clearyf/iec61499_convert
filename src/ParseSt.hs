@@ -103,7 +103,7 @@ number = StInt <$> lexNumber
 lexIdentifier :: Parser String
 lexIdentifier = do
   word <- lexeme ((:) <$> letterChar <*> many (letterChar <|> digitChar <|> char '_'))
-  guard (not (Set.member word keywords))
+  guard (not (elem word keywords))
   pure word
 
 variable :: Parser Symbol

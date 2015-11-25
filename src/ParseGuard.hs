@@ -2,7 +2,6 @@ module ParseGuard (Guard(..), GuardCondition(..), parseGuard) where
 
 import           BasePrelude hiding (try)
 import           Data.Set (Set)
-import qualified Data.Set as Set
 import           Text.Megaparsec
        (ParseError, between, char, choice, digitChar, letterChar, option,
         parse, space, try)
@@ -41,7 +40,7 @@ stripLeadingAnd x = pure x
 parseEvent :: Applicative f => Set String -> Parser (f String)
 parseEvent events = do
     word <- identifier
-    guard (Set.member word events)
+    guard (elem word events)
     pure (pure word)
 
 parens ::Parser a -> Parser a
