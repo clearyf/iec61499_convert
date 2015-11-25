@@ -27,7 +27,7 @@ data Symbol
     deriving (Show,Eq)
 
 parseSt :: String -> Either ParseError [Statement]
-parseSt = parse stParser "stdin"
+parseSt str = parse stParser str str
 
 stParser :: Parser [Statement]
 stParser = space *> statementsTill eof
