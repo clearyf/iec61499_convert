@@ -33,7 +33,7 @@ stParser :: Parser [Statement]
 stParser = space *> statementsTill eof
 
 statementsTill :: Parser end -> Parser [Statement]
-statementsTill end = catMaybes <$> manyTill (statement <* semicolon) end
+statementsTill end = fmap catMaybes (manyTill (statement <* semicolon) end)
 
 semicolon :: Parser Char
 semicolon = lexeme (char ';')
@@ -45,12 +45,12 @@ semicolon = lexeme (char ';')
 statement :: MonadPlus m => Parser (m Statement)
 statement =
     (lookAhead semicolon *> pure mzero) <|>
-    (pure <$> (parseIf <|> assignment))
+    (fmap pure (parseIf <|> assignment))
 
 parseIf :: Parser Statement
 parseIf =
     createIf <$> parseIfToThen
-             <*> option mzero (pure <$> try parseFirstBranch)
+             <*> option mzero (fmap pure (try parseFirstBranch))
              <*> parseLastBranch
   where
     parseIfToThen = symbol "IF" *> (lexeme identifier `someTill` try (symbol "THEN"))
@@ -98,7 +98,7 @@ lexNumber :: Parser Integer
 lexNumber = L.signed spaceConsumer lexNatNumber
 
 number :: Parser Symbol
-number = StInt <$> lexNumber
+number = fmap StInt lexNumber
 
 lexIdentifier :: Parser String
 lexIdentifier = do
@@ -107,7 +107,7 @@ lexIdentifier = do
   pure word
 
 variable :: Parser Symbol
-variable = StVar <$> lexIdentifier
+variable = fmap StVar lexIdentifier
 
 spaceConsumer :: Parser ()
 spaceConsumer =
