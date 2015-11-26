@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE FBType SYSTEM "../data/Schemas/LibraryElement.dtd">
+<FBType Name="Demux8" Comment="Basic Function Block Type" Namespace="Loytec.HVAC">
+  <Attribute Name="Configuration.FB.IDCounter" Value="0" />
+  <Identification Standard="61499-2" />
+  <VersionInfo Organization="nxtControl GmbH" Version="0.0" Author="jowelskop" Date="3/25/2015" Remarks="Template" />
+  <InterfaceList>
+    <EventInputs>
+      <Event Name="REQ" Comment="Normal Execution Request">
+        <With Var="inValue" />
+      </Event>
+    </EventInputs>
+    <EventOutputs>
+      <Event Name="CNF" Comment="Execution Confirmation">
+        <With Var="outValue1" />
+        <With Var="outValue2" />
+        <With Var="outValue3" />
+        <With Var="outValue4" />
+        <With Var="outValue5" />
+        <With Var="outValue6" />
+        <With Var="outValue7" />
+        <With Var="outValue8" />
+      </Event>
+    </EventOutputs>
+    <InputVars>
+      <VarDeclaration Name="inValue" Type="INT" Comment="Input Value (from 1 to 8)" />
+    </InputVars>
+    <OutputVars>
+      <VarDeclaration Name="outValue1" Type="BOOL" Comment="Output TRUE if inValue = 1" />
+      <VarDeclaration Name="outValue2" Type="BOOL" Comment="Output TRUE if inValue = 2" />
+      <VarDeclaration Name="outValue3" Type="BOOL" Comment="Output TRUE if inValue = 3" />
+      <VarDeclaration Name="outValue4" Type="BOOL" Comment="Output TRUE if inValue = 4" />
+      <VarDeclaration Name="outValue5" Type="BOOL" Comment="Output TRUE if inValue = 5" />
+      <VarDeclaration Name="outValue6" Type="BOOL" Comment="Output TRUE if inValue = 6" />
+      <VarDeclaration Name="outValue7" Type="BOOL" Comment="Output TRUE if inValue = 7" />
+      <VarDeclaration Name="outValue8" Type="BOOL" Comment="Output TRUE if inValue = 8" />
+    </OutputVars>
+  </InterfaceList>
+  <BasicFB>
+    <ECC>
+      <ECState Name="START" Comment="Initial State" x="552.9412" y="429.4117" />
+      <ECState Name="REQ" Comment="Normal execution" x="217.647" y="752.9412">
+        <ECAction Algorithm="REQ" Output="CNF" />
+      </ECState>
+      <ECTransition Source="START" Destination="REQ" Condition="REQ" x="447.8488" y="648.3352" />
+      <ECTransition Source="REQ" Destination="START" Condition="1" x="372.8767" y="512.7991" />
+    </ECC>
+    <Algorithm Name="REQ" Comment="Normally executed algorithm">
+      <ST Text="IF inValue = 1 THEN outValue1 := TRUE;&#xD;&#xA;	             ELSE outValue1 := FALSE;&#xD;&#xA;END_IF ;&#xD;&#xA;&#xD;&#xA;IF inValue = 2 THEN outValue2 := TRUE;&#xD;&#xA;	             ELSE outValue2 := FALSE;&#xD;&#xA;END_IF ;&#xD;&#xA;&#xD;&#xA;IF inValue = 3 THEN outValue3 := TRUE;&#xD;&#xA;	             ELSE outValue3 := FALSE;&#xD;&#xA;END_IF ;&#xD;&#xA;&#xD;&#xA;IF inValue = 4 THEN outValue4 := TRUE;&#xD;&#xA;	             ELSE outValue4 := FALSE;&#xD;&#xA;END_IF ;&#xD;&#xA;&#xD;&#xA;IF inValue = 5 THEN outValue5 := TRUE;&#xD;&#xA;	             ELSE outValue5 := FALSE;&#xD;&#xA;END_IF ;&#xD;&#xA;&#xD;&#xA;IF inValue = 6 THEN outValue6 := TRUE;&#xD;&#xA;	             ELSE outValue6 := FALSE;&#xD;&#xA;END_IF ;&#xD;&#xA;&#xD;&#xA;IF inValue = 7 THEN outValue7 := TRUE;&#xD;&#xA;	             ELSE outValue7 := FALSE;&#xD;&#xA;END_IF ;&#xD;&#xA;&#xD;&#xA;IF inValue = 8 THEN outValue8 := TRUE;&#xD;&#xA;	             ELSE outValue8 := FALSE;&#xD;&#xA;END_IF ;&#xD;&#xA;&#xD;&#xA;&#xD;&#xA;;&#xD;&#xA;&#xD;&#xA;&#xD;&#xA;;&#xD;&#xA;&#xD;&#xA;" />
+    </Algorithm>
+  </BasicFB>
+</FBType>
