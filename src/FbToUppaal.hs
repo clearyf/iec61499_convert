@@ -196,11 +196,11 @@ transitions fb = basicTransitions <> otherTransitions
                 id
                 (parseGuard events cond)
 
-guardToSync :: Guard -> Maybe String
+guardToSync :: MonadPlus m => Guard -> m String
 guardToSync (Guard (Just s) _) = pure (inputChannelPrefix <> s <> "?")
 guardToSync _ = mzero
 
-guardToGuard :: Guard -> Maybe String
+guardToGuard :: MonadPlus m => Guard -> m String
 guardToGuard (Guard _ (Just (GuardSubCondition [GuardTrue]))) = mzero
 guardToGuard (Guard _ (Just (GuardSubCondition e))) = pure (foldMap f e)
   where

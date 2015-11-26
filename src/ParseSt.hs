@@ -42,15 +42,15 @@ semicolon = lexeme (char ';')
 -- Nothing for them.  Use lookAhead to check for the colon, as if it's
 -- there then it must be consumed in statementsTill, if statement
 -- returns Nothing.
-statement :: Parser (Maybe Statement)
+statement :: MonadPlus m => Parser (m Statement)
 statement =
-    (lookAhead semicolon *> pure Nothing) <|>
-    (Just <$> (parseIf <|> assignment))
+    (lookAhead semicolon *> pure mzero) <|>
+    (pure <$> (parseIf <|> assignment))
 
 parseIf :: Parser Statement
 parseIf =
     createIf <$> parseIfToThen
-             <*> option Nothing (Just <$> try parseFirstBranch)
+             <*> option mzero (pure <$> try parseFirstBranch)
              <*> parseLastBranch
   where
     parseIfToThen = symbol "IF" *> (lexeme identifier `someTill` try (symbol "THEN"))
