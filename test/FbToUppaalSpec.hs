@@ -35,11 +35,12 @@ input2 =
     ECAlgorithm
         "name"
         ""
-        [ Assignment
+        [ Declaration "blah" (IECInt Eight)
+        , Assignment
               "blah"
               [ StFunc
                     "max"
                     [ [StInt 10, StOp "+", StFunc "min" [[StInt 2], [StInt 10]]]
                     , [StFloat 0.3313]]]]
 output2 :: String
-output2  = "void name()\n{\n\tblah = max(10 + min(2, 10), 0.3313);\n}\n"
+output2  = "void name()\n{\n\tint[-128,127] blah;\n\tblah = max(10 + min(2, 10), 0.3313);\n}\n"

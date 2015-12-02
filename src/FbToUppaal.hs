@@ -16,7 +16,7 @@ import           ParseGuard (Guard(..), GuardCondition(..), parseGuard)
 import           ParseIec61499
        (ECTransition(..), ECState(..), FunctionBlock(..), IECVariable(..),
         InterfaceList(..), Event(..), Variable(..), ECAction(..),
-        BasicFunctionBlock(..), ECAlgorithm(..))
+        BasicFunctionBlock(..), ECAlgorithm(..), Width(..))
 import           ParseSt (Statement(..), Symbol(..))
 
 fbToUppaalModel :: FunctionBlock -> UppaalModel
@@ -55,8 +55,18 @@ outputChannels = extractChannels outputChannelPrefix eventOutputs
 
 convertVariableType :: IECVariable -> String
 convertVariableType IECBool = "bool"
-convertVariableType IECInt = "int"
-convertVariableType IECReal = error "Uppaal doesn't support Real types!"
+convertVariableType (IECUInt Eight) = intWithRange 0 ((2::Integer)^(8::Integer))
+convertVariableType (IECUInt Sixteen) = intWithRange 0 ((2::Integer)^(16::Integer))
+convertVariableType (IECUInt ThirtyTwo) = intWithRange 0 ((2::Integer)^(32::Integer))
+convertVariableType (IECUInt SixtyFour) = intWithRange 0 ((2::Integer)^(64::Integer))
+convertVariableType (IECInt Eight) = intWithRange ((-2::Integer)^(7::Integer)) ((2::Integer)^(7::Integer)-1)
+convertVariableType (IECInt Sixteen) = intWithRange ((-2::Integer)^(15::Integer)) ((2::Integer)^(15::Integer)-1)
+convertVariableType (IECInt ThirtyTwo) = intWithRange ((-2::Integer)^(31::Integer)) ((2::Integer)^(31::Integer)-1)
+convertVariableType (IECInt SixtyFour) = intWithRange ((-2::Integer)^(63::Integer)) ((2::Integer)^(63::Integer)-1)
+convertVariableType t = error "Uppaal doesn't support " <> show t <> " type!"
+
+intWithRange :: Integer -> Integer -> String
+intWithRange from to = "int[" <> show from <> "," <> show to <> "]"
 
 inputParameters :: FunctionBlock -> [UppaalVar]
 inputParameters = fmap createUppaalVar . inputVariables . interfaceList
@@ -228,7 +238,7 @@ getDestId s (StateMap m)
       in i
 
 anAlgorithm :: ECAlgorithm -> String
-anAlgorithm al = foldMap (<>"\n") (execWriter (runReaderT writeFunction 0))
+anAlgorithm al = foldMap (<> "\n") (execWriter (runReaderT writeFunction 0))
   where
     -- The writer monad uses a DList so writeLine runs in constant
     -- time; the 'foldMap (<>"\n)' simultaneously adds the newlines
@@ -243,6 +253,8 @@ anAlgorithm al = foldMap (<>"\n") (execWriter (runReaderT writeFunction 0))
         writeLine "{"
         withReaderT (1 +) (traverse_ writeStatement statements)
         writeLine "}"
+    writeStatement (Declaration name theType) =
+        writeLine (convertVariableType theType <> " " <> name <> ";")
     writeStatement (Assignment lvalue rvalue) =
         writeLine (lvalue <> " = " <> showSymbols rvalue <> ";")
     writeStatement (If cond branch) = do

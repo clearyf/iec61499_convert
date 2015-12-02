@@ -28,7 +28,7 @@ demux8Block =
                            }]
         , inputVariables = [ Variable
                              { variableName = "inValue"
-                             , variableType = IECInt
+                             , variableType = IECInt Sixteen
                              , variableComment = "Input Value (from 1 to 8)"
                              }]
         , outputVariables = [ Variable

@@ -4,6 +4,7 @@ import BasePrelude
 import Test.Hspec (it, shouldBe)
 import Test.Hspec.Core.Spec (Spec)
 import ParseSt
+import Iec61131
 
 spec :: Spec
 spec = do
@@ -23,6 +24,17 @@ spec = do
             parseSt "Value := TRUE;\ni := 3;\n" `shouldBe`
                 Right
                     [Assignment "Value" [StBool True], Assignment "i" [StInt 3]])
+    it
+        "Var declaration"
+        (do parseSt "VAR; llh : INT; llt : REAL; END_VAR; llh := 5;" `shouldBe`
+                Right
+                    [ Declaration "llh" (IECInt Sixteen)
+                    , Declaration "llt" IECReal
+                    , Assignment "llh" [StInt 5]]
+            parseSt "VAR; blah : UDINT; END_VAR ; blah := 10;" `shouldBe`
+                Right
+                    [ Declaration "blah" (IECUInt ThirtyTwo)
+                    , Assignment "blah" [StInt 10]])
     it
         "IF statements"
         (do parseSt

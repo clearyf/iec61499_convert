@@ -2,11 +2,12 @@ module ParseIec61499
        (readFunctionBlock, FunctionBlock(..), InterfaceList(..),
         BasicFunctionBlock(..), ECState(..), ECTransition(..),
         ECAction(..), ECAlgorithm(..), Event(..), Variable(..),
-        IECVariable(..))
+        IECVariable(..), Width(..))
        where
 
 import BasePrelude hiding (orElse)
 import ParseSt (parseSt, Statement)
+import Iec61131
 import Text.XML.HXT.Core
        (ArrowXml, SysConfig, XmlTree, arr2, arr3, arr4, constA, deep,
         isElem, getAttrValue, hasName, listA, no, orElse, readDocument,
@@ -67,21 +68,6 @@ data Variable = Variable
     , variableType :: IECVariable
     , variableComment :: String
     } deriving (Show,Eq)
-
-data IECVariable
-    = IECReal
-    | IECInt
-    | IECBool
-    deriving (Show,Eq)
-
-vartypeFromString :: String -> IECVariable
-vartypeFromString str
-  | capsStr == "BOOL" = IECBool
-  | capsStr == "REAL" = IECReal
-  | capsStr == "INT" = IECInt
-  | otherwise = error "Unhandled IEC variable type!"
-  where
-    capsStr = fmap toUpper str
 
 atTag :: ArrowXml a => String -> a XmlTree XmlTree
 atTag tag = deep (isElem >>> hasName tag)

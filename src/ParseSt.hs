@@ -5,16 +5,17 @@ import           BasePrelude hiding (try)
 import           Data.Functor.Identity (Identity)
 import           Data.Set (Set)
 import qualified Data.Set as Set
+import           Iec61131
 import           Text.Megaparsec
-       (ParseError, ParsecT, char, choice, digitChar, eof, letterChar,
-        lookAhead, manyTill, option, parse, someTill, space, spaceChar,
-        string, try)
+       (ParseError, ParsecT, between, char, choice, digitChar, eof,
+        letterChar, lookAhead, manyTill, option, parse, sepBy, someTill,
+        spaceChar, string, try)
 import qualified Text.Megaparsec.Lexer as L
 import           Text.Megaparsec.String (Parser)
 
 data Statement
-    = Assignment String
-                 [Symbol]
+    = Assignment String [Symbol]
+    | Declaration String IECVariable
     | If [Symbol] [Statement]
     | IfElse [Symbol] [Statement] [Statement]
     deriving (Show,Eq)
@@ -31,14 +32,29 @@ data Symbol
 parseSt :: String -> Either ParseError [Statement]
 parseSt str = parse stParser str str
 
+mappendA :: (Applicative m, Monoid a) => m a -> m a -> m a
+mappendA = liftA2 (<>)
+
 stParser :: Parser [Statement]
-stParser = space *> statementsTill eof
+stParser =
+    spaceConsumer *>
+    ((option mempty (try parseVarDecls)) `mappendA` statementsTill eof)
 
 statementsTill :: Parser end -> Parser [Statement]
 statementsTill end = fmap catMaybes (manyTill (statement <* semicolon) end)
 
 semicolon :: Parser Char
 semicolon = lexeme (char ';')
+
+parseVarDecls :: Parser [Statement]
+parseVarDecls =
+    symbol "VAR" *> semicolon *>
+    parseVarDecl `manyTill` (symbol "END_VAR" *> semicolon)
+
+parseVarDecl :: Parser Statement
+parseVarDecl =
+    Declaration <$> lexeme lexIdentifier <* symbol ":" <*>
+    (vartypeFromString <$> lexIdentifier) <* semicolon
 
 -- Empty statements (bare semicolons) are always possible, so return
 -- Nothing for them.  Use lookAhead to check for the colon, as if it's
@@ -65,12 +81,13 @@ parseIf =
     createIf a (Just b) c = IfElse a b c
 
 parseFunction :: Parser Symbol
-parseFunction =
-    StFunc <$> lexIdentifier <* symbol "("
-           <*> parseArgs `manyTill` symbol ")"
+parseFunction = StFunc <$> lexIdentifier <*> parens parseArgs
 
-parseArgs :: Parser [Symbol]
-parseArgs = many (lexeme identifier) <* (lookAhead (symbol ")") <|> symbol ",")
+parseArgs :: Parser [[Symbol]]
+parseArgs = expression `sepBy` symbol ","
+
+parens :: Parser a -> Parser a
+parens = between (symbol "(") (symbol ")")
 
 assignment :: Parser Statement
 assignment = Assignment <$> lexIdentifier <* assignmentOp <*> expression
