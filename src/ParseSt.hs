@@ -24,6 +24,8 @@ data Symbol
     | StOp String
     | StVar String
     | StInt Integer
+    | StFloat Double
+    | StFunc String [[Symbol]]
     deriving (Show,Eq)
 
 parseSt :: String -> Either ParseError [Statement]
@@ -62,6 +64,14 @@ parseIf =
     createIf a Nothing b = If a b
     createIf a (Just b) c = IfElse a b c
 
+parseFunction :: Parser Symbol
+parseFunction =
+    StFunc <$> lexIdentifier <* symbol "("
+           <*> parseArgs `manyTill` symbol ")"
+
+parseArgs :: Parser [Symbol]
+parseArgs = many (lexeme identifier) <* (lookAhead (symbol ")") <|> symbol ",")
+
 assignment :: Parser Statement
 assignment = Assignment <$> lexIdentifier <* assignmentOp <*> expression
 
@@ -72,7 +82,14 @@ expression :: Parser [Symbol]
 expression = lexeme (some identifier)
 
 identifier :: Parser Symbol
-identifier = number <|> operator <|> try lexTrue <|> try lexFalse <|> variable
+identifier =
+    choice
+        [ operator
+        , number
+        , try lexTrue
+        , try lexFalse
+        , try parseFunction
+        , variable]
 
 keywords :: Set String
 keywords = Set.fromList ["IF", "THEN", "ELSE", "END_IF"]
@@ -91,14 +108,11 @@ operator =
     let f x = theSymbol x (StOp x)
     in choice (fmap f ["+", "-", "*", "/", "=", "<", "<=", ">", ">="])
 
-lexNatNumber :: Parser Integer
-lexNatNumber = lexeme L.integer
-
-lexNumber :: Parser Integer
-lexNumber = L.signed spaceConsumer lexNatNumber
+lexNumber :: Parser (Either Integer Double)
+lexNumber = lexeme L.number
 
 number :: Parser Symbol
-number = fmap StInt lexNumber
+number = fmap (either StInt StFloat) lexNumber
 
 lexIdentifier :: Parser String
 lexIdentifier = do

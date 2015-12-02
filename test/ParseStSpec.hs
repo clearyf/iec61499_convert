@@ -15,7 +15,9 @@ spec = do
         (do parseSt "Value:=FALSE;" `shouldBe`
                 Right [Assignment "Value" [StBool False]]
             parseSt "Value := -303;" `shouldBe`
-                Right [Assignment "Value" [StInt (-303)]]
+                Right [Assignment "Value" [StOp "-", StInt 303]]
+            parseSt "Value := -0.333;" `shouldBe`
+                Right [Assignment "Value" [StOp "-", StFloat 0.333]]
             parseSt "Value := blah;" `shouldBe`
                 Right [Assignment "Value" [StVar "blah"]]
             parseSt "Value := TRUE;\ni := 3;\n" `shouldBe`
@@ -33,3 +35,15 @@ spec = do
                                 [StVar "value", StOp "=", StInt 0]
                                 [Assignment "out" [StBool False]]
                                 [Assignment "error" [StBool True]]]])
+    it
+        "Functions"
+        (do parseSt "blah := max(2 - 32, abs(ao) * 3);" `shouldBe`
+                Right
+                    [ Assignment
+                          "blah"
+                          [ StFunc
+                                "max"
+                                [ [StInt 2, StOp "-", StInt 32]
+                                , [ StFunc "abs" [[StVar "ao"]]
+                                  , StOp "*"
+                                  , StInt 3]]]])

@@ -1,4 +1,4 @@
-module FbToUppaal (fbToUppaalModel) where
+module FbToUppaal (fbToUppaalModel, anAlgorithm) where
 
 import           BasePrelude
 import           Control.Monad.Trans.Class (lift)
@@ -254,8 +254,11 @@ anAlgorithm al = foldMap (<>"\n") (execWriter (runReaderT writeFunction 0))
         writeLine "else"
         writeBlock branch2
     showSymbols = mconcat . intersperse " " . fmap showSymbol
+    showArgs = mconcat . intersperse ", " . fmap showSymbols
     showSymbol (StBool True) = "true"
     showSymbol (StBool False) = "false"
     showSymbol (StVar str) = str
     showSymbol (StInt i) = show i
     showSymbol (StOp op) = op
+    showSymbol (StFloat i) = show i -- TODO Uppaal can’t handle floats!
+    showSymbol (StFunc name args) = name <> "(" <> showArgs args <> ")"
