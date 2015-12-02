@@ -6,6 +6,7 @@ import           Control.Monad.Trans.Reader (ask, runReaderT, withReaderT)
 import           Control.Monad.Trans.State.Lazy (State, evalState, get, put)
 import           Control.Monad.Trans.Writer.Lazy (execWriter, tell)
 import qualified Data.DList as DList
+import qualified Data.List.NonEmpty as NE
 import           Data.Map.Strict ((!), Map)
 import qualified Data.Map.Strict as Map
 import qualified Data.Set as Set
@@ -14,10 +15,11 @@ import           OutputUppaal
         Location(..), StateId(..), Transition(..))
 import           ParseGuard (Guard(..), GuardCondition(..), parseGuard)
 import           ParseIec61499
-       (ECTransition(..), ECState(..), FunctionBlock(..), IECVariable(..),
+       (ECTransition(..), ECState(..), FunctionBlock(..),
         InterfaceList(..), Event(..), Variable(..), ECAction(..),
-        BasicFunctionBlock(..), ECAlgorithm(..), Width(..))
-import           ParseSt (Statement(..), Symbol(..))
+        BasicFunctionBlock(..), ECAlgorithm(..))
+import           ParseSt
+       (LValue(..), Statement(..), Symbol(..), IECVariable(..), Width(..))
 
 -- | Converts IEC61499 FunctionBlock to an UppaalModel
 -- If something goes wrong then an exception is thrown.
@@ -55,17 +57,18 @@ outputChannels = extractChannels outputChannelPrefix eventOutputs
 --------------------------------------------------------------------------------
 -- Handle variables
 
-convertVariableType :: IECVariable -> String
-convertVariableType IECBool = "bool"
-convertVariableType (IECUInt Eight) = intWithRange 0 ((2::Integer)^(8::Integer))
-convertVariableType (IECUInt Sixteen) = intWithRange 0 ((2::Integer)^(16::Integer))
-convertVariableType (IECUInt ThirtyTwo) = intWithRange 0 ((2::Integer)^(32::Integer))
-convertVariableType (IECUInt SixtyFour) = intWithRange 0 ((2::Integer)^(64::Integer))
-convertVariableType (IECInt Eight) = intWithRange ((-2::Integer)^(7::Integer)) ((2::Integer)^(7::Integer)-1)
-convertVariableType (IECInt Sixteen) = intWithRange ((-2::Integer)^(15::Integer)) ((2::Integer)^(15::Integer)-1)
-convertVariableType (IECInt ThirtyTwo) = intWithRange ((-2::Integer)^(31::Integer)) ((2::Integer)^(31::Integer)-1)
-convertVariableType (IECInt SixtyFour) = intWithRange ((-2::Integer)^(63::Integer)) ((2::Integer)^(63::Integer)-1)
-convertVariableType t = error "Uppaal doesn't support " <> show t <> " type!"
+showVarType :: IECVariable -> (String,String)
+showVarType IECBool = ("bool",mempty)
+showVarType (IECUInt Eight) = (intWithRange 0 ((2::Integer)^(8::Integer)),mempty)
+showVarType (IECUInt Sixteen) = (intWithRange 0 ((2::Integer)^(16::Integer)),mempty)
+showVarType (IECUInt ThirtyTwo) = (intWithRange 0 ((2::Integer)^(32::Integer)),mempty)
+showVarType (IECUInt SixtyFour) = (intWithRange 0 ((2::Integer)^(64::Integer)),mempty)
+showVarType (IECInt Eight) = (intWithRange ((-2::Integer)^(7::Integer)) ((2::Integer)^(7::Integer)-1),mempty)
+showVarType (IECInt Sixteen) = (intWithRange ((-2::Integer)^(15::Integer)) ((2::Integer)^(15::Integer)-1),mempty)
+showVarType (IECInt ThirtyTwo) = (intWithRange ((-2::Integer)^(31::Integer)) ((2::Integer)^(31::Integer)-1),mempty)
+showVarType (IECInt SixtyFour) = (intWithRange ((-2::Integer)^(63::Integer)) ((2::Integer)^(63::Integer)-1),mempty)
+showVarType (IECArray idxs var) = (fst (showVarType var), "[" <> (foldMap id (NE.intersperse "," (fmap show idxs))) <> "]")
+showVarType t = error ("Uppaal doesn't support " <> show t <> " type!")
 
 intWithRange :: Integer -> Integer -> String
 intWithRange from to = "int[" <> show from <> "," <> show to <> "]"
@@ -77,8 +80,8 @@ outputParameters :: FunctionBlock -> [UppaalVar]
 outputParameters = fmap createUppaalVar . outputVariables . interfaceList
 
 createUppaalVar :: Variable -> UppaalVar
-createUppaalVar var =
-    UppaalVar (convertVariableType (variableType var)) (variableName var)
+createUppaalVar var = UppaalVar varType (variableName var <> suffix)
+    where (varType,suffix) = showVarType (variableType var)
 
 --------------------------------------------------------------------------------
 -- 3. Handle Locations
@@ -255,10 +258,11 @@ anAlgorithm al = foldMap (<> "\n") (execWriter (runReaderT writeFunction 0))
         writeLine "{"
         withReaderT (1 +) (traverse_ writeStatement statements)
         writeLine "}"
-    writeStatement (Declaration name theType) =
-        writeLine (convertVariableType theType <> " " <> name <> ";")
+    writeStatement (Declaration name typeIn) =
+        writeLine (typeOut <> " " <> name <> suffix <> ";")
+        where (typeOut, suffix) = showVarType typeIn
     writeStatement (Assignment lvalue rvalue) =
-        writeLine (lvalue <> " = " <> showSymbols rvalue <> ";")
+        writeLine (showLocation lvalue <> " = " <> showSymbols rvalue <> ";")
     writeStatement (For name start end step body) = do
         writeLine
             ("for (int " <> name <> " = " <> show start <> "; " <>
@@ -277,8 +281,10 @@ anAlgorithm al = foldMap (<> "\n") (execWriter (runReaderT writeFunction 0))
     showArgs = mconcat . intersperse ", " . fmap showSymbols
     showSymbol (StBool True) = "true"
     showSymbol (StBool False) = "false"
-    showSymbol (StVar str) = str
     showSymbol (StInt i) = show i
     showSymbol (StOp op) = op
+    showSymbol (StLValue v) = showLocation v
     showSymbol (StFloat i) = show i -- TODO Uppaal can’t handle floats!
     showSymbol (StFunc name args) = name <> "(" <> showArgs args <> ")"
+    showLocation (SimpleLValue name) = name
+    showLocation (ArrayLValue name idx) = name <> showSymbols idx

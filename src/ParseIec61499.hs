@@ -1,13 +1,11 @@
 module ParseIec61499
        (readFunctionBlock, FunctionBlock(..), InterfaceList(..),
         BasicFunctionBlock(..), ECState(..), ECTransition(..),
-        ECAction(..), ECAlgorithm(..), Event(..), Variable(..),
-        IECVariable(..), Width(..))
+        ECAction(..), ECAlgorithm(..), Event(..), Variable(..))
        where
 
 import BasePrelude hiding (orElse)
-import ParseSt (parseSt, Statement)
-import Iec61131
+import ParseSt (parseSt, Statement, IECVariable(..), iECtypeFromString)
 import Text.XML.HXT.Core
        (ArrowXml, SysConfig, XmlTree, arr2, arr3, arr4, constA, deep,
         isElem, getAttrValue, hasName, listA, no, orElse, readDocument,
@@ -89,7 +87,7 @@ getVariable :: ArrowXml a => a XmlTree Variable
 getVariable =
     atTag "VarDeclaration" >>>
     getAttrValue "Name" &&&
-    (getAttrValue "Type" >>^ vartypeFromString) &&&
+    (getAttrValue "Type" >>^ either (error . show) id . iECtypeFromString) &&&
     getAttrValueOrEmpty "Comment" >>>
     arr3 Variable
 

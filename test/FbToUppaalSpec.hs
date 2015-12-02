@@ -23,7 +23,7 @@ input1 =
         "name"
         ""
         [ Assignment
-              "blah"
+              (SimpleLValue "blah")
               [ StFunc
                     "max"
                     [[StInt 10, StOp "+", StFloat 10.1], [StFloat 0.3313]]]]
@@ -37,7 +37,7 @@ input2 =
         ""
         [ Declaration "blah" (IECInt Eight)
         , Assignment
-              "blah"
+              (SimpleLValue "blah")
               [ StFunc
                     "max"
                     [ [StInt 10, StOp "+", StFunc "min" [[StInt 2], [StInt 10]]]

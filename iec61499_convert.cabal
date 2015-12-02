@@ -8,7 +8,7 @@ cabal-version:       >=1.10
 
 executable iec61499_convert
   main-is:             Main.hs
-  build-depends:       base >= 4.7
+  build-depends:       base >= 4.8
                      , base-prelude >= 0.1.19
                      , containers >= 0.5.6.2
                      , dlist >= 0.7.1.2
@@ -16,6 +16,7 @@ executable iec61499_convert
                      , hspec-core >= 2.1.10
                      , hxt >= 9.3.1.15
                      , megaparsec >= 4.1.1
+                     , semigroups >= 0.18
                      , transformers >= 0.4.2.0
   hs-source-dirs:      src,app
   ghc-options:         -Wall
@@ -25,7 +26,7 @@ executable iec61499_convert
 test-suite test_iec61499_convert
   type:                exitcode-stdio-1.0
   main-is:             Spec.hs
-  build-depends:       base >= 4.7
+  build-depends:       base >= 4.8
                      , base-prelude >= 0.1.19
                      , containers >= 0.5.6.2
                      , dlist >= 0.7.1.2
@@ -33,6 +34,7 @@ test-suite test_iec61499_convert
                      , hspec-core >= 2.1.10
                      , hxt >= 9.3.1.15
                      , megaparsec >= 4.1.1
+                     , semigroups >= 0.18
                      , transformers >= 0.4.2.0
   hs-source-dirs:      src,test
   ghc-options:         -Wall

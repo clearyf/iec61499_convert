@@ -67,14 +67,14 @@ toggleFunctionBlock =
                             { ecAlgorithmName = "TurnOn"
                             , ecAlgorithmComment = "Normally executed algorithm"
                             , ecAlgorithmStText = [ Assignment
-                                                        "Value"
+                                                        (SimpleLValue "Value")
                                                         [StBool True]]
                             }
                           , ECAlgorithm
                             { ecAlgorithmName = "TurnOff"
                             , ecAlgorithmComment = ""
                             , ecAlgorithmStText = [ Assignment
-                                                        "Value"
+                                                        (SimpleLValue "Value")
                                                         [StBool False]]
                             }]
         }
