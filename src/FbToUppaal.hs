@@ -19,6 +19,8 @@ import           ParseIec61499
         BasicFunctionBlock(..), ECAlgorithm(..), Width(..))
 import           ParseSt (Statement(..), Symbol(..))
 
+-- | Converts IEC61499 FunctionBlock to an UppaalModel
+-- If something goes wrong then an exception is thrown.
 fbToUppaalModel :: FunctionBlock -> UppaalModel
 fbToUppaalModel fb =
     UppaalModel
