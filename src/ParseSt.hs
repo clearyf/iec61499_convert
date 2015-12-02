@@ -18,6 +18,7 @@ data Statement
     | Declaration String IECVariable
     | If [Symbol] [Statement]
     | IfElse [Symbol] [Statement] [Statement]
+    | For String Int Int Int [Statement] -- Start End Step
     deriving (Show,Eq)
 
 data Symbol
@@ -48,13 +49,12 @@ semicolon = lexeme (char ';')
 
 parseVarDecls :: Parser [Statement]
 parseVarDecls =
-    symbol "VAR" *> semicolon *>
-    parseVarDecl `manyTill` (symbol "END_VAR" *> semicolon)
+    symbol "VAR" *> parseVarDecl `manyTill` (try (symbol "END_VAR" *> semicolon))
 
 parseVarDecl :: Parser Statement
 parseVarDecl =
-    Declaration <$> lexeme lexIdentifier <* symbol ":" <*>
-    (vartypeFromString <$> lexIdentifier) <* semicolon
+    Declaration <$> lexeme lexIdentifier <* symbol ":"
+                <*> fmap vartypeFromString lexIdentifier <* semicolon
 
 -- Empty statements (bare semicolons) are always possible, so return
 -- Nothing for them.  Use lookAhead to check for the colon, as if it's
@@ -63,7 +63,7 @@ parseVarDecl =
 statement :: MonadPlus m => Parser (m Statement)
 statement =
     (lookAhead semicolon *> pure mzero) <|>
-    (fmap pure (parseIf <|> assignment))
+    (fmap pure (parseFor <|> parseIf <|> assignment))
 
 parseIf :: Parser Statement
 parseIf =
@@ -79,6 +79,15 @@ parseIf =
     -- branch and not the false one.
     createIf a Nothing b = If a b
     createIf a (Just b) c = IfElse a b c
+
+-- FOR count := 0 TO 10 BY 1 DO lll := count; END_FOR;
+parseFor :: Parser Statement
+parseFor =
+    For <$> (symbol "FOR" *> lexIdentifier)
+        <*> (assignmentOp *> lexInt)
+        <*> (symbol "TO" *> lexInt)
+        <*> (symbol "BY" *> lexInt)
+        <*> (symbol "DO" *> statementsTill (symbol "END_FOR"))
 
 parseFunction :: Parser Symbol
 parseFunction = StFunc <$> lexIdentifier <*> parens parseArgs
@@ -124,6 +133,12 @@ operator :: Parser Symbol
 operator =
     let f x = theSymbol x (StOp x)
     in choice (fmap f ["+", "-", "*", "/", "=", "<", "<=", ">", ">="])
+
+lexInt :: Parser Int
+lexInt = fmap fromIntegral lexInteger
+
+lexInteger :: Parser Integer
+lexInteger = L.signed spaceConsumer (lexeme L.integer)
 
 lexNumber :: Parser (Either Integer Double)
 lexNumber = lexeme L.number

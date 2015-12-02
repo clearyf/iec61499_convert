@@ -257,6 +257,12 @@ anAlgorithm al = foldMap (<> "\n") (execWriter (runReaderT writeFunction 0))
         writeLine (convertVariableType theType <> " " <> name <> ";")
     writeStatement (Assignment lvalue rvalue) =
         writeLine (lvalue <> " = " <> showSymbols rvalue <> ";")
+    writeStatement (For name start end step body) = do
+        writeLine
+            ("for (int " <> name <> " = " <> show start <> "; " <>
+                   name <> " != " <> show end <> "; " <>
+                   name <> " = " <> name <> " + " <> show step <> ")")
+        writeBlock body
     writeStatement (If cond branch) = do
         writeLine ("if (" <> showSymbols cond <> ")")
         writeBlock branch

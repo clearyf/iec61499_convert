@@ -26,15 +26,22 @@ spec = do
                     [Assignment "Value" [StBool True], Assignment "i" [StInt 3]])
     it
         "Var declaration"
-        (do parseSt "VAR; llh : INT; llt : REAL; END_VAR; llh := 5;" `shouldBe`
+        (do parseSt "VAR llh : INT; llt : REAL; END_VAR; llh := 5;" `shouldBe`
                 Right
                     [ Declaration "llh" (IECInt Sixteen)
                     , Declaration "llt" IECReal
                     , Assignment "llh" [StInt 5]]
-            parseSt "VAR; blah : UDINT; END_VAR ; blah := 10;" `shouldBe`
+            parseSt "VAR blah : UDINT; END_VAR ; blah := 10;" `shouldBe`
                 Right
                     [ Declaration "blah" (IECUInt ThirtyTwo)
                     , Assignment "blah" [StInt 10]])
+    it
+        "FOR statements"
+        (do parseSt
+                "VAR a : INT; END_VAR; FOR blah := 0 TO 10 BY 1 DO a := blah; END_FOR;" `shouldBe`
+                Right
+                    [ Declaration "a" (IECInt Sixteen)
+                    , For "blah" 0 10 1 [Assignment "a" [StVar "blah"]]])
     it
         "IF statements"
         (do parseSt
