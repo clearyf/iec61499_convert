@@ -271,7 +271,8 @@ anAlgorithm al = foldMap (<> "\n") (execWriter (runReaderT writeFunction 0))
         writeLine
             ("for (int " <> name <> " = " <> show start <> "; " <>
                    name <> " != " <> show end <> "; " <>
-                   name <> " = " <> name <> " + " <> show step <> ")")
+                   name <> " = " <> name <> " + (" <>
+                   show (fromMaybe 1 step) <> "))")
         writeBlock body
     writeStatement (If cond branch) = do
         writeLine ("if (" <> showCond cond <> ")")

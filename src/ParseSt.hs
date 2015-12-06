@@ -22,7 +22,7 @@ data Statement
     | Declaration String IECVariable
     | If (NonEmpty Value) [Statement]
     | IfElse (NonEmpty Value) [Statement] [Statement]
-    | For String Int Int Int [Statement] -- Start End Step
+    | For String Int Int (Maybe Int) [Statement] -- Start End Step
     deriving (Show,Eq)
 
 data Value
@@ -156,7 +156,7 @@ parseFor =
     For <$> (symbol "FOR" *> lexIdentifier)
         <*> (assignmentOp *> lexInt)
         <*> (symbol "TO" *> lexInt)
-        <*> (symbol "BY" *> lexInt)
+        <*> optional (symbol "BY" *> lexInt)
         <*> (symbol "DO" *> statementsTill (symbol "END_FOR"))
 
 parseFunction :: Parser Value

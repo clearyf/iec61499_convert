@@ -56,7 +56,8 @@ spec = do
       parseSt "VAR blah : UDINT; END_VAR ; blah := 10;" `shouldBe` Right [ Declaration "blah" (IECUInt ThirtyTwo) , Assignment (SimpleLValue "blah") (StInt 10 :| [])]
       parseSt "VAR blah : INT[10,10,10]; END_VAR;" `shouldBe` Right [Declaration "blah" (IECArray (10 :| [10,10]) (IECInt Sixteen))]
   it "FOR statements" $ do
-      parseSt "VAR a : INT; END_VAR; FOR blah := 0 TO 10 BY 1 DO a := blah; END_FOR;" `shouldBe` Right [ Declaration "a" (IECInt Sixteen) , For "blah" 0 10 1 [Assignment (SimpleLValue "a") (StLValue (SimpleLValue "blah") :| [])]]
+    parseSt "VAR a : INT; END_VAR; FOR blah := 10 TO 0 BY -1 DO a := blah; END_FOR;" `shouldBe` Right [ Declaration "a" (IECInt Sixteen) , For "blah" 10 0 (Just (-1)) [Assignment (SimpleLValue "a") (StLValue (SimpleLValue "blah") :| [])]]
+    parseSt "FOR blah := 0 TO 10 DO a := blah; END_FOR;" `shouldBe` Right [ For "blah" 0 10 Nothing [Assignment (SimpleLValue "a") (StLValue (SimpleLValue "blah") :| [])]]
   it "IF statements" $ do
       parseSt "IF value = 1 THEN out := TRUE; ELSE IF value = 0 THEN out := FALSE; ELSE error := TRUE; END_IF; END_IF;" `shouldBe` Right [ IfElse (StLValue (SimpleLValue "value") :| [StOp "=", StInt 1] ) [Assignment (SimpleLValue "out") (StBool True :| [])] [ IfElse (StLValue (SimpleLValue "value") :| [StOp "=", StInt 0]) [Assignment (SimpleLValue "out") (StBool False :| [])] [Assignment (SimpleLValue "error") (StBool True :| [])]]]
   it "Functions" $ do
