@@ -1,7 +1,7 @@
 {-# LANGUAGE TupleSections #-}
 module ParseSt
-       (IECVariable(..), LValue(..), Statement(..), Value(..), Width(..),
-        parseSt, iECtypeFromString)
+       (CaseSubExpression(..), IECVariable(..), LValue(..), Statement(..),
+        Value(..), Width(..), parseSt, iECtypeFromString)
        where
 
 import           BasePrelude hiding (try)
@@ -25,9 +25,15 @@ data Statement
     | For String Int Int (Maybe Int) [Statement] -- Start End Step
     | While (NonEmpty Value) [Statement]
     | Repeat [Statement] (NonEmpty Value)
+    | Case (NonEmpty Value) [(NonEmpty CaseSubExpression, [Statement])] [Statement]
     | Break
     | Return
     deriving (Show,Eq)
+
+data CaseSubExpression
+  = CaseInt Int
+  | CaseRange Int Int
+  deriving (Show,Eq)
 
 data Value
     = StBool Bool
@@ -141,7 +147,7 @@ vartypeFromString str =
 statement :: MonadPlus m => Parser (m Statement)
 statement =
     (lookAhead semicolon *> pure mzero) <|>
-    fmap pure (parseFor <|> parseIf <|> parseWhile <|> try parseReturn <|> parseBreak <|> parseRepeat <|> assignment)
+    fmap pure (parseFor <|> parseCase <|> parseIf <|> parseWhile <|> try parseReturn <|> parseBreak <|> parseRepeat <|> assignment)
 
 parseIf :: Parser Statement
 parseIf =
@@ -176,6 +182,32 @@ parseRepeat :: Parser Statement
 parseRepeat =
   Repeat <$> (symbol "REPEAT" *> statementsTill (symbol "UNTIL"))
          <*> (expressionsTill (symbol "END_REPEAT"))
+
+parseCase :: Parser Statement
+parseCase =
+  Case <$> (symbol "CASE" *> expressionsTill (symbol "OF"))
+       <*> parseCaseExpression `manyTill` endNormalCaseStatements
+       <*> handleElse <* symbol "END_CASE"
+  where endNormalCaseStatements =
+          try (lookAhead (symbol "END_CASE")) <|> try (symbol "ELSE")
+        handleElse =
+          option mempty (statementsTill (try (lookAhead (symbol "END_CASE"))))
+
+parseCaseExpression :: Parser (NonEmpty CaseSubExpression, [Statement])
+parseCaseExpression =
+  (,) <$> parseCaseSubExpression
+      <*> statementsTill (try (lookAhead (symbol "END_CASE")) <|>
+                          try (lookAhead (symbol "ELSE")) <|>
+                          try (lookAhead lexInt *> pure []))
+
+parseCaseSubExpression :: Parser (NonEmpty CaseSubExpression)
+parseCaseSubExpression =
+  fmap NE.fromList ((parseCaseInt `sepBy1` symbol ",") <* symbol ":")
+
+parseCaseInt :: Parser CaseSubExpression
+parseCaseInt =
+  try (CaseRange <$> lexInt <*> (symbol "-" *> lexInt)) <|>
+  (CaseInt <$> lexInt)
 
 parseReturn :: Parser Statement
 parseReturn = const Return <$> symbol "RETURN"
@@ -220,7 +252,8 @@ identifier =
 
 keywords :: Set String
 keywords = Set.fromList ["IF", "THEN", "ELSE", "END_IF", "FOR", "END_FOR"
-                        ,"VAR", "END_VAR"]
+                        ,"VAR", "END_VAR", "CASE", "END_CASE", "WHILE",
+                         "END_WHILE", "REPEAT", "END_REPEAT", "EXIT", "RETURN"]
 
 theSymbol :: String -> a -> Parser a
 theSymbol sym result = symbol sym *> pure result

@@ -85,6 +85,16 @@ spec = do
       Right [Assignment
              (SimpleLValue "a")
              (StInt 1 :| [StOp "*", StSubValue (StInt 2 :| [StOp "+", StInt 3])])]
+  it "Case" $ do
+    parseSt "CASE a OF 1,2-3,4,5,6,7-10: a := 2; 11: a := 3; ELSE a := 4; END_CASE;" `shouldBe`
+      Right
+      [Case
+       (StLValue (SimpleLValue "a") :| [])
+       [(CaseInt 1 :| [CaseRange 2 3,CaseInt 4,CaseInt 5,CaseInt 6,CaseRange 7 10],
+         [Assignment (SimpleLValue "a") (StInt 2 :| [])])
+       ,(CaseInt 11 :| [],
+         [Assignment (SimpleLValue "a") (StInt 3 :| [])])]
+       [Assignment (SimpleLValue "a") (StInt 4 :| [])]]
   it "Functions" $ do
       parseSt "blah := max(2 - 32, abs(ao) * 3);" `shouldBe`
        Right
