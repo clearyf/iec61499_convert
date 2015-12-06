@@ -14,6 +14,8 @@ spec = do
   it "Simple Assigment" $ do
       parseSt "Value:=FALSE;" `shouldBe`
         Right [Assignment (SimpleLValue "Value") (StBool False :| [])]
+      parseSt "Value := 2 ** 3;" `shouldBe`
+        Right [Assignment (SimpleLValue "Value") (StInt 2 :| [StOp "**", StInt 3])]
       parseSt "Value := -303;" `shouldBe`
         Right [Assignment (SimpleLValue "Value") (StOp "-" :| [StInt 303])]
       parseSt "Value := -0.333;" `shouldBe`

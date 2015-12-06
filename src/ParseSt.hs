@@ -205,8 +205,9 @@ lexFalse = theSymbol "FALSE" (StBool False)
 
 operator :: Parser Value
 operator =
-    let f x = theSymbol x (StOp x)
-    in choice (fmap f ["+", "-", "*", "/", "=", "<", "<=", ">", ">="])
+    let f x = try (theSymbol x (StOp x))
+    in choice (fmap f ["+", "-", "**", "*", "/", "=", "<>", "<=", "<", ">=", ">"
+                      ,"NOT", "MOD", "&", "AND", "XOR", "OR"])
 
 lexInt :: Parser Int
 lexInt = fmap fromIntegral lexInteger
