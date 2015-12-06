@@ -36,6 +36,7 @@ data Value
     | StInt Integer
     | StFloat Double
     | StFunc String [NonEmpty Value]
+    | StSubValue (NonEmpty Value)
     deriving (Show,Eq)
 
 data LValue
@@ -191,6 +192,9 @@ parseArgs = expression `sepBy` comma
 brackets :: Parser a -> Parser a
 brackets = between (symbol "[") (symbol "]")
 
+parseSubValue :: Parser Value
+parseSubValue = StSubValue <$> parens expression
+
 parens :: Parser a -> Parser a
 parens = between (symbol "(") (symbol ")")
 
@@ -210,6 +214,7 @@ identifier =
         , number
         , try lexTrue
         , try lexFalse
+        , parseSubValue
         , try parseFunction
         , fmap StLValue lValue]
 

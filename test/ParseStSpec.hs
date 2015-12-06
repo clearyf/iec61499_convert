@@ -80,6 +80,11 @@ spec = do
               (StLValue (SimpleLValue "a") :| [StOp "+", StInt 1])]
              (StLValue (SimpleLValue "a") :|
               [StOp ">=", StInt 4])]
+  it "Parens" $ do
+    parseSt "a := 1 * (2 + 3);" `shouldBe`
+      Right [Assignment
+             (SimpleLValue "a")
+             (StInt 1 :| [StOp "*", StSubValue (StInt 2 :| [StOp "+", StInt 3])])]
   it "Functions" $ do
       parseSt "blah := max(2 - 32, abs(ao) * 3);" `shouldBe`
        Right
