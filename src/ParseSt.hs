@@ -238,7 +238,7 @@ spaceConsumer =
     L.space
         (spaceChar *> pure ())
         (L.skipLineComment "//")
-        (L.skipBlockComment "/*" "*/")
+        (L.skipBlockComment "(*" "*)")
 
 symbol :: String -> Parser String
 symbol = L.symbol spaceConsumer
