@@ -23,6 +23,10 @@ data Statement
     | If (NonEmpty Value) [Statement]
     | IfElse (NonEmpty Value) [Statement] [Statement]
     | For String Int Int (Maybe Int) [Statement] -- Start End Step
+    | While (NonEmpty Value) [Statement]
+    | Repeat [Statement] (NonEmpty Value)
+    | Break
+    | Return
     deriving (Show,Eq)
 
 data Value
@@ -68,6 +72,9 @@ stParser =
 
 statementsTill :: Parser end -> Parser [Statement]
 statementsTill end = fmap catMaybes (manyTill (statement <* semicolon) end)
+
+expressionsTill :: Parser end -> Parser (NonEmpty Value)
+expressionsTill end = fmap NE.fromList (lexeme identifier `someTill` try end)
 
 semicolon :: Parser Char
 semicolon = lexeme (char ';')
@@ -133,15 +140,15 @@ vartypeFromString str =
 statement :: MonadPlus m => Parser (m Statement)
 statement =
     (lookAhead semicolon *> pure mzero) <|>
-    fmap pure (parseFor <|> parseIf <|> assignment)
+    fmap pure (parseFor <|> parseIf <|> parseWhile <|> try parseReturn <|> parseBreak <|> parseRepeat <|> assignment)
 
 parseIf :: Parser Statement
 parseIf =
-    createIf <$> fmap NE.fromList parseIfToThen
+    createIf <$> parseIfToThen
              <*> optional (try parseFirstBranch)
              <*> parseLastBranch
   where
-    parseIfToThen = symbol "IF" *> (lexeme identifier `someTill` try (symbol "THEN"))
+    parseIfToThen = symbol "IF" *> (expressionsTill (symbol "THEN"))
     parseFirstBranch = statementsTill (symbol "ELSE")
     parseLastBranch = statementsTill (symbol "END_IF")
     -- If the first branch can't be parsed because there is no "ELSE"
@@ -158,6 +165,22 @@ parseFor =
         <*> (symbol "TO" *> lexInt)
         <*> optional (symbol "BY" *> lexInt)
         <*> (symbol "DO" *> statementsTill (symbol "END_FOR"))
+
+parseWhile :: Parser Statement
+parseWhile =
+  While <$> (symbol "WHILE" *> expressionsTill (symbol "DO"))
+        <*> (statementsTill (symbol "END_WHILE"))
+
+parseRepeat :: Parser Statement
+parseRepeat =
+  Repeat <$> (symbol "REPEAT" *> statementsTill (symbol "UNTIL"))
+         <*> (expressionsTill (symbol "END_REPEAT"))
+
+parseReturn :: Parser Statement
+parseReturn = const Return <$> symbol "RETURN"
+
+parseBreak :: Parser Statement
+parseBreak = const Break <$> symbol "EXIT"
 
 parseFunction :: Parser Value
 parseFunction = StFunc <$> lexIdentifier <*> parens parseArgs

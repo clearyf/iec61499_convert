@@ -60,6 +60,26 @@ spec = do
     parseSt "FOR blah := 0 TO 10 DO a := blah; END_FOR;" `shouldBe` Right [ For "blah" 0 10 Nothing [Assignment (SimpleLValue "a") (StLValue (SimpleLValue "blah") :| [])]]
   it "IF statements" $ do
       parseSt "IF value = 1 THEN out := TRUE; ELSE IF value = 0 THEN out := FALSE; ELSE error := TRUE; END_IF; END_IF;" `shouldBe` Right [ IfElse (StLValue (SimpleLValue "value") :| [StOp "=", StInt 1] ) [Assignment (SimpleLValue "out") (StBool True :| [])] [ IfElse (StLValue (SimpleLValue "value") :| [StOp "=", StInt 0]) [Assignment (SimpleLValue "out") (StBool False :| [])] [Assignment (SimpleLValue "error") (StBool True :| [])]]]
+  it "RETURN statement" $ do
+    parseSt "RETURN;" `shouldBe` Right [Return]
+  it "BREAK statement" $ do
+    parseSt "EXIT;" `shouldBe` Right [Break]
+  it "WHILE statements" $ do
+    parseSt "WHILE a < 4 DO a := a + 1; END_WHILE;" `shouldBe`
+      Right [While
+             (StLValue (SimpleLValue "a") :|
+              [StOp "<", StInt 4])
+             [Assignment
+              (SimpleLValue "a")
+              (StLValue (SimpleLValue "a") :| [StOp "+", StInt 1])]]
+  it "REPEAT statments" $ do
+    parseSt "REPEAT a := a + 1; UNTIL a >= 4 END_REPEAT;" `shouldBe`
+      Right [Repeat
+             [Assignment
+              (SimpleLValue "a")
+              (StLValue (SimpleLValue "a") :| [StOp "+", StInt 1])]
+             (StLValue (SimpleLValue "a") :|
+              [StOp ">=", StInt 4])]
   it "Functions" $ do
       parseSt "blah := max(2 - 32, abs(ao) * 3);" `shouldBe`
        Right
