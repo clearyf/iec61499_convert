@@ -2,9 +2,9 @@ module ParseGuard (Guard(..), GuardCondition(..), parseGuard) where
 
 import           BasePrelude hiding (try)
 import           Data.Set (Set)
-import           Text.Megaparsec
-       (ParseError, between, char, choice, digitChar, letterChar, option,
-        parse, space, try)
+import Text.Megaparsec
+       (ParseError, between, char, choice, digitChar, letterChar, parse,
+        space, try)
 import qualified Text.Megaparsec.Lexer as L
 import           Text.Megaparsec.String (Parser)
 
@@ -30,7 +30,7 @@ parseGuard events str = parse (doParseGuard events) str str
 
 doParseGuard :: Set String -> Parser Guard
 doParseGuard events =
-    Guard <$> option mzero (try (parseEvent events))
+    Guard <$> optional (try (parseEvent events))
           <*> fmap stripLeadingAnd parseCondition
 
 stripLeadingAnd :: (MonadPlus m) => GuardCondition -> m GuardCondition
@@ -38,11 +38,11 @@ stripLeadingAnd (GuardSubCondition (GuardAnd:xs)) = pure (GuardSubCondition xs)
 stripLeadingAnd (GuardSubCondition []) = mzero
 stripLeadingAnd x = pure x
 
-parseEvent :: Applicative f => Set String -> Parser (f String)
+parseEvent :: Set String -> Parser String
 parseEvent events = do
     word <- identifier
     guard (word `elem` events)
-    pure (pure word)
+    pure word
 
 parens ::Parser a -> Parser a
 parens = between (symbol "(") (symbol ")")

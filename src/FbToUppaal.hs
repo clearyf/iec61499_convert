@@ -99,10 +99,14 @@ locationStartPrefix :: ECState -> String
 locationStartPrefix state = "__start_" <> ecStateName state
 
 locationEventPrefix :: ECState -> ECAction -> String
-locationEventPrefix state action =
-    "__action_" <> ecStateName state <> "__" <> ecActionOutput action <> "_" <>
-    ecActionAlgorithm action <>
-    "_"
+locationEventPrefix state action = fold ["__action_"
+                                        ,(ecStateName state)
+                                        ,"__"
+                                        ,(ecActionOutput action)
+                                        ,"_"
+                                        ,(ecActionAlgorithm action)
+                                        ,"_"
+                                        ]
 
 locations :: FunctionBlock -> [Location]
 locations fb = doFold states

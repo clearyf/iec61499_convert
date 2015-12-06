@@ -86,8 +86,8 @@ parseVarDecl =
 
 parseVarType :: Parser IECVariable
 parseVarType = f <$> lexeme lexIdentifier
-                 <*> option mzero (brackets parseIndices)
-  where parseIndices = fmap (pure . NE.fromList) (lexInt `sepBy1` comma)
+                 <*> optional (brackets parseIndices)
+  where parseIndices = fmap NE.fromList (lexInt `sepBy1` comma)
         f name Nothing = vartypeFromString name
         f name (Just indices) = IECArray indices (vartypeFromString name)
 
@@ -138,7 +138,7 @@ statement =
 parseIf :: Parser Statement
 parseIf =
     createIf <$> fmap NE.fromList parseIfToThen
-             <*> option mzero (fmap pure (try parseFirstBranch))
+             <*> optional (try parseFirstBranch)
              <*> parseLastBranch
   where
     parseIfToThen = symbol "IF" *> (lexeme identifier `someTill` try (symbol "THEN"))
@@ -191,7 +191,8 @@ identifier =
         , fmap StLValue lValue]
 
 keywords :: Set String
-keywords = Set.fromList ["IF", "THEN", "ELSE", "END_IF"]
+keywords = Set.fromList ["IF", "THEN", "ELSE", "END_IF", "FOR", "END_FOR"
+                        ,"VAR", "END_VAR"]
 
 theSymbol :: String -> a -> Parser a
 theSymbol sym result = symbol sym *> pure result
@@ -227,7 +228,7 @@ lexIdentifier = do
     pure word
 
 lValue :: Parser LValue
-lValue = f <$> lexIdentifier <*> option mzero (fmap pure (brackets expression))
+lValue = f <$> lexIdentifier <*> optional (brackets expression)
   where
     f name Nothing = SimpleLValue name
     f name (Just s) = ArrayLValue name s
