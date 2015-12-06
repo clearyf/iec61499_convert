@@ -1,6 +1,6 @@
 {-# LANGUAGE TupleSections #-}
 module ParseSt
-       (IECVariable(..), LValue(..), Statement(..), Symbol(..), Width(..),
+       (IECVariable(..), LValue(..), Statement(..), Value(..), Width(..),
         parseSt, iECtypeFromString)
        where
 
@@ -18,25 +18,25 @@ import qualified Text.Megaparsec.Lexer as L
 import           Text.Megaparsec.String (Parser)
 
 data Statement
-    = Assignment LValue [Symbol]
+    = Assignment LValue (NonEmpty Value)
     | Declaration String IECVariable
-    | If [Symbol] [Statement]
-    | IfElse [Symbol] [Statement] [Statement]
+    | If (NonEmpty Value) [Statement]
+    | IfElse (NonEmpty Value) [Statement] [Statement]
     | For String Int Int Int [Statement] -- Start End Step
     deriving (Show,Eq)
 
-data Symbol
+data Value
     = StBool Bool
     | StOp String
     | StLValue LValue
     | StInt Integer
     | StFloat Double
-    | StFunc String [[Symbol]]
+    | StFunc String [NonEmpty Value]
     deriving (Show,Eq)
 
 data LValue
     = SimpleLValue String
-    | ArrayLValue String [Symbol]
+    | ArrayLValue String (NonEmpty Value)
     deriving (Show,Eq)
 
 data Width
@@ -64,7 +64,7 @@ mappendA = liftA2 (<>)
 stParser :: Parser [Statement]
 stParser =
     spaceConsumer *>
-    ((option mempty (try parseVarDecls)) `mappendA` statementsTill eof)
+    option mempty (try parseVarDecls) `mappendA` statementsTill eof
 
 statementsTill :: Parser end -> Parser [Statement]
 statementsTill end = fmap catMaybes (manyTill (statement <* semicolon) end)
@@ -77,7 +77,7 @@ comma = lexeme (char ',')
 
 parseVarDecls :: Parser [Statement]
 parseVarDecls =
-    symbol "VAR" *> parseVarDecl `manyTill` (try (symbol "END_VAR" *> semicolon))
+    symbol "VAR" *> parseVarDecl `manyTill` try (symbol "END_VAR" *> semicolon)
 
 parseVarDecl :: Parser Statement
 parseVarDecl =
@@ -96,7 +96,7 @@ iECtypeFromString str = parse parseVarType str str
 
 vartypeFromString :: String -> IECVariable
 vartypeFromString str =
-    maybe (error "Unhandled IEC variable type!") id (lookup lowerCased alist)
+    fromMaybe (error "Unhandled IEC variable type!") (lookup lowerCased alist)
   where
     lowerCased = fmap toLower str
     alist =
@@ -123,8 +123,8 @@ vartypeFromString str =
         ,
           -- Various other types
           ("time", IECTime)
-        , ("date_and_time", (error "Can't handle DATE_AND_TIME type!"))
-        , ("time_of_day", (error "Can't handle TIME_OF_DAY type!"))]
+        , ("date_and_time", error "Can't handle DATE_AND_TIME type!")
+        , ("time_of_day", error "Can't handle TIME_OF_DAY type!")]
 
 -- Empty statements (bare semicolons) are always possible, so return
 -- Nothing for them.  Use lookAhead to check for the colon, as if it's
@@ -133,11 +133,11 @@ vartypeFromString str =
 statement :: MonadPlus m => Parser (m Statement)
 statement =
     (lookAhead semicolon *> pure mzero) <|>
-    (fmap pure (parseFor <|> parseIf <|> assignment))
+    fmap pure (parseFor <|> parseIf <|> assignment)
 
 parseIf :: Parser Statement
 parseIf =
-    createIf <$> parseIfToThen
+    createIf <$> fmap NE.fromList parseIfToThen
              <*> option mzero (fmap pure (try parseFirstBranch))
              <*> parseLastBranch
   where
@@ -159,10 +159,10 @@ parseFor =
         <*> (symbol "BY" *> lexInt)
         <*> (symbol "DO" *> statementsTill (symbol "END_FOR"))
 
-parseFunction :: Parser Symbol
+parseFunction :: Parser Value
 parseFunction = StFunc <$> lexIdentifier <*> parens parseArgs
 
-parseArgs :: Parser [[Symbol]]
+parseArgs :: Parser [NonEmpty Value]
 parseArgs = expression `sepBy` comma
 
 brackets :: Parser a -> Parser a
@@ -177,10 +177,10 @@ assignment = Assignment <$> lValue <* assignmentOp <*> expression
 assignmentOp :: Parser String
 assignmentOp = lexeme (string ":=")
 
-expression :: Parser [Symbol]
-expression = lexeme (some identifier)
+expression :: Parser (NonEmpty Value)
+expression = fmap NE.fromList (lexeme (some identifier))
 
-identifier :: Parser Symbol
+identifier :: Parser Value
 identifier =
     choice
         [ operator
@@ -196,13 +196,13 @@ keywords = Set.fromList ["IF", "THEN", "ELSE", "END_IF"]
 theSymbol :: String -> a -> Parser a
 theSymbol sym result = symbol sym *> pure result
 
-lexTrue :: Parser Symbol
+lexTrue :: Parser Value
 lexTrue = theSymbol "TRUE" (StBool True)
 
-lexFalse :: Parser Symbol
+lexFalse :: Parser Value
 lexFalse = theSymbol "FALSE" (StBool False)
 
-operator :: Parser Symbol
+operator :: Parser Value
 operator =
     let f x = theSymbol x (StOp x)
     in choice (fmap f ["+", "-", "*", "/", "=", "<", "<=", ">", ">="])
@@ -216,7 +216,7 @@ lexInteger = L.signed spaceConsumer (lexeme L.integer)
 lexNumber :: Parser (Either Integer Double)
 lexNumber = lexeme L.number
 
-number :: Parser Symbol
+number :: Parser Value
 number = fmap (either StInt StFloat) lexNumber
 
 lexIdentifier :: Parser String

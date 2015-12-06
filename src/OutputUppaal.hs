@@ -97,7 +97,7 @@ createGlobalDecl um =
         (<> ";\n")
         (inputChannels um <> outputChannels um <> inputParameters um <>
          outputParameters um) <>
-    mconcat (modelDeclarations um)
+    fold (modelDeclarations um)
 
 -- The global declarations consist of the input/output events and
 -- input/output values.

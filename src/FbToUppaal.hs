@@ -19,7 +19,7 @@ import           ParseIec61499
         InterfaceList(..), Event(..), Variable(..), ECAction(..),
         BasicFunctionBlock(..), ECAlgorithm(..))
 import           ParseSt
-       (LValue(..), Statement(..), Symbol(..), IECVariable(..), Width(..))
+       (LValue(..), Statement(..), Value(..), IECVariable(..), Width(..))
 
 -- | Converts IEC61499 FunctionBlock to an UppaalModel
 -- If something goes wrong then an exception is thrown.
@@ -67,7 +67,7 @@ showVarType (IECInt Eight) = (intWithRange ((-2::Integer)^(7::Integer)) ((2::Int
 showVarType (IECInt Sixteen) = (intWithRange ((-2::Integer)^(15::Integer)) ((2::Integer)^(15::Integer)-1),mempty)
 showVarType (IECInt ThirtyTwo) = (intWithRange ((-2::Integer)^(31::Integer)) ((2::Integer)^(31::Integer)-1),mempty)
 showVarType (IECInt SixtyFour) = (intWithRange ((-2::Integer)^(63::Integer)) ((2::Integer)^(63::Integer)-1),mempty)
-showVarType (IECArray idxs var) = (fst (showVarType var), "[" <> (foldMap id (NE.intersperse "," (fmap show idxs))) <> "]")
+showVarType (IECArray idxs var) = (fst (showVarType var), "[" <> foldMap id (NE.intersperse "," (fmap show idxs)) <> "]")
 showVarType t = error ("Uppaal doesn't support " <> show t <> " type!")
 
 intWithRange :: Integer -> Integer -> String
@@ -262,7 +262,7 @@ anAlgorithm al = foldMap (<> "\n") (execWriter (runReaderT writeFunction 0))
         writeLine (typeOut <> " " <> name <> suffix <> ";")
         where (typeOut, suffix) = showVarType typeIn
     writeStatement (Assignment lvalue rvalue) =
-        writeLine (showLocation lvalue <> " = " <> showSymbols rvalue <> ";")
+        writeLine (showLocation lvalue <> " = " <> showCond rvalue <> ";")
     writeStatement (For name start end step body) = do
         writeLine
             ("for (int " <> name <> " = " <> show start <> "; " <>
@@ -270,21 +270,21 @@ anAlgorithm al = foldMap (<> "\n") (execWriter (runReaderT writeFunction 0))
                    name <> " = " <> name <> " + " <> show step <> ")")
         writeBlock body
     writeStatement (If cond branch) = do
-        writeLine ("if (" <> showSymbols cond <> ")")
+        writeLine ("if (" <> showCond cond <> ")")
         writeBlock branch
     writeStatement (IfElse cond branch1 branch2) = do
-        writeLine ("if (" <> showSymbols cond <> ")")
+        writeLine ("if (" <> showCond cond <> ")")
         writeBlock branch1
         writeLine "else"
         writeBlock branch2
-    showSymbols = mconcat . intersperse " " . fmap showSymbol
-    showArgs = mconcat . intersperse ", " . fmap showSymbols
-    showSymbol (StBool True) = "true"
-    showSymbol (StBool False) = "false"
-    showSymbol (StInt i) = show i
-    showSymbol (StOp op) = op
-    showSymbol (StLValue v) = showLocation v
-    showSymbol (StFloat i) = show i -- TODO Uppaal can’t handle floats!
-    showSymbol (StFunc name args) = name <> "(" <> showArgs args <> ")"
+    showCond = fold . NE.intersperse " " . fmap showValue
+    showArgs = fold . intersperse ", " . fmap showCond
+    showValue (StBool True) = "true"
+    showValue (StBool False) = "false"
+    showValue (StInt i) = show i
+    showValue (StOp op) = op
+    showValue (StLValue v) = showLocation v
+    showValue (StFloat i) = show i -- TODO Uppaal can’t handle floats!
+    showValue (StFunc name args) = name <> "(" <> showArgs args <> ")"
     showLocation (SimpleLValue name) = name
-    showLocation (ArrayLValue name idx) = name <> showSymbols idx
+    showLocation (ArrayLValue name idx) = name <> showCond idx

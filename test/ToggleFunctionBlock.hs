@@ -1,6 +1,7 @@
 module ToggleFunctionBlock where
 
 import BasePrelude
+import Data.List.NonEmpty (NonEmpty(..))
 import ParseIec61499
 import ParseSt
 
@@ -68,14 +69,14 @@ toggleFunctionBlock =
                             , ecAlgorithmComment = "Normally executed algorithm"
                             , ecAlgorithmStText = [ Assignment
                                                         (SimpleLValue "Value")
-                                                        [StBool True]]
+                                                        (StBool True :| [])]
                             }
                           , ECAlgorithm
                             { ecAlgorithmName = "TurnOff"
                             , ecAlgorithmComment = ""
                             , ecAlgorithmStText = [ Assignment
                                                         (SimpleLValue "Value")
-                                                        [StBool False]]
+                                                        (StBool False :| [])]
                             }]
         }
       }]
