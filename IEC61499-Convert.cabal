@@ -22,6 +22,11 @@ executable iec61499_convert
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N -Wall
   default-extensions:  NoImplicitPrelude OverloadedStrings
   default-language:    Haskell2010
+  other-modules:       FbToUppaal
+                     , OutputUppaal
+                     , ParseGuard
+                     , ParseIec61499
+                     , ParseSt
 
 test-suite test_iec61499_convert
   type:                exitcode-stdio-1.0
@@ -40,3 +45,16 @@ test-suite test_iec61499_convert
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N -Wall
   default-extensions:  NoImplicitPrelude OverloadedStrings
   default-language:    Haskell2010
+  other-modules:       Demux8
+                     , FbToUppaal
+                     , FbToUppaalSpec
+                     , OutputModelSpec
+                     , OutputUppaal
+                     , ParseGuard
+                     , ParseGuardSpec
+                     , ParseIec61499
+                     , ParseIec61499Spec
+                     , ParseSt
+                     , ParseStSpec
+                     , ToggleFunctionBlock
+                     , UppaalModel
