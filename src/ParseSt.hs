@@ -11,7 +11,7 @@ import qualified Data.List.NonEmpty as NE
 import           Data.Set (Set)
 import qualified Data.Set as Set
 import           Text.Megaparsec
-       (ParseError, ParsecT, between, char, choice, digitChar, eof,
+       (ParseError, ParsecT, (<?>), between, char, choice, digitChar, eof,
         letterChar, lookAhead, manyTill, option, parse, sepBy, sepBy1,
         someTill, spaceChar, string, try)
 import qualified Text.Megaparsec.Lexer as L
@@ -97,10 +97,12 @@ parseVarDecl :: Parser Statement
 parseVarDecl =
     Declaration <$> lexeme lexIdentifier <* symbol ":"
                 <*> parseVarType <* semicolon
+                <?> "variable declaration"
 
 parseVarType :: Parser IECVariable
 parseVarType = f <$> lexeme lexIdentifier
                  <*> optional (brackets parseIndices)
+                 <?> "variable type"
   where parseIndices = fmap NE.fromList (lexInt `sepBy1` comma)
         f name Nothing = vartypeFromString name
         f name (Just indices) = IECArray indices (vartypeFromString name)
@@ -286,7 +288,7 @@ lexIdentifier :: Parser String
 lexIdentifier = do
     word <- lexeme ((:) <$> letterChar
                         <*> many (letterChar <|> digitChar <|> char '_'))
-    guard (word `notElem` keywords)
+    guard (word `notElem` keywords) <?> "non-keyword"
     pure word
 
 lValue :: Parser LValue
