@@ -26,6 +26,11 @@ spec = do
         Right
         [ Assignment (SimpleLValue "Value") (StBool True :| [])
         , Assignment (SimpleLValue "i") (StInt 3 :| [])]
+  it "Time" $ do
+    parseSt "a := t#11h22m30s435ms;" `shouldBe`
+      Right [Assignment
+            (SimpleLValue "a")
+            (StTime 40950435 :| [])]
   it "Arrays" $ do
       parseSt "value[i + 1] := 20 + i;" `shouldBe`
         Right [ Assignment

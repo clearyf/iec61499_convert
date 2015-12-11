@@ -12,8 +12,8 @@ import           Data.Set (Set)
 import qualified Data.Set as Set
 import           Text.Megaparsec
        (ParseError, ParsecT, (<?>), between, char, choice, digitChar, eof,
-        letterChar, lookAhead, manyTill, option, parse, sepBy, sepBy1,
-        someTill, spaceChar, string, try)
+        letterChar, lookAhead, manyTill, noneOf, option, parse, satisfy,
+        sepBy, sepBy1, someTill, spaceChar, string, try)
 import qualified Text.Megaparsec.Lexer as L
 import           Text.Megaparsec.String (Parser)
 
@@ -41,6 +41,7 @@ data Value
     | StLValue LValue
     | StInt Integer
     | StFloat Double
+    | StTime Integer
     | StFunc String [NonEmpty Value]
     | StSubValue (NonEmpty Value)
     deriving (Show,Eq)
@@ -249,6 +250,7 @@ identifier =
         , try lexTrue
         , try lexFalse
         , parseSubValue
+        , parseTime
         , try parseFunction
         , fmap StLValue lValue]
 
@@ -259,6 +261,26 @@ keywords = Set.fromList ["IF", "THEN", "ELSE", "END_IF", "FOR", "END_FOR"
 
 theSymbol :: String -> a -> Parser a
 theSymbol sym result = symbol sym *> pure result
+
+parseTime :: Parser Value
+parseTime = lexeme (symbol "t#" *> (try parseShortTime <|> parseLongTime))
+
+parseLongTime :: Parser Value
+parseLongTime = StTime . sum <$> parseStuff `someTill` lookAhead notDigit
+  where
+    units = [("h", (60 * 60 * 1000)),("ms", 1),("s", 1000),("m", 60 * 1000)]
+    parseUnits = choice (fmap (try . string . fst) units)
+                 -- fromJust is completely safe here, s must be one of
+                 -- the strings that was in units.
+    calcTime n s = n * (fromJust (lookup s units))
+    parseStuff = calcTime <$> justAnInteger <*> parseUnits
+    notDigit = satisfy (not . isDigit) <?> "non digit"
+
+parseShortTime :: Parser Value
+parseShortTime = StTime <$> justAnInteger <* lookAhead (noneOf "hms")
+
+justAnInteger :: Parser Integer
+justAnInteger = L.integer
 
 lexTrue :: Parser Value
 lexTrue = theSymbol "TRUE" (StBool True)
