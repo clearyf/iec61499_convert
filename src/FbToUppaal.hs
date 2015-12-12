@@ -19,7 +19,8 @@ import           ParseIec61499
         InterfaceList(..), Event(..), Variable(..), ECAction(..),
         BasicFunctionBlock(..), ECAlgorithm(..))
 import           ParseSt
-       (LValue(..), Statement(..), Value(..), IECVariable(..), Width(..))
+       (LValue(..), Statement(..), Value(..), IECVariable(..), Width(..),
+        CaseSubExpression(..))
 
 -- | Converts IEC61499 FunctionBlock to an UppaalModel
 -- If something goes wrong then an exception is thrown.
@@ -247,45 +248,79 @@ getDestId s (StateMap m)
       in i
 
 anAlgorithm :: ECAlgorithm -> String
-anAlgorithm al = foldMap (<> "\n") (execWriter (runReaderT writeFunction 0))
+anAlgorithm al = fold (execWriter (runReaderT writeFunction 0))
   where
     -- The writer monad uses a DList so writeLine runs in constant
     -- time; the 'foldMap (<>"\n)' simultaneously adds the newlines
     -- and flattens the lists into one string.
     writeLine l = do
-        n <- ask
-        lift (tell (DList.singleton (replicate n '\t' <> l)))
+      n <- ask
+      lift (tell (DList.singleton (replicate n '\t' <> l <> "\n")))
     writeFunction = do
-        writeLine ("void " <> ecAlgorithmName al <> "()")
-        writeBlock (ecAlgorithmStText al)
+      writeLine ("void " <> ecAlgorithmName al <> "()")
+      writeBlock (ecAlgorithmStText al)
+    increaseIndent =
+      withReaderT (1 +)
     writeBlock statements = do
-        writeLine "{"
-        withReaderT (1 +) (traverse_ writeStatement statements)
-        writeLine "}"
+      writeLine "{"
+      increaseIndent (traverse_ writeStatement statements)
+      writeLine "}"
     writeStatement (Declaration name typeIn) =
-        writeLine (typeOut <> " " <> name <> suffix <> ";")
-        where (typeOut, suffix) = showVarType typeIn
+      writeLine (typeOut <> " " <> name <> suffix <> ";")
+      where (typeOut, suffix) = showVarType typeIn
     writeStatement (Assignment lvalue rvalue) =
-        writeLine (showLocation lvalue <> " = " <> showCond rvalue <> ";")
+      writeLine (showLocation lvalue <> " = " <> showCond rvalue <> ";")
     writeStatement (For name start end step body) = do
-        writeLine
-            ("for (int " <> name <> " = " <> show start <> "; " <>
-                   name <> " != " <> show end <> "; " <>
-                   name <> " = " <> name <> " + (" <>
-                   show (fromMaybe 1 step) <> "))")
-        writeBlock body
+      writeLine
+        ("for (int " <> name <> " = " <> show start <> "; " <>
+         name <> " != " <> show end <> "; " <>
+         name <> " = " <> name <> " + (" <>
+         show (fromMaybe 1 step) <> "))")
+      writeBlock body
+    writeStatement (While cond body) = do
+      writeLine ("while (" <> showCond cond <> ")")
+      writeBlock body
+    writeStatement (Repeat body cond) = do
+      writeLine "do"
+      writeBlock body
+      writeLine ("while (" <> showCond cond <> ")")
+    writeStatement (Case var branches defaultBranch) = do
+      writeLine ("case (" <> showCond var <> ")")
+      writeLine "{"
+      traverse_ writeBranch branches
+      writeDefaultBranch
+      writeLine "}"
+      where
+        writeCase i = writeLine (i <> ":")
+        writeCases = traverse_ (writeCase . show)
+        writeCaseExp (CaseInt i) = writeCase (show i)
+        writeCaseExp (CaseRange from to)
+          | from <= to = writeCases (enumFromTo from to)
+          | otherwise = writeCases (enumFromThenTo from (from-1) to)
+        writeBranch (cases, body) = do
+          traverse_ writeCaseExp cases
+          increaseIndent $ do traverse_ writeStatement body
+                              writeStatement Break
+        writeDefaultBranch = do
+          writeCase "default"
+          increaseIndent $ do traverse_ writeStatement defaultBranch
+                              writeStatement Break
     writeStatement (If cond branch) = do
-        writeLine ("if (" <> showCond cond <> ")")
-        writeBlock branch
+      writeLine ("if (" <> showCond cond <> ")")
+      writeBlock branch
     writeStatement (IfElse cond branch1 branch2) = do
-        writeLine ("if (" <> showCond cond <> ")")
-        writeBlock branch1
-        writeLine "else"
-        writeBlock branch2
+      writeLine ("if (" <> showCond cond <> ")")
+      writeBlock branch1
+      writeLine "else"
+      writeBlock branch2
+    writeStatement Break = writeLine "break;"
+    writeStatement Return = writeLine "return;"
     showCond = fold . NE.intersperse " " . fmap showValue
     showArgs = fold . intersperse ", " . fmap showCond
+    showValue (StSubValue values) = "(" <> showCond values <> ")"
     showValue (StBool True) = "true"
     showValue (StBool False) = "false"
+    showValue (StTime t) = show t
     showValue (StInt i) = show i
     showValue (StOp op) = op
     showValue (StLValue v) = showLocation v
