@@ -269,7 +269,7 @@ anAlgorithm al = fold (execWriter (runReaderT writeFunction 0))
       writeLine (typeOut <> " " <> name <> suffix <> ";")
       where (typeOut, suffix) = showVarType typeIn
     writeStatement (Assignment lvalue rvalue) =
-      writeLine (showLocation lvalue <> " = " <> showCond rvalue <> ";")
+      writeLine (showLocation lvalue <> " = " <> showValue rvalue <> ";")
     writeStatement (For name start end step body) = do
       writeLine
         ("for (int " <> name <> " = " <> show start <> "; " <>
@@ -278,14 +278,14 @@ anAlgorithm al = fold (execWriter (runReaderT writeFunction 0))
          show (fromMaybe 1 step) <> "))")
       writeBlock body
     writeStatement (While cond body) = do
-      writeLine ("while (" <> showCond cond <> ")")
+      writeLine ("while (" <> showValue cond <> ")")
       writeBlock body
     writeStatement (Repeat body cond) = do
       writeLine "do"
       writeBlock body
-      writeLine ("while (" <> showCond cond <> ")")
+      writeLine ("while (" <> showValue cond <> ")")
     writeStatement (Case var branches defaultBranch) = do
-      writeLine ("case (" <> showCond var <> ")")
+      writeLine ("case (" <> showValue var <> ")")
       writeLine "{"
       traverse_ writeBranch branches
       writeDefaultBranch
@@ -306,25 +306,28 @@ anAlgorithm al = fold (execWriter (runReaderT writeFunction 0))
           increaseIndent $ do traverse_ writeStatement defaultBranch
                               writeStatement Break
     writeStatement (If cond branch) = do
-      writeLine ("if (" <> showCond cond <> ")")
+      writeLine ("if (" <> showValue cond <> ")")
       writeBlock branch
     writeStatement (IfElse cond branch1 branch2) = do
-      writeLine ("if (" <> showCond cond <> ")")
+      writeLine ("if (" <> showValue cond <> ")")
       writeBlock branch1
       writeLine "else"
       writeBlock branch2
     writeStatement Break = writeLine "break;"
     writeStatement Return = writeLine "return;"
-    showCond = fold . NE.intersperse " " . fmap showValue
-    showArgs = fold . intersperse ", " . fmap showCond
-    showValue (StSubValue values) = "(" <> showCond values <> ")"
+    showArgs = fold . intersperse ", " . fmap showValue
+    showValue (StSubValue values) = "(" <> showValue values <> ")"
     showValue (StBool True) = "true"
     showValue (StBool False) = "false"
+    showValue (StAddition a b) = showBinaryValue a " + " b
+    showValue (StSubtract a b) = showBinaryValue a " - " b
+    showValue (StMultiply a b) = showBinaryValue a " * " b
+    showValue (StDivide a b) = showBinaryValue a " / " b
     showValue (StTime t) = show t
     showValue (StInt i) = show i
-    showValue (StOp op) = op
     showValue (StLValue v) = showLocation v
     showValue (StFloat i) = show i -- TODO Uppaal can’t handle floats!
     showValue (StFunc name args) = name <> "(" <> showArgs args <> ")"
+    showBinaryValue a op b = showValue a <> op <> showValue b
     showLocation (SimpleLValue name) = name
-    showLocation (ArrayLValue name idx) = name <> showCond idx
+    showLocation (ArrayLValue name idx) = name <> showValue idx

@@ -1,7 +1,6 @@
 module Demux8 where
 
 import BasePrelude
-import Data.List.NonEmpty (NonEmpty(..))
 import ParseIec61499
 import ParseSt
 
@@ -100,86 +99,7 @@ demux8Block =
         , bfbAlgorithms = [ ECAlgorithm
                             { ecAlgorithmName = "REQ"
                             , ecAlgorithmComment = "Normally executed algorithm"
-                            , ecAlgorithmStText = [ IfElse
-                                                        (StLValue (SimpleLValue"inValue") :|
-                                                         [ StOp "="
-                                                         , StInt 1])
-                                                        [ Assignment
-                                                              (SimpleLValue "outValue1")
-                                                              (StBool True :| [])]
-                                                        [ Assignment
-                                                              (SimpleLValue "outValue1")
-                                                              (StBool False :| [])]
-                                                  , IfElse
-                                                        (StLValue (SimpleLValue "inValue") :|
-                                                         [ StOp "="
-                                                         , StInt 2])
-                                                        [ Assignment
-                                                              (SimpleLValue "outValue2")
-                                                              (StBool True :| [])]
-                                                        [ Assignment
-                                                              (SimpleLValue "outValue2")
-                                                              (StBool False :| [])]
-                                                  , IfElse
-                                                        (StLValue (SimpleLValue "inValue") :|
-                                                         [ StOp "="
-                                                         , StInt 3])
-                                                        [ Assignment
-                                                              (SimpleLValue "outValue3")
-                                                              (StBool True :| [])]
-                                                        [ Assignment
-                                                              (SimpleLValue "outValue3")
-                                                              (StBool False :| [])]
-                                                  , IfElse
-                                                        (StLValue (SimpleLValue "inValue") :|
-                                                         [ StOp "="
-                                                         , StInt 4])
-                                                        [ Assignment
-                                                              (SimpleLValue "outValue4")
-                                                              (StBool True :| [])]
-                                                        [ Assignment
-                                                              (SimpleLValue "outValue4")
-                                                              (StBool False :| [])]
-                                                  , IfElse
-                                                        (StLValue (SimpleLValue "inValue") :|
-                                                         [ StOp "="
-                                                         , StInt 5])
-                                                        [ Assignment
-                                                              (SimpleLValue "outValue5")
-                                                              (StBool True :| [])]
-                                                        [ Assignment
-                                                              (SimpleLValue "outValue5")
-                                                              (StBool False :| [])]
-                                                  , IfElse
-                                                        (StLValue (SimpleLValue "inValue") :|
-                                                         [ StOp "="
-                                                         , StInt 6])
-                                                        [ Assignment
-                                                              (SimpleLValue "outValue6")
-                                                              (StBool True :| [])]
-                                                        [ Assignment
-                                                              (SimpleLValue "outValue6")
-                                                              (StBool False :| [])]
-                                                  , IfElse
-                                                        (StLValue (SimpleLValue "inValue") :|
-                                                         [ StOp "="
-                                                         , StInt 7])
-                                                        [ Assignment
-                                                              (SimpleLValue "outValue7")
-                                                              (StBool True :| [])]
-                                                        [ Assignment
-                                                              (SimpleLValue "outValue7")
-                                                              (StBool False :| [])]
-                                                  , IfElse
-                                                        (StLValue (SimpleLValue "inValue") :|
-                                                         [ StOp "="
-                                                         , StInt 8])
-                                                        [ Assignment
-                                                              (SimpleLValue "outValue8")
-                                                              (StBool True :| [])]
-                                                        [ Assignment
-                                                              (SimpleLValue "outValue8")
-                                                              (StBool False :| [])]]
-                            }]
-        }
-      }]
+                            , ecAlgorithmStText = theAlgorithm}]}}]
+
+theAlgorithm :: [Statement]
+theAlgorithm = [IfElse (StEquals (StLValue (SimpleLValue "inValue")) (StInt 1)) [Assignment (SimpleLValue "outValue1") (StBool True)] [Assignment (SimpleLValue "outValue1") (StBool False)],IfElse (StEquals (StLValue (SimpleLValue "inValue")) (StInt 2)) [Assignment (SimpleLValue "outValue2") (StBool True)] [Assignment (SimpleLValue "outValue2") (StBool False)],IfElse (StEquals (StLValue (SimpleLValue "inValue")) (StInt 3)) [Assignment (SimpleLValue "outValue3") (StBool True)] [Assignment (SimpleLValue "outValue3") (StBool False)],IfElse (StEquals (StLValue (SimpleLValue "inValue")) (StInt 4)) [Assignment (SimpleLValue "outValue4") (StBool True)] [Assignment (SimpleLValue "outValue4") (StBool False)],IfElse (StEquals (StLValue (SimpleLValue "inValue")) (StInt 5)) [Assignment (SimpleLValue "outValue5") (StBool True)] [Assignment (SimpleLValue "outValue5") (StBool False)],IfElse (StEquals (StLValue (SimpleLValue "inValue")) (StInt 6)) [Assignment (SimpleLValue "outValue6") (StBool True)] [Assignment (SimpleLValue "outValue6") (StBool False)],IfElse (StEquals (StLValue (SimpleLValue "inValue")) (StInt 7)) [Assignment (SimpleLValue "outValue7") (StBool True)] [Assignment (SimpleLValue "outValue7") (StBool False)],IfElse (StEquals (StLValue (SimpleLValue "inValue")) (StInt 8)) [Assignment (SimpleLValue "outValue8") (StBool True)] [Assignment (SimpleLValue "outValue8") (StBool False)]]

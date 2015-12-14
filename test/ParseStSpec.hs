@@ -13,58 +13,42 @@ spec = do
       parseSt " ; ; ; ;" `shouldBe` Right []
   it "Simple Assigment" $ do
       parseSt "Value:=FALSE;" `shouldBe`
-        Right [Assignment (SimpleLValue "Value") (StBool False :| [])]
+        Right [Assignment (SimpleLValue "Value") (StBool False)]
       parseSt "Value := 2 ** 3;" `shouldBe`
-        Right [Assignment (SimpleLValue "Value") (StInt 2 :| [StOp "**", StInt 3])]
+        Right [Assignment (SimpleLValue "Value") (StExp (StInt 2) (StInt 3))]
       parseSt "Value := -303;" `shouldBe`
-        Right [Assignment (SimpleLValue "Value") (StOp "-" :| [StInt 303])]
+        Right [Assignment (SimpleLValue "Value") (StNegate (StInt 303))]
       parseSt "Value := -0.333;" `shouldBe`
-        Right [Assignment (SimpleLValue "Value") (StOp "-" :| [StFloat 0.333])]
+        Right [Assignment (SimpleLValue "Value") (StNegate (StFloat 0.333))]
       parseSt "Value := blah;" `shouldBe`
-        Right [Assignment (SimpleLValue "Value") (StLValue (SimpleLValue "blah") :| [])]
+        Right [Assignment (SimpleLValue "Value") (StLValue (SimpleLValue "blah"))]
       parseSt "Value := TRUE;\ni := 3;\n" `shouldBe`
         Right
-        [ Assignment (SimpleLValue "Value") (StBool True :| [])
-        , Assignment (SimpleLValue "i") (StInt 3 :| [])]
+        [ Assignment (SimpleLValue "Value") (StBool True)
+        , Assignment (SimpleLValue "i") (StInt 3)]
   it "Time" $ do
     parseSt "a := t#11h22m30s435ms;" `shouldBe`
-      Right [Assignment
-            (SimpleLValue "a")
-            (StTime 40950435 :| [])]
+      Right [Assignment (SimpleLValue "a") (StTime 40950435)]
   it "Arrays" $ do
       parseSt "value[i + 1] := 20 + i;" `shouldBe`
-        Right [ Assignment
-                (ArrayLValue
-                 "value"
-                 (StLValue (SimpleLValue "i") :| [StOp "+", StInt 1]))
-                (StInt 20 :| [StOp "+", StLValue (SimpleLValue "i")])]
+        Right [Assignment
+               (ArrayLValue
+                "value"
+                (StAddition (StLValue (SimpleLValue "i")) (StInt 1)))
+               (StAddition (StInt 20) (StLValue (SimpleLValue "i")))]
       parseSt "value[i + i] := 20 + arr[i + value[i - 1]];" `shouldBe`
         Right
-        [Assignment
-         (ArrayLValue
-          "value"
-          (StLValue (SimpleLValue "i") :|
-           [StOp "+",StLValue (SimpleLValue "i")]))
-         (StInt 20 :| [ StOp "+"
-                      , StLValue
-                        (ArrayLValue
-                         "arr"
-                         (StLValue (SimpleLValue "i") :|
-                          [ StOp "+"
-                          , StLValue (ArrayLValue
-                                      "value"
-                                      (StLValue (SimpleLValue "i") :|
-                                       [StOp "-" , StInt 1]))]))])]
+        [Assignment (ArrayLValue "value" (StAddition (StLValue (SimpleLValue "i")) (StLValue (SimpleLValue "i")))) (StAddition (StInt 20) (StLValue (ArrayLValue "arr" (StAddition (StLValue (SimpleLValue "i")) (StLValue (ArrayLValue "value" (StSubtract (StLValue (SimpleLValue "i")) (StInt 1))))))))]
   it "Var declaration" $ do
       parseSt "VAR llh : INT; llt : REAL; END_VAR; llh := 5;" `shouldBe`
-        Right [ Declaration "llh" (IECInt Sixteen) , Declaration "llt" IECReal , Assignment (SimpleLValue "llh") (StInt 5 :| [])]
-      parseSt "VAR blah : UDINT; END_VAR ; blah := 10;" `shouldBe` Right [ Declaration "blah" (IECUInt ThirtyTwo) , Assignment (SimpleLValue "blah") (StInt 10 :| [])]
+        Right [ Declaration "llh" (IECInt Sixteen) , Declaration "llt" IECReal , Assignment (SimpleLValue "llh") (StInt 5)]
+      parseSt "VAR blah : UDINT; END_VAR ; blah := 10;" `shouldBe` Right [ Declaration "blah" (IECUInt ThirtyTwo) , Assignment (SimpleLValue "blah") (StInt 10)]
       parseSt "VAR blah : INT[10,10,10]; END_VAR;" `shouldBe` Right [Declaration "blah" (IECArray (10 :| [10,10]) (IECInt Sixteen))]
   it "FOR statements" $ do
-    parseSt "VAR a : INT; END_VAR; FOR blah := 10 TO 0 BY -1 DO a := blah; END_FOR;" `shouldBe` Right [ Declaration "a" (IECInt Sixteen) , For "blah" 10 0 (Just (-1)) [Assignment (SimpleLValue "a") (StLValue (SimpleLValue "blah") :| [])]]
-    parseSt "FOR blah := 0 TO 10 DO a := blah; END_FOR;" `shouldBe` Right [ For "blah" 0 10 Nothing [Assignment (SimpleLValue "a") (StLValue (SimpleLValue "blah") :| [])]]
+    parseSt "VAR a : INT; END_VAR; FOR blah := 10 TO 0 BY -1 DO a := blah; END_FOR;" `shouldBe` Right [ Declaration "a" (IECInt Sixteen) , For "blah" 10 0 (Just (-1)) [Assignment (SimpleLValue "a") (StLValue (SimpleLValue "blah"))]]
+    parseSt "FOR blah := 0 TO 10 DO a := blah; END_FOR;" `shouldBe` Right [ For "blah" 0 10 Nothing [Assignment (SimpleLValue "a") (StLValue (SimpleLValue "blah"))]]
   it "IF statements" $ do
-      parseSt "IF value = 1 THEN out := TRUE; ELSE IF value = 0 THEN out := FALSE; ELSE error := TRUE; END_IF; END_IF;" `shouldBe` Right [ IfElse (StLValue (SimpleLValue "value") :| [StOp "=", StInt 1] ) [Assignment (SimpleLValue "out") (StBool True :| [])] [ IfElse (StLValue (SimpleLValue "value") :| [StOp "=", StInt 0]) [Assignment (SimpleLValue "out") (StBool False :| [])] [Assignment (SimpleLValue "error") (StBool True :| [])]]]
+      parseSt "IF value = 1 THEN out := TRUE; ELSE IF value = 0 THEN out := FALSE; ELSE error := TRUE; END_IF; END_IF;" `shouldBe` Right [ IfElse (StEquals (StLValue (SimpleLValue "value")) (StInt 1)) [Assignment (SimpleLValue "out") (StBool True)] [ IfElse (StEquals (StLValue (SimpleLValue "value")) (StInt 0)) [Assignment (SimpleLValue "out") (StBool False)] [Assignment (SimpleLValue "error") (StBool True)]]]
   it "RETURN statement" $ do
     parseSt "RETURN;" `shouldBe` Right [Return]
   it "BREAK statement" $ do
@@ -72,41 +56,40 @@ spec = do
   it "WHILE statements" $ do
     parseSt "WHILE a < 4 DO a := a + 1; END_WHILE;" `shouldBe`
       Right [While
-             (StLValue (SimpleLValue "a") :|
-              [StOp "<", StInt 4])
+             (StLessThan (StLValue (SimpleLValue "a")) (StInt 4))
              [Assignment
               (SimpleLValue "a")
-              (StLValue (SimpleLValue "a") :| [StOp "+", StInt 1])]]
+              (StAddition (StLValue (SimpleLValue "a")) (StInt 1))]]
   it "REPEAT statments" $ do
     parseSt "REPEAT a := a + 1; UNTIL a >= 4 END_REPEAT;" `shouldBe`
       Right [Repeat
              [Assignment
               (SimpleLValue "a")
-              (StLValue (SimpleLValue "a") :| [StOp "+", StInt 1])]
-             (StLValue (SimpleLValue "a") :|
-              [StOp ">=", StInt 4])]
+              (StAddition (StLValue (SimpleLValue "a")) (StInt 1))
+              ]
+             (StGreaterThanEquals (StLValue (SimpleLValue "a")) (StInt 4))
+             ]
   it "Parens" $ do
     parseSt "a := 1 * (2 + 3);" `shouldBe`
       Right [Assignment
              (SimpleLValue "a")
-             (StInt 1 :| [StOp "*", StSubValue (StInt 2 :| [StOp "+", StInt 3])])]
+             (StMultiply (StInt 1) (StSubValue (StAddition (StInt 2) (StInt 3))))]
   it "Case" $ do
     parseSt "CASE a OF 1,2-3,4,5,6,7-10: a := 2; 11: a := 3; ELSE a := 4; END_CASE;" `shouldBe`
       Right
       [Case
-       (StLValue (SimpleLValue "a") :| [])
+       (StLValue (SimpleLValue "a"))
        [(CaseInt 1 :| [CaseRange 2 3,CaseInt 4,CaseInt 5,CaseInt 6,CaseRange 7 10],
-         [Assignment (SimpleLValue "a") (StInt 2 :| [])])
+         [Assignment (SimpleLValue "a") (StInt 2)])
        ,(CaseInt 11 :| [],
-         [Assignment (SimpleLValue "a") (StInt 3 :| [])])]
-       [Assignment (SimpleLValue "a") (StInt 4 :| [])]]
+         [Assignment (SimpleLValue "a") (StInt 3)])]
+       [Assignment (SimpleLValue "a") (StInt 4)]]
   it "Functions" $ do
       parseSt "blah := max(2 - 32, abs(ao) * 3);" `shouldBe`
        Right
        [Assignment
         (SimpleLValue "blah")
-        (StFunc "max" [StInt 2 :| [StOp "-",StInt 32]
-                      ,StFunc
-                       "abs"
-                       [StLValue (SimpleLValue "ao") :| []]
-                       :| [StOp "*",StInt 3]] :| [])]
+        (StFunc "max" [StSubtract (StInt 2) (StInt 32)
+                      ,StMultiply
+                       (StFunc "abs" [StLValue (SimpleLValue "ao")])
+                       (StInt 3)])]
