@@ -169,13 +169,13 @@ statementsTill end = fmap catMaybes (manyTill (statement <* semicolon) end)
 statement :: MonadPlus m => Parser (m Statement)
 statement =
     (lookAhead semicolon *> pure mzero) <|>
-    fmap pure (try parseFor <|>
-               try parseCase <|>
-               try parseIf <|>
-               try parseWhile <|>
-               try parseReturn <|>
-               try parseBreak <|>
-               try parseRepeat <|>
+    fmap pure (parseFor <|>
+               parseCase <|>
+               parseIf <|>
+               parseWhile <|>
+               parseReturn <|>
+               parseBreak <|>
+               parseRepeat <|>
                assignment)
 
 parseIf :: Parser Statement
@@ -185,7 +185,7 @@ parseIf =
              <*> parseLastBranch
              <?> "statement"
   where
-    parseIfToThen = symbol "IF" *> value <* symbol "THEN"
+    parseIfToThen = try (symbol "IF") *> value <* symbol "THEN"
     parseFirstBranch = statementsTill (symbol "ELSE")
     parseLastBranch = statementsTill (symbol "END_IF")
     -- If the first branch can't be parsed because there is no "ELSE"
@@ -197,7 +197,7 @@ parseIf =
 -- FOR count := 0 TO 10 BY 1 DO lll := count; END_FOR;
 parseFor :: Parser Statement
 parseFor =
-  For <$> (symbol "FOR" *> lexIdentifier)
+  For <$> (try (symbol "FOR") *> lexIdentifier)
       <*> (assignmentOp *> lexInt)
       <*> (symbol "TO" *> lexInt)
       <*> optional (symbol "BY" *> lexInt)
@@ -206,19 +206,19 @@ parseFor =
 
 parseWhile :: Parser Statement
 parseWhile =
-  While <$> (symbol "WHILE" *> value <* symbol "DO")
+  While <$> (try (symbol "WHILE") *> value <* symbol "DO")
         <*> (statementsTill (symbol "END_WHILE"))
         <?> "WHILE loop"
 
 parseRepeat :: Parser Statement
 parseRepeat =
-  Repeat <$> (symbol "REPEAT" *> statementsTill (symbol "UNTIL"))
+  Repeat <$> (try (symbol "REPEAT") *> statementsTill (symbol "UNTIL"))
          <*> (value <* symbol "END_REPEAT")
          <?> "REPEAT loop"
 
 parseCase :: Parser Statement
 parseCase =
-  Case <$> (symbol "CASE" *> value <* symbol "OF")
+  Case <$> (try (symbol "CASE") *> value <* symbol "OF")
        <*> parseCaseExpression `manyTill` endNormalCaseStatements
        <*> handleElse <* symbol "END_CASE"
        <?> "CASE statement"
@@ -245,10 +245,10 @@ parseCaseInt =
   (CaseInt <$> lexInt)
 
 parseReturn :: Parser Statement
-parseReturn = const Return <$> symbol "RETURN"
+parseReturn = const Return <$> try (symbol "RETURN")
 
 parseBreak :: Parser Statement
-parseBreak = const Break <$> symbol "EXIT"
+parseBreak = const Break <$> try (symbol "EXIT")
 
 assignment :: Parser Statement
 assignment = Assignment <$> lValue <* assignmentOp <*> value
@@ -260,9 +260,9 @@ value = makeExprParser terminals operatorTable <?> "value"
 
 terminals :: Parser Value
 terminals = parseSubValue <|>
-            try parseFunction <|>
+            parseFunction <|>
             number <|>
-            try lexBool <|>
+            lexBool <|>
             parseTime <|>
             fmap StLValue lValue
 
@@ -287,7 +287,8 @@ operatorTable= [[prefix "-" StNegate
                ,[binary "OR" StOr]]
 
 parseFunction :: Parser Value
-parseFunction = StFunc <$> lexIdentifier <*> parens parseArgs
+parseFunction = StFunc <$> try (lexIdentifier <* lookAhead (symbol "("))
+                       <*> parens parseArgs
 
 parseArgs :: Parser [Value]
 parseArgs = value `sepBy` comma
@@ -330,8 +331,8 @@ justAnInteger :: Parser Integer
 justAnInteger = L.integer
 
 lexBool :: Parser Value
-lexBool = symbol "TRUE" $> StBool True <|>
-          symbol "FALSE" $> StBool False
+lexBool = try (symbol "TRUE" $> StBool True <|>
+               symbol "FALSE" $> StBool False)
 
 binary :: String -> (a -> a -> a) -> Operator Parser a
 binary name f = InfixL (reservedOp name >> return f)
