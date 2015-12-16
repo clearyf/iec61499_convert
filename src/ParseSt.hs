@@ -109,12 +109,12 @@ parseVarDecls =
 
 parseVarDecl :: Parser Statement
 parseVarDecl =
-    Declaration <$> lexeme lexIdentifier <* symbol ":"
+    Declaration <$> lexeme identifier <* symbol ":"
                 <*> parseVarType <* semicolon
                 <?> "variable declaration"
 
 parseVarType :: Parser IECVariable
-parseVarType = f <$> lexeme lexIdentifier
+parseVarType = f <$> lexeme identifier
                  <*> optional (brackets parseIndices)
                  <?> "variable type"
   where
@@ -197,7 +197,7 @@ parseIf =
 -- FOR count := 0 TO 10 BY 1 DO lll := count; END_FOR;
 parseFor :: Parser Statement
 parseFor =
-  For <$> (try (symbol "FOR") *> lexIdentifier)
+  For <$> (try (symbol "FOR") *> identifier)
       <*> (assignmentOp *> lexInt)
       <*> (symbol "TO" *> lexInt)
       <*> optional (symbol "BY" *> lexInt)
@@ -287,7 +287,7 @@ operatorTable= [[prefix "-" StNegate
                ,[binary "OR" StOr]]
 
 parseFunction :: Parser Value
-parseFunction = StFunc <$> try (lexIdentifier <* lookAhead (symbol "("))
+parseFunction = StFunc <$> try (identifier <* lookAhead (symbol "("))
                        <*> parens parseArgs
 
 parseArgs :: Parser [Value]
@@ -355,15 +355,15 @@ lexNumber = lexeme L.number
 number :: Parser Value
 number = fmap (either StInt StFloat) lexNumber
 
-lexIdentifier :: Parser String
-lexIdentifier = do
+identifier :: Parser String
+identifier = do
     word <- lexeme ((:) <$> letterChar
                         <*> many (letterChar <|> digitChar <|> char '_'))
     guard (word `notElem` keywords) <?> "non-keyword"
     pure word
 
 lValue :: Parser LValue
-lValue = f <$> lexIdentifier <*> optional (brackets value)
+lValue = f <$> identifier <*> optional (brackets value)
   where
     f name Nothing = SimpleLValue name
     f name (Just s) = ArrayLValue name s
