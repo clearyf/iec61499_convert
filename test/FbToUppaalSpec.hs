@@ -26,7 +26,7 @@ input1 =
          (SimpleLValue "blah")
          (StFunc
           "max"
-          [StAddition (StInt 10) (StFloat 10.1)
+          [StBinaryOp StAddition (StInt 10) (StFloat 10.1)
           ,StFloat 0.3313])]
 output1 :: String
 output1 = "void name()\n{\n\tblah = max(10 + 10.1, 0.3313);\n}\n"
@@ -41,7 +41,7 @@ input2 =
          (SimpleLValue "blah")
          (StFunc
           "max"
-          [StAddition (StInt 10) (StFunc "min" [StInt 2, StInt 10])
+          [StBinaryOp StAddition (StInt 10) (StFunc "min" [StInt 2, StInt 10])
           ,StFloat 0.0013])]
 output2 :: String
 output2  = "void name()\n{\n\tint[-128,127] blah;\n\tblah = max(10 + min(2, 10), 0.0013);\n}\n"

@@ -20,7 +20,7 @@ import           ParseIec61499
         BasicFunctionBlock(..), ECAlgorithm(..))
 import           ParseSt
        (LValue(..), Statement(..), Value(..), IECVariable(..), Width(..),
-        CaseSubExpression(..))
+        StMonoOp(..), StBinaryOp(..), CaseSubExpression(..))
 
 -- | Converts IEC61499 FunctionBlock to an UppaalModel
 -- If something goes wrong then an exception is thrown.
@@ -319,10 +319,7 @@ anAlgorithm al = fold (execWriter (runReaderT writeFunction 0))
     showValue (StSubValue values) = "(" <> showValue values <> ")"
     showValue (StBool True) = "true"
     showValue (StBool False) = "false"
-    showValue (StAddition a b) = showBinaryValue a " + " b
-    showValue (StSubtract a b) = showBinaryValue a " - " b
-    showValue (StMultiply a b) = showBinaryValue a " * " b
-    showValue (StDivide a b) = showBinaryValue a " / " b
+    showValue (StBinaryOp StAddition a b) = showBinaryValue a " + " b
     showValue (StTime t) = show t
     showValue (StInt i) = show i
     showValue (StLValue v) = showLocation v

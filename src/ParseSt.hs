@@ -1,7 +1,8 @@
 {-# LANGUAGE TupleSections #-}
 module ParseSt
-       (CaseSubExpression(..), IECVariable(..), LValue(..), Statement(..),
-        Value(..), Width(..), parseSt, iECtypeFromString)
+       (CaseSubExpression(..), IECVariable(..), LValue(..), StMonoOp(..),
+        StBinaryOp(..), Statement(..), Value(..), Width(..), parseSt,
+        iECtypeFromString)
        where
 
 import           BasePrelude hiding (Prefix, try)
@@ -40,30 +41,38 @@ data CaseSubExpression
 
 data Value
   = StBool Bool
-  | StAddition Value Value
-  | StSubtract Value Value
-  | StNegate Value
-  | StExp Value Value
-  | StMultiply Value Value
-  | StDivide Value Value
-  | StEquals Value Value
-  | StNotEquals Value Value
-  | StLessThanEquals Value Value
-  | StLessThan Value Value
-  | StGreaterThanEquals Value Value
-  | StGreaterThan Value Value
-  | StNot Value
-  | StMod Value Value
-  | StBitwiseAnd Value Value
-  | StAnd Value Value
-  | StOr Value Value
-  | StXor Value Value
+  | StMonoOp StMonoOp Value
+  | StBinaryOp StBinaryOp Value Value
   | StLValue LValue
   | StInt Integer
   | StFloat Double
   | StTime Integer
   | StFunc String [Value]
   | StSubValue Value
+  deriving (Show,Eq)
+
+data StMonoOp
+  = StNegate
+  | StNot
+  deriving (Show,Eq)
+
+data StBinaryOp
+  = StAddition
+  | StSubtract
+  | StExp
+  | StMultiply
+  | StDivide
+  | StEquals
+  | StNotEquals
+  | StLessThanEquals
+  | StLessThan
+  | StGreaterThanEquals
+  | StGreaterThan
+  | StMod
+  | StBitwiseAnd
+  | StAnd
+  | StOr
+  | StXor
   deriving (Show,Eq)
 
 data LValue
@@ -267,24 +276,24 @@ terminals = parseSubValue <|>
             fmap StLValue lValue
 
 operatorTable:: [[Operator Parser Value]]
-operatorTable= [[prefix "-" StNegate
-                ,prefix "NOT" StNot]
-               ,[binary "**" StExp]
-               ,[binary "*" StMultiply
-                ,binary "/" StDivide
-                ,binary "MOD" StMod]
-               ,[binary "+" StAddition
-                ,binary "-" StSubtract]
-               ,[binary "<=" StLessThanEquals
-                ,binary "<" StLessThan
-                ,binary ">=" StGreaterThanEquals
-                ,binary ">" StGreaterThan]
-               ,[binary "=" StEquals
-                ,binary "<>" StNotEquals]
-               ,[binary "AND" StAnd
-                ,binary "&" StAnd]
-               ,[binary "XOR" StXor]
-               ,[binary "OR" StOr]]
+operatorTable= [[prefix "-" (StMonoOp StNegate)
+                ,prefix "NOT" (StMonoOp StNot)]
+               ,[binary "**" (StBinaryOp StExp)]
+               ,[binary "*" (StBinaryOp StMultiply)
+                ,binary "/" (StBinaryOp StDivide)
+                ,binary "MOD" (StBinaryOp StMod)]
+               ,[binary "+" (StBinaryOp StAddition)
+                ,binary "-" (StBinaryOp StSubtract)]
+               ,[binary "<=" (StBinaryOp StLessThanEquals)
+                ,binary "<" (StBinaryOp StLessThan)
+                ,binary ">=" (StBinaryOp StGreaterThanEquals)
+                ,binary ">" (StBinaryOp StGreaterThan)]
+               ,[binary "=" (StBinaryOp StEquals)
+                ,binary "<>" (StBinaryOp StNotEquals)]
+               ,[binary "AND" (StBinaryOp StAnd)
+                ,binary "&" (StBinaryOp StAnd)]
+               ,[binary "XOR" (StBinaryOp StXor)]
+               ,[binary "OR" (StBinaryOp StOr)]]
 
 parseFunction :: Parser Value
 parseFunction = StFunc <$> try (identifier <* lookAhead (symbol "("))

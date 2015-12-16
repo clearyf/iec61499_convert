@@ -102,4 +102,36 @@ demux8Block =
                             , ecAlgorithmStText = theAlgorithm}]}}]
 
 theAlgorithm :: [Statement]
-theAlgorithm = [IfElse (StEquals (StLValue (SimpleLValue "inValue")) (StInt 1)) [Assignment (SimpleLValue "outValue1") (StBool True)] [Assignment (SimpleLValue "outValue1") (StBool False)],IfElse (StEquals (StLValue (SimpleLValue "inValue")) (StInt 2)) [Assignment (SimpleLValue "outValue2") (StBool True)] [Assignment (SimpleLValue "outValue2") (StBool False)],IfElse (StEquals (StLValue (SimpleLValue "inValue")) (StInt 3)) [Assignment (SimpleLValue "outValue3") (StBool True)] [Assignment (SimpleLValue "outValue3") (StBool False)],IfElse (StEquals (StLValue (SimpleLValue "inValue")) (StInt 4)) [Assignment (SimpleLValue "outValue4") (StBool True)] [Assignment (SimpleLValue "outValue4") (StBool False)],IfElse (StEquals (StLValue (SimpleLValue "inValue")) (StInt 5)) [Assignment (SimpleLValue "outValue5") (StBool True)] [Assignment (SimpleLValue "outValue5") (StBool False)],IfElse (StEquals (StLValue (SimpleLValue "inValue")) (StInt 6)) [Assignment (SimpleLValue "outValue6") (StBool True)] [Assignment (SimpleLValue "outValue6") (StBool False)],IfElse (StEquals (StLValue (SimpleLValue "inValue")) (StInt 7)) [Assignment (SimpleLValue "outValue7") (StBool True)] [Assignment (SimpleLValue "outValue7") (StBool False)],IfElse (StEquals (StLValue (SimpleLValue "inValue")) (StInt 8)) [Assignment (SimpleLValue "outValue8") (StBool True)] [Assignment (SimpleLValue "outValue8") (StBool False)]]
+theAlgorithm =
+    [ IfElse
+          (StBinaryOp StEquals (StLValue (SimpleLValue "inValue")) (StInt 1))
+          [Assignment (SimpleLValue "outValue1") (StBool True)]
+          [Assignment (SimpleLValue "outValue1") (StBool False)]
+    , IfElse
+          (StBinaryOp StEquals (StLValue (SimpleLValue "inValue")) (StInt 2))
+          [Assignment (SimpleLValue "outValue2") (StBool True)]
+          [Assignment (SimpleLValue "outValue2") (StBool False)]
+    , IfElse
+          (StBinaryOp StEquals (StLValue (SimpleLValue "inValue")) (StInt 3))
+          [Assignment (SimpleLValue "outValue3") (StBool True)]
+          [Assignment (SimpleLValue "outValue3") (StBool False)]
+    , IfElse
+          (StBinaryOp StEquals (StLValue (SimpleLValue "inValue")) (StInt 4))
+          [Assignment (SimpleLValue "outValue4") (StBool True)]
+          [Assignment (SimpleLValue "outValue4") (StBool False)]
+    , IfElse
+          (StBinaryOp StEquals (StLValue (SimpleLValue "inValue")) (StInt 5))
+          [Assignment (SimpleLValue "outValue5") (StBool True)]
+          [Assignment (SimpleLValue "outValue5") (StBool False)]
+    , IfElse
+          (StBinaryOp StEquals (StLValue (SimpleLValue "inValue")) (StInt 6))
+          [Assignment (SimpleLValue "outValue6") (StBool True)]
+          [Assignment (SimpleLValue "outValue6") (StBool False)]
+    , IfElse
+          (StBinaryOp StEquals (StLValue (SimpleLValue "inValue")) (StInt 7))
+          [Assignment (SimpleLValue "outValue7") (StBool True)]
+          [Assignment (SimpleLValue "outValue7") (StBool False)]
+    , IfElse
+          (StBinaryOp StEquals (StLValue (SimpleLValue "inValue")) (StInt 8))
+          [Assignment (SimpleLValue "outValue8") (StBool True)]
+          [Assignment (SimpleLValue "outValue8") (StBool False)]]
