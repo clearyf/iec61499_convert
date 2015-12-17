@@ -1,96 +1,68 @@
-module ParseGuard (Guard(..), GuardCondition(..), parseGuard) where
+module ParseGuard (Guard(..), parseGuard) where
 
-import           BasePrelude hiding (try)
-import           Data.Set (Set)
-import Text.Megaparsec
-       (ParseError, between, char, choice, digitChar, letterChar, parse,
-        space, try)
-import qualified Text.Megaparsec.Lexer as L
-import           Text.Megaparsec.String (Parser)
+import BasePrelude
+import Data.Set (Set)
+import ParseSt (Value(..), StBinaryOp(..), LValue(..), parseValue)
 
 data Guard = Guard
     { guardEvent :: Maybe String
-    , guardCondition :: Maybe GuardCondition
+    , guardCondition :: Maybe Value
     } deriving (Show,Eq)
 
-data GuardCondition
-    = GuardSubCondition [GuardCondition]
-    | GuardVariable String
-    | GuardEquals
-    | GuardApprox
-    | GuardAnd
-    | GuardOr
-    | GuardNot
-    | GuardTrue
-    | GuardFalse
-    deriving (Show,Eq)
+parseGuard :: Set String -> String -> Maybe Guard
+parseGuard events str = do
+  v <- tokenizeGuard str
+  (justEvent events v <|>
+   eventCondition events (rewriteValue events v) <|>
+   justCondition v)
 
-parseGuard :: Set String -> String -> Either ParseError Guard
-parseGuard events str = parse (doParseGuard events) str str
+justEvent :: Set String -> Value -> Maybe Guard
+justEvent set v = case v of
+  (StLValue (SimpleLValue s)) -> fmap f (find (==s) set)
+  _ -> mzero
+  where
+    f s = Guard (pure s) mzero
 
-doParseGuard :: Set String -> Parser Guard
-doParseGuard events =
-    Guard <$> optional (try (parseEvent events))
-          <*> fmap stripLeadingAnd parseCondition
+justCondition :: Value -> Maybe Guard
+justCondition = pure . Guard mzero . pure
 
-stripLeadingAnd :: (MonadPlus m) => GuardCondition -> m GuardCondition
-stripLeadingAnd (GuardSubCondition (GuardAnd:xs)) = pure (GuardSubCondition xs)
-stripLeadingAnd (GuardSubCondition []) = mzero
-stripLeadingAnd x = pure x
+eventCondition :: Set String -> Value -> Maybe Guard
+eventCondition set v = case v of
+  (StBinaryOp StAnd (StLValue (SimpleLValue s)) e) -> fmap (f e) (find (==s) set)
+  _ -> mzero
+  where
+    f e s = Guard (pure s) (pure e)
 
-parseEvent :: Set String -> Parser String
-parseEvent events = do
-    word <- identifier
-    guard (word `elem` events)
-    pure word
+-- As AND has higher precedence than OR, if the guard is something
+-- like "event AND this OR that", then the OR will be the outermost
+-- operator.  However in the guard condition the first AND is special,
+-- so move that to the outside.  Note that XOR also has lower
+-- precedence than AND, so that needs to be checked as well.
+isRewriteRequired :: Set String -> Value -> Maybe String
+isRewriteRequired set v = case v of
+  (StBinaryOp StAnd (StBinaryOp StAnd (StLValue (SimpleLValue s)) _) _) ->
+    find (==s) set
+  (StBinaryOp StOr (StBinaryOp StAnd (StLValue (SimpleLValue s)) _) _) ->
+    find (==s) set
+  (StBinaryOp StXor (StBinaryOp StAnd (StLValue (SimpleLValue s)) _) _) ->
+    find (==s) set
+  (StBinaryOp StAnd l _) -> isRewriteRequired set l
+  (StBinaryOp StOr l _) -> isRewriteRequired set l
+  (StBinaryOp StXor l _) -> isRewriteRequired set l
+  _ -> mzero
 
-parens ::Parser a -> Parser a
-parens = between (symbol "(") (symbol ")")
+rewriteValue :: Set String -> Value -> Value
+rewriteValue set v = fromMaybe v (fmap (recurse v) (isRewriteRequired set v))
+  where
+    recurse value@(StBinaryOp StAnd (StLValue (SimpleLValue s)) _) target
+      | s == target = value
+      | otherwise = recurse (leftRotate value) target
+    recurse value target = recurse (leftRotate value) target
 
-parseCondition :: Parser GuardCondition
-parseCondition = fmap GuardSubCondition (many parseElement)
+leftRotate :: Value -> Value
+leftRotate (StBinaryOp op1 (StBinaryOp op2 vll vlr) vr) =
+  StBinaryOp op2 vll (StBinaryOp op1 vlr vr)
+leftRotate x = x
 
-parseElement :: Parser GuardCondition
-parseElement =
-    choice
-        [ parens parseCondition
-        , try approxSymbol
-        , try equalsSymbol
-        , try andSymbol
-        , try orSymbol
-        , try notSymbol
-        , try trueSymbol
-        , try falseSymbol
-        , fmap GuardVariable identifier]
-
-identifier :: Parser String
-identifier =
-    lexeme
-        ((:) <$> letterChar <*> many (letterChar <|> digitChar <|> char '_'))
-
-equalsSymbol :: Parser GuardCondition
-equalsSymbol = symbol "=" *> pure GuardEquals
-
-approxSymbol :: Parser GuardCondition
-approxSymbol = symbol "<>" *> pure GuardApprox
-
-andSymbol :: Parser GuardCondition
-andSymbol = (symbol "AND" <|> symbol "&") *> pure GuardAnd
-
-orSymbol :: Parser GuardCondition
-orSymbol = (symbol "OR" <|> symbol "|") *> pure GuardOr
-
-notSymbol :: Parser GuardCondition
-notSymbol = (symbol "NOT" <|> symbol "!") *> pure GuardNot
-
-trueSymbol :: Parser GuardCondition
-trueSymbol = (symbol "TRUE" <|> symbol "1") *> pure GuardTrue
-
-falseSymbol :: Parser GuardCondition
-falseSymbol = (symbol "FALSE" <|> symbol "0") *> pure GuardFalse
-
-lexeme :: Parser a -> Parser a
-lexeme = L.lexeme space
-
-symbol :: String -> Parser String
-symbol = L.symbol space
+tokenizeGuard :: String -> Maybe Value
+tokenizeGuard str = either (const mzero) pure (parseValue str)

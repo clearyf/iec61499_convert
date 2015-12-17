@@ -2,9 +2,10 @@ module FbToUppaal (fbToUppaalModel, anAlgorithm) where
 
 import           BasePrelude
 import           Control.Monad.Trans.Class (lift)
-import           Control.Monad.Trans.Reader (ask, runReaderT, withReaderT)
+import           Control.Monad.Trans.Reader (ReaderT, ask, runReaderT, withReaderT)
 import           Control.Monad.Trans.State.Lazy (State, evalState, get, put)
-import           Control.Monad.Trans.Writer.Lazy (execWriter, tell)
+import           Control.Monad.Trans.Writer.Lazy (WriterT, execWriter, tell)
+import           Data.DList (DList)
 import qualified Data.DList as DList
 import qualified Data.List.NonEmpty as NE
 import           Data.Map.Strict ((!), Map)
@@ -13,7 +14,7 @@ import qualified Data.Set as Set
 import           OutputUppaal
        (UppaalModel(..), AState(..), UppaalChan(..), UppaalVar(..),
         Location(..), StateId(..), Transition(..))
-import           ParseGuard (Guard(..), GuardCondition(..), parseGuard)
+import           ParseGuard (Guard(..), parseGuard)
 import           ParseIec61499
        (ECTransition(..), ECState(..), FunctionBlock(..),
         InterfaceList(..), Event(..), Variable(..), ECAction(..),
@@ -211,28 +212,18 @@ transitions fb = basicTransitions <> otherTransitions
             mzero -- No update/advancedTransitions on the basic transition.
       where
         gd =
-            either
-                (const (error ("Couldn't parse guard: " <> cond)))
-                id
-                (parseGuard events cond)
+            fromMaybe
+            (error ("Couldn't parse guard: " <> cond))
+            (parseGuard events cond)
 
 guardToSync :: MonadPlus m => Guard -> m String
 guardToSync (Guard (Just s) _) = pure (inputChannelPrefix <> s <> "?")
 guardToSync _ = mzero
 
 guardToGuard :: MonadPlus m => Guard -> m String
-guardToGuard (Guard _ (Just (GuardSubCondition [GuardTrue]))) = mzero
-guardToGuard (Guard _ (Just (GuardSubCondition e))) = pure (foldMap f e)
-  where
-    f (GuardEquals) = " = "
-    f (GuardApprox) = " <> " --TODO This is wrong!
-    f (GuardAnd) = " & "
-    f (GuardOr) = " | "
-    f (GuardNot) = "!"
-    f (GuardTrue) = "true"
-    f (GuardFalse) = "false"
-    f (GuardVariable var) = var
-    f (GuardSubCondition child) = "(" <> foldMap f child <> ")"
+guardToGuard (Guard _ (Just (StBool True))) = mzero
+guardToGuard (Guard _ (Just (StInt 1))) = mzero
+guardToGuard (Guard _ (Just v)) = pure (showValue v)
 guardToGuard _ = mzero
 
 getSrcId :: String -> StateMap -> StateId
@@ -250,81 +241,117 @@ getDestId s (StateMap m)
 anAlgorithm :: ECAlgorithm -> String
 anAlgorithm al = fold (execWriter (runReaderT writeFunction 0))
   where
-    -- The writer monad uses a DList so writeLine runs in constant
-    -- time; the 'foldMap (<>"\n)' simultaneously adds the newlines
-    -- and flattens the lists into one string.
-    writeLine l = do
-      n <- ask
-      lift (tell (DList.singleton (replicate n '\t' <> l <> "\n")))
     writeFunction = do
       writeLine ("void " <> ecAlgorithmName al <> "()")
       writeBlock (ecAlgorithmStText al)
-    increaseIndent =
-      withReaderT (1 +)
-    writeBlock statements = do
-      writeLine "{"
-      increaseIndent (traverse_ writeStatement statements)
-      writeLine "}"
-    writeStatement (Declaration name typeIn) =
-      writeLine (typeOut <> " " <> name <> suffix <> ";")
-      where (typeOut, suffix) = showVarType typeIn
-    writeStatement (Assignment lvalue rvalue) =
-      writeLine (showLocation lvalue <> " = " <> showValue rvalue <> ";")
-    writeStatement (For name start end step body) = do
-      writeLine
-        ("for (int " <> name <> " = " <> show start <> "; " <>
-         name <> " != " <> show end <> "; " <>
-         name <> " = " <> name <> " + (" <>
-         show (fromMaybe 1 step) <> "))")
-      writeBlock body
-    writeStatement (While cond body) = do
-      writeLine ("while (" <> showValue cond <> ")")
-      writeBlock body
-    writeStatement (Repeat body cond) = do
-      writeLine "do"
-      writeBlock body
-      writeLine ("while (" <> showValue cond <> ")")
-    writeStatement (Case var branches defaultBranch) = do
-      writeLine ("case (" <> showValue var <> ")")
-      writeLine "{"
-      traverse_ writeBranch branches
-      writeDefaultBranch
-      writeLine "}"
-      where
-        writeCase i = writeLine (i <> ":")
-        writeCases = traverse_ (writeCase . show)
-        writeCaseExp (CaseInt i) = writeCase (show i)
-        writeCaseExp (CaseRange from to)
-          | from <= to = writeCases (enumFromTo from to)
-          | otherwise = writeCases (enumFromThenTo from (from-1) to)
-        writeBranch (cases, body) = do
-          traverse_ writeCaseExp cases
-          increaseIndent $ do traverse_ writeStatement body
-                              writeStatement Break
-        writeDefaultBranch = do
-          writeCase "default"
-          increaseIndent $ do traverse_ writeStatement defaultBranch
-                              writeStatement Break
-    writeStatement (If cond branch) = do
-      writeLine ("if (" <> showValue cond <> ")")
-      writeBlock branch
-    writeStatement (IfElse cond branch1 branch2) = do
-      writeLine ("if (" <> showValue cond <> ")")
-      writeBlock branch1
-      writeLine "else"
-      writeBlock branch2
-    writeStatement Break = writeLine "break;"
-    writeStatement Return = writeLine "return;"
-    showArgs = fold . intersperse ", " . fmap showValue
-    showValue (StSubValue values) = "(" <> showValue values <> ")"
-    showValue (StBool True) = "true"
-    showValue (StBool False) = "false"
-    showValue (StBinaryOp StAddition a b) = showBinaryValue a " + " b
-    showValue (StTime t) = show t
-    showValue (StInt i) = show i
-    showValue (StLValue v) = showLocation v
-    showValue (StFloat i) = show i -- TODO Uppaal can’t handle floats!
-    showValue (StFunc name args) = name <> "(" <> showArgs args <> ")"
-    showBinaryValue a op b = showValue a <> op <> showValue b
-    showLocation (SimpleLValue name) = name
-    showLocation (ArrayLValue name idx) = name <> showValue idx
+
+writeLine :: Monad m => String -> ReaderT Int (WriterT (DList String) m) ()
+writeLine l = do
+  n <- ask
+  lift (tell (DList.singleton (replicate n '\t' <> l <> "\n")))
+
+increaseIndent :: ReaderT Int m a -> ReaderT Int m a
+increaseIndent =
+  withReaderT (1 +)
+
+writeBlock :: Monad m => [Statement] -> ReaderT Int (WriterT (DList String) m) ()
+writeBlock statements = do
+  writeLine "{"
+  increaseIndent (traverse_ writeStatement statements)
+  writeLine "}"
+
+writeStatement :: Monad m => Statement -> ReaderT Int (WriterT (DList String) m) ()
+writeStatement (Declaration name typeIn) =
+  writeLine (typeOut <> " " <> name <> suffix <> ";")
+  where (typeOut, suffix) = showVarType typeIn
+writeStatement (Assignment lvalue rvalue) =
+  writeLine (showLocation lvalue <> " = " <> showValue rvalue <> ";")
+writeStatement (For name start end step body) = do
+  writeLine
+    ("for (int " <> name <> " = " <> show start <> "; " <>
+     name <> " != " <> show end <> "; " <>
+     name <> " = " <> name <> " + (" <>
+     show (fromMaybe 1 step) <> "))")
+  writeBlock body
+writeStatement (While cond body) = do
+  writeLine ("while (" <> showValue cond <> ")")
+  writeBlock body
+writeStatement (Repeat body cond) = do
+  writeLine "do"
+  writeBlock body
+  writeLine ("while (" <> showValue cond <> ")")
+writeStatement (Case var branches defaultBranch) = do
+  writeLine ("case (" <> showValue var <> ")")
+  writeLine "{"
+  traverse_ writeBranch branches
+  writeDefaultBranch
+  writeLine "}"
+    where
+      writeCase i = writeLine (i <> ":")
+      writeCases = traverse_ (writeCase . show)
+      writeCaseExp (CaseInt i) = writeCase (show i)
+      writeCaseExp (CaseRange from to)
+        | from <= to = writeCases (enumFromTo from to)
+        | otherwise = writeCases (enumFromThenTo from (from-1) to)
+      writeBranch (cases, body) = do
+        traverse_ writeCaseExp cases
+        increaseIndent $ do traverse_ writeStatement body
+                            writeStatement Break
+      writeDefaultBranch = do
+        writeCase "default"
+        increaseIndent $ do traverse_ writeStatement defaultBranch
+                            writeStatement Break
+writeStatement (If cond branch) = do
+  writeLine ("if (" <> showValue cond <> ")")
+  writeBlock branch
+writeStatement (IfElse cond branch1 branch2) = do
+  writeLine ("if (" <> showValue cond <> ")")
+  writeBlock branch1
+  writeLine "else"
+  writeBlock branch2
+writeStatement Break = writeLine "break;"
+writeStatement Return = writeLine "return;"
+
+showArgs :: [Value] -> String
+showArgs = fold . intersperse ", " . fmap showValue
+
+showValue :: Value -> String
+showValue (StSubValue values) = "(" <> showValue values <> ")"
+showValue (StBool True) = "true"
+showValue (StBool False) = "false"
+showValue (StBinaryOp op a b) = showBinaryValue a op b
+showValue (StMonoOp op a) = showMonoValue op a
+showValue (StTime t) = show t
+showValue (StInt i) = show i
+showValue (StLValue v) = showLocation v
+showValue (StFloat i) = show i -- TODO Uppaal can’t handle floats!
+showValue (StFunc name args) = name <> "(" <> showArgs args <> ")"
+
+showBinaryValue :: Value -> StBinaryOp -> Value -> String
+showBinaryValue a op b = showValue a <> opStr <> showValue b
+  where
+    opStr = case op of
+      StAddition -> "+"
+      StSubtract -> "-"
+      StExp -> error "Uppaal doesn't support exponentiation!"
+      StMultiply -> "*"
+      StDivide -> "/"
+      StEquals -> "="
+      StNotEquals -> "!="
+      StLessThanEquals -> "<="
+      StLessThan -> "<"
+      StGreaterThanEquals -> ">="
+      StGreaterThan -> ">"
+      StMod -> "%"
+      StBitwiseAnd -> "&"
+      StAnd -> "&&"
+      StOr -> "||"
+      StXor -> "^"
+
+showMonoValue :: StMonoOp -> Value -> String
+showMonoValue StNegate v = "-" <> showValue v
+showMonoValue StNot v = "!" <> showValue v
+
+showLocation :: LValue -> String
+showLocation (SimpleLValue name) = name
+showLocation (ArrayLValue name idx) = name <> showValue idx

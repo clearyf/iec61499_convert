@@ -4,6 +4,7 @@ import           BasePrelude
 import           Data.Set (Set)
 import qualified Data.Set as Set
 import           ParseGuard
+import           ParseSt
 import           Test.Hspec (it, shouldBe)
 import           Test.Hspec.Core.Spec (Spec)
 
@@ -12,68 +13,42 @@ spec = do
     it
         "Simple event"
         (parseGuard events "BUTTON" `shouldBe`
-         Right (Guard (Just "BUTTON") Nothing))
+         Just (Guard (Just "BUTTON") Nothing))
     it
         "Only condition"
         (parseGuard events "NOT button" `shouldBe`
-         Right
+         Just
              (Guard
                   Nothing
-                  (Just (GuardSubCondition [GuardNot, GuardVariable "button"]))))
+                  (Just (StMonoOp StNot (StLValue (SimpleLValue "button"))))))
     it
         "Event + condition 1"
         (parseGuard events "BUTTON AND NOT button" `shouldBe`
-         Right
+         Just
              (Guard
                   (Just "BUTTON")
-                  (Just (GuardSubCondition [GuardNot, GuardVariable "button"]))))
+                  (Just (StMonoOp StNot (StLValue (SimpleLValue "button"))))))
     it
         "Event + condition 2"
         (parseGuard events "BUTTON AND !(b1 OR b2) AND b3" `shouldBe`
-         Right
+         Just
              (Guard
                   (Just "BUTTON")
-                  (Just
-                       (GuardSubCondition
-                            [ GuardNot
-                            , GuardSubCondition
-                                  [ GuardVariable "b1"
-                                  , GuardOr
-                                  , GuardVariable "b2"]
-                            , GuardAnd
-                            , GuardVariable "b3"]))))
+                  (Just (StBinaryOp StAnd (StMonoOp StNot (StSubValue (StBinaryOp StOr (StLValue (SimpleLValue "b1")) (StLValue (SimpleLValue "b2"))))) (StLValue (SimpleLValue "b3"))))))
     it
         "Event + condition 3"
         (parseGuard events "BLAH AND (((a & b) | c) & d) | e" `shouldBe`
-         Right
+         Just
              (Guard
                   (Just "BLAH")
-                  (Just
-                       (GuardSubCondition
-                            [ GuardSubCondition
-                                  [ GuardSubCondition
-                                        [ GuardSubCondition
-                                              [ GuardVariable "a"
-                                              , GuardAnd
-                                              , GuardVariable "b"]
-                                        , GuardOr
-                                        , GuardVariable "c"]
-                                  , GuardAnd
-                                  , GuardVariable "d"]
-                            , GuardOr
-                            , GuardVariable "e"]))))
+                  (Just (StBinaryOp StOr (StSubValue (StBinaryOp StAnd (StSubValue (StBinaryOp StOr (StSubValue (StBinaryOp StAnd (StLValue (SimpleLValue "a")) (StLValue (SimpleLValue "b")))) (StLValue (SimpleLValue "c")))) (StLValue (SimpleLValue "d")))) (StLValue (SimpleLValue "e"))))))
     it
         "Event AND (variable = value)"
         (parseGuard events "BUTTON AND (setpoint = value)" `shouldBe`
-         Right
+         Just
              (Guard
                   (Just "BUTTON")
-                  (Just
-                       (GuardSubCondition
-                            [ GuardSubCondition
-                                  [ GuardVariable "setpoint"
-                                  , GuardEquals
-                                  , GuardVariable "value"]]))))
+                  (Just (StSubValue (StBinaryOp StEquals (StLValue (SimpleLValue "setpoint")) (StLValue (SimpleLValue "value")))))))
 
 events :: Set String
 events = Set.fromList ["BUTTON", "BLAH"]

@@ -2,7 +2,7 @@
 module ParseSt
        (CaseSubExpression(..), IECVariable(..), LValue(..), StMonoOp(..),
         StBinaryOp(..), Statement(..), Value(..), Width(..), parseSt,
-        iECtypeFromString)
+        parseValue, iECtypeFromString)
        where
 
 import           BasePrelude hiding (Prefix, try)
@@ -98,6 +98,9 @@ data IECVariable
 
 parseSt :: String -> Either ParseError [Statement]
 parseSt str = parse stParser str str
+
+parseValue :: String -> Either ParseError Value
+parseValue str = parse value str str
 
 --------------------------------------------------------------------------------
 
@@ -277,7 +280,8 @@ terminals = parseSubValue <|>
 
 operatorTable:: [[Operator Parser Value]]
 operatorTable= [[prefix "-" (StMonoOp StNegate)
-                ,prefix "NOT" (StMonoOp StNot)]
+                ,prefix "NOT" (StMonoOp StNot)
+                ,prefix "!" (StMonoOp StNot)]
                ,[binary "**" (StBinaryOp StExp)]
                ,[binary "*" (StBinaryOp StMultiply)
                 ,binary "/" (StBinaryOp StDivide)
@@ -293,7 +297,8 @@ operatorTable= [[prefix "-" (StMonoOp StNegate)
                ,[binary "AND" (StBinaryOp StAnd)
                 ,binary "&" (StBinaryOp StAnd)]
                ,[binary "XOR" (StBinaryOp StXor)]
-               ,[binary "OR" (StBinaryOp StOr)]]
+               ,[binary "OR" (StBinaryOp StOr)
+                ,binary "|" (StBinaryOp StOr)]]
 
 parseFunction :: Parser Value
 parseFunction = StFunc <$> try (identifier <* lookAhead (symbol "("))
