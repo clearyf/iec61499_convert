@@ -328,7 +328,7 @@ showValue (StFloat i) = show i -- TODO Uppaal can’t handle floats!
 showValue (StFunc name args) = name <> "(" <> showArgs args <> ")"
 
 showBinaryValue :: Value -> StBinaryOp -> Value -> String
-showBinaryValue a op b = showValue a <> opStr <> showValue b
+showBinaryValue a op b = showValue a <> " " <> opStr <> " " <> showValue b
   where
     opStr = case op of
       StAddition -> "+"
