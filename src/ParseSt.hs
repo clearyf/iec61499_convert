@@ -1,4 +1,3 @@
-{-# LANGUAGE TupleSections #-}
 module ParseSt
        (CaseSubExpression(..), IECVariable(..), LValue(..), StMonoOp(..),
         StBinaryOp(..), Statement(..), Value(..), Width(..), parseSt,
