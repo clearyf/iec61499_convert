@@ -109,8 +109,8 @@ parseValue str = parse value str str
 stParser :: Parser [Statement]
 stParser =
     spaceConsumer *>
-    ((<>) <$> option mempty (try parseVarDecls)
-          <*> statementsTill eof)
+    (mappend <$> option mempty (try parseVarDecls)
+             <*> statementsTill eof)
 
 --------------------------------------------------------------------------------
 
@@ -120,12 +120,12 @@ parseVarDecls =
 
 parseVarDecl :: Parser Statement
 parseVarDecl =
-    Declaration <$> lexeme identifier <* symbol ":"
+    Declaration <$> identifier <* symbol ":"
                 <*> parseVarType <* semicolon
                 <?> "variable declaration"
 
 parseVarType :: Parser IECVariable
-parseVarType = f <$> lexeme identifier
+parseVarType = f <$> identifier
                  <*> optional (brackets parseIndices)
                  <?> "variable type"
   where
@@ -218,13 +218,13 @@ parseFor =
 parseWhile :: Parser Statement
 parseWhile =
   While <$> (try (symbol "WHILE") *> value <* symbol "DO")
-        <*> (statementsTill (symbol "END_WHILE"))
+        <*> statementsTill (symbol "END_WHILE")
         <?> "WHILE loop"
 
 parseRepeat :: Parser Statement
 parseRepeat =
   Repeat <$> (try (symbol "REPEAT") *> statementsTill (symbol "UNTIL"))
-         <*> (value <* symbol "END_REPEAT")
+         <*> value <* symbol "END_REPEAT"
          <?> "REPEAT loop"
 
 parseCase :: Parser Statement
@@ -329,11 +329,11 @@ parseTime = lexeme (symbol "t#" *> (try parseShortTime <|> parseLongTime))
 parseLongTime :: Parser Value
 parseLongTime = StTime . sum <$> parseStuff `someTill` lookAhead notDigit
   where
-    units = [("h", (60 * 60 * 1000)),("ms", 1),("s", 1000),("m", 60 * 1000)]
+    units = [("h", 60 * 60 * 1000),("ms", 1),("s", 1000),("m", 60 * 1000)]
     parseUnits = choice (fmap (try . string . fst) units)
                  -- fromJust is completely safe here, s must be one of
                  -- the strings that was in units.
-    calcTime n s = n * (fromJust (lookup s units))
+    calcTime n s = n * fromJust (lookup s units)
     parseStuff = calcTime <$> justAnInteger <*> parseUnits
     notDigit = satisfy (not . isDigit) <?> "non digit"
 

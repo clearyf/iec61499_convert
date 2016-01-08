@@ -12,9 +12,9 @@ data Guard = Guard
 parseGuard :: Set String -> String -> Maybe Guard
 parseGuard events str = do
   v <- tokenizeGuard str
-  (justEvent events v <|>
-   eventCondition events (rewriteValue events v) <|>
-   justCondition v)
+  justEvent events v <|>
+    eventCondition events (rewriteValue events v) <|>
+    justCondition v
 
 justEvent :: Set String -> Value -> Maybe Guard
 justEvent set v = case v of
@@ -52,7 +52,7 @@ isRewriteRequired set v = case v of
   _ -> mzero
 
 rewriteValue :: Set String -> Value -> Value
-rewriteValue set v = fromMaybe v (fmap (recurse v) (isRewriteRequired set v))
+rewriteValue set v = maybe v (recurse v) (isRewriteRequired set v)
   where
     recurse value@(StBinaryOp StAnd (StLValue (SimpleLValue s)) _) target
       | s == target = value
