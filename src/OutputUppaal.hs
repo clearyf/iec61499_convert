@@ -121,8 +121,8 @@ templateDecl um =
 makeLocationDecl :: ArrowXml a => Location -> a n XmlTree
 makeLocationDecl l =
     case l of
-        (Location s) -> mk s mempty
-        (UrgentLocation s) -> mk s [eelem "urgent"]
+        Location s -> mk s mempty
+        UrgentLocation s -> mk s [eelem "urgent"]
   where
     mk (AState n i) extra =
         mkelem

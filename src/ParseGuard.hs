@@ -18,7 +18,7 @@ parseGuard events str = do
 
 justEvent :: Set String -> Value -> Maybe Guard
 justEvent set v = case v of
-  (StLValue (SimpleLValue s)) -> fmap f (find (==s) set)
+  StLValue (SimpleLValue s) -> fmap f (find (==s) set)
   _ -> mzero
   where
     f s = Guard (pure s) mzero
@@ -28,7 +28,7 @@ justCondition = pure . Guard mzero . pure
 
 eventCondition :: Set String -> Value -> Maybe Guard
 eventCondition set v = case v of
-  (StBinaryOp StAnd (StLValue (SimpleLValue s)) e) -> fmap (f e) (find (==s) set)
+  StBinaryOp StAnd (StLValue (SimpleLValue s)) e -> fmap (f e) (find (==s) set)
   _ -> mzero
   where
     f e s = Guard (pure s) (pure e)
@@ -40,15 +40,15 @@ eventCondition set v = case v of
 -- precedence than AND, so that needs to be checked as well.
 isRewriteRequired :: Set String -> Value -> Maybe String
 isRewriteRequired set v = case v of
-  (StBinaryOp StAnd (StBinaryOp StAnd (StLValue (SimpleLValue s)) _) _) ->
+  StBinaryOp StAnd (StBinaryOp StAnd (StLValue (SimpleLValue s)) _) _ ->
     find (==s) set
-  (StBinaryOp StOr (StBinaryOp StAnd (StLValue (SimpleLValue s)) _) _) ->
+  StBinaryOp StOr (StBinaryOp StAnd (StLValue (SimpleLValue s)) _) _ ->
     find (==s) set
-  (StBinaryOp StXor (StBinaryOp StAnd (StLValue (SimpleLValue s)) _) _) ->
+  StBinaryOp StXor (StBinaryOp StAnd (StLValue (SimpleLValue s)) _) _ ->
     find (==s) set
-  (StBinaryOp StAnd l _) -> isRewriteRequired set l
-  (StBinaryOp StOr l _) -> isRewriteRequired set l
-  (StBinaryOp StXor l _) -> isRewriteRequired set l
+  StBinaryOp StAnd l _ -> isRewriteRequired set l
+  StBinaryOp StOr l _ -> isRewriteRequired set l
+  StBinaryOp StXor l _ -> isRewriteRequired set l
   _ -> mzero
 
 rewriteValue :: Set String -> Value -> Value
