@@ -14,7 +14,8 @@ void TurnOff()
 </declaration>
   <template>
     <name x="0" y="0">Toggle</name>
-    <declaration>// Declarations
+    <declaration>// Local declarations
+int[0,65536] Blah;
 </declaration>
     <location id="id4" x="0" y="0">
       <name x="0" y="0">__start_Off</name>

@@ -27,7 +27,11 @@ toggleFunctionBlock =
                               }]
         }
       , basicFb = BasicFunctionBlock
-        { bfbStates = [ ECState
+        { bfbVariables = [ Variable { variableName = "Blah"
+                                    , variableType = IECUInt Sixteen
+                                    , variableComment = "Unused Variable"
+                                    }]
+        , bfbStates = [ ECState
                         { ecStateName = "START"
                         , ecStateComment = "Initial State"
                         , ecStateActions = []

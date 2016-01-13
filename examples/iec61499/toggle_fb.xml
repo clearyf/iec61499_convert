@@ -18,6 +18,9 @@
     </OutputVars>
   </InterfaceList>
   <BasicFB>
+    <InternalVars>
+      <VarDeclaration Name="Blah" Type="WORD" Comment="Unused Variable" />
+    </InternalVars>
     <ECC>
       <ECState Name="START" Comment="Initial State" x="552.9412" y="429.4117" />
       <ECState Name="On" Comment="Normal execution" x="217.647" y="752.9412">

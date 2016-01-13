@@ -27,7 +27,8 @@ data InterfaceList = InterfaceList
     } deriving (Show,Eq)
 
 data BasicFunctionBlock = BasicFunctionBlock
-    { bfbStates :: [ECState]
+    { bfbVariables :: [Variable]
+    , bfbStates :: [ECState]
     , bfbTransitions :: [ECTransition]
     , bfbAlgorithms :: [ECAlgorithm]
     } deriving (Show,Eq)
@@ -159,10 +160,11 @@ getInterfaceList =
 getBasicFunctionBlock :: ArrowXml a => a XmlTree BasicFunctionBlock
 getBasicFunctionBlock =
     atTag "BasicFB" >>>
+    getListAtElem getVariable "InternalVars" &&&
     getListAtElem getECState "ECC" &&&
     getListAtElem getECTransition "ECC" &&&
     (listA getAlgorithm `orElse` constA mempty) >>>
-    arr3 BasicFunctionBlock
+    arr4 BasicFunctionBlock
 
 getFunctionBlock :: ArrowXml a => a XmlTree FunctionBlock
 getFunctionBlock =

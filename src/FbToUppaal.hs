@@ -33,6 +33,7 @@ fbToUppaalModel fb =
         (outputChannels fb)
         (inputParameters fb)
         (outputParameters fb)
+        (localParameters fb)
         (locations fb)
         (transitions fb)
         (fmap anAlgorithm (bfbAlgorithms (basicFb fb)))
@@ -80,6 +81,9 @@ inputParameters = fmap createUppaalVar . inputVariables . interfaceList
 
 outputParameters :: FunctionBlock -> [UppaalVar]
 outputParameters = fmap createUppaalVar . outputVariables . interfaceList
+
+localParameters :: FunctionBlock -> [UppaalVar]
+localParameters = fmap createUppaalVar . bfbVariables . basicFb
 
 createUppaalVar :: Variable -> UppaalVar
 createUppaalVar var = UppaalVar varType (variableName var <> suffix)

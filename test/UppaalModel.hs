@@ -11,6 +11,7 @@ uppaalModel =
     , modelOutputEvents = [UppaalChan "oc_Update"]
     , modelInputVars = []
     , modelOutputVars = [UppaalVar "bool" "Value"]
+    , modelInternalVars = [UppaalVar "int[0,65536]" "Blah"]
     , modelLocations = [ UrgentLocation
                              AState
                               { stateName = "__start_Off"

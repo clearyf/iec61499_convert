@@ -13,6 +13,7 @@ data UppaalModel = UppaalModel
     , modelOutputEvents :: [UppaalChan]
     , modelInputVars :: [UppaalVar]
     , modelOutputVars :: [UppaalVar]
+    , modelInternalVars :: [UppaalVar]
     , modelLocations :: [Location]
     , modelTransitions :: [Transition]
     , modelDeclarations :: [String]
@@ -84,20 +85,24 @@ inputChannels um = fmap (\ (UppaalChan c) -> "chan " <> c) (modelInputEvents um)
 outputChannels :: UppaalModel -> [String]
 outputChannels um = fmap (\ (UppaalChan c) -> "chan " <> c) (modelOutputEvents um)
 
-inputParameters :: UppaalModel -> [String]
-inputParameters um = fmap (\ (UppaalVar t v) -> t <> " " <> v) (modelInputVars um)
-
-outputParameters :: UppaalModel -> [String]
-outputParameters um = fmap (\ (UppaalVar t v) -> t <> " " <> v) (modelOutputVars um)
+parameters :: Functor f => (t -> f UppaalVar) -> t -> f String
+parameters f um = fmap (\ (UppaalVar t v) -> t <> " " <> v) (f um)
 
 createGlobalDecl :: UppaalModel -> String
 createGlobalDecl um =
     "// Global declarations\n" <>
     foldMap
         (<> ";\n")
-        (inputChannels um <> outputChannels um <> inputParameters um <>
-         outputParameters um) <>
+        (inputChannels um <>
+         outputChannels um <>
+         parameters modelInputVars um <>
+         parameters modelOutputVars um) <>
     fold (modelDeclarations um)
+
+createLocalDeclarations :: UppaalModel -> String
+createLocalDeclarations um =
+  "// Local declarations\n" <>
+  foldMap (<> ";\n") (parameters modelInternalVars um)
 
 -- The global declarations consist of the input/output events and
 -- input/output values.
@@ -113,7 +118,7 @@ templateDecl um =
     selem
         "template"
         ([ mkelem "name" [sattr "x" "0", sattr "y" "0"] [txt (modelName um)]
-         , selem "declaration" [txt "// Declarations\n"]] <>
+         , selem "declaration" [txt (createLocalDeclarations um)]] <>
          fmap makeLocationDecl (modelLocations um) <>
          makeInitialLocation <>
          fmap makeTransitionDecl (modelTransitions um))

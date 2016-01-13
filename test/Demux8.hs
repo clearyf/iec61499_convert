@@ -73,7 +73,8 @@ demux8Block =
                               }]
         }
       , basicFb = BasicFunctionBlock
-        { bfbStates = [ ECState
+        { bfbVariables = []
+        , bfbStates = [ ECState
                         { ecStateName = "START"
                         , ecStateComment = "Initial State"
                         , ecStateActions = []
