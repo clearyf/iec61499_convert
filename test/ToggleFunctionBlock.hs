@@ -58,19 +58,19 @@ toggleFunctionBlock =
         , bfbTransitions = [ ECTransition
                              { ecTransitionSource = "START"
                              , ecTransitionDestination = "Off"
-                             , ecTransitionCondition = "1"
+                             , ecTransitionCondition = StInt 1
                              , ecTransitionPosition = (-770.4371) :+ 464.92926
                              }
                            , ECTransition
                              { ecTransitionSource = "Off"
                              , ecTransitionDestination = "On"
-                             , ecTransitionCondition = "Toggle"
+                             , ecTransitionCondition = StLValue (SimpleLValue "Toggle")
                              , ecTransitionPosition = (-404.7159) :+ 544.991
                              }
                            , ECTransition
                              { ecTransitionSource = "On"
                              , ecTransitionDestination = "Off"
-                             , ecTransitionCondition = "Toggle"
+                             , ecTransitionCondition = StLValue (SimpleLValue "Toggle")
                              , ecTransitionPosition = (-372.27936) :+ (-574.5198)
                              }]
         , bfbAlgorithms = [ ECAlgorithm

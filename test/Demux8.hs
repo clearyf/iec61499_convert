@@ -92,13 +92,13 @@ demux8Block =
         , bfbTransitions = [ ECTransition
                              { ecTransitionSource = "START"
                              , ecTransitionDestination = "REQ"
-                             , ecTransitionCondition = "REQ"
+                             , ecTransitionCondition = StLValue (SimpleLValue "REQ")
                              , ecTransitionPosition = 175.91646 :+ 411.85184
                              }
                            , ECTransition
                              { ecTransitionSource = "REQ"
                              , ecTransitionDestination = "START"
-                             , ecTransitionCondition = "1"
+                             , ecTransitionCondition = StInt 1
                              , ecTransitionPosition = (-280.46118) :+ (-245.7205)
                              }]
         , bfbAlgorithms = [ ECAlgorithm

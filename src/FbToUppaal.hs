@@ -231,8 +231,8 @@ transitions fb = basicTransitions <> otherTransitions
       where
         gd =
             fromMaybe
-            (error ("Couldn't parse guard: " <> cond))
-            (parseGuard events cond)
+                (error ("Couldn't parse guard: " <> (show cond)))
+                (parseGuard events cond)
 
 guardToSync :: MonadPlus m => Guard -> m String
 guardToSync (Guard (Just s) _) = pure (inputChannelPrefix <> s <> "?")

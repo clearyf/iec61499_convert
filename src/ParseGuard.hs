@@ -2,18 +2,16 @@ module ParseGuard (Guard(..), parseGuard) where
 
 import BasePrelude
 import Data.Set (Set)
-import ParseSt (Value(..), StBinaryOp(..), LValue(..), parseValue)
+import ParseSt (Value(..), StBinaryOp(..), LValue(..))
 
 data Guard = Guard
     { guardEvent :: Maybe String
     , guardCondition :: Maybe Value
     } deriving (Show,Eq)
 
-parseGuard :: Set String -> String -> Maybe Guard
-parseGuard events str = do
-  v <- tokenizeGuard str
-  justEvent events v <|>
-    eventCondition events (rewriteValue events v) <|>
+parseGuard :: Set String -> Value -> Maybe Guard
+parseGuard events v =
+    justEvent events v <|> eventCondition events (rewriteValue events v) <|>
     justCondition v
 
 justEvent :: Set String -> Value -> Maybe Guard
@@ -63,6 +61,3 @@ leftRotate :: Value -> Value
 leftRotate (StBinaryOp op1 (StBinaryOp op2 vll vlr) vr) =
   StBinaryOp op2 vll (StBinaryOp op1 vlr vr)
 leftRotate x = x
-
-tokenizeGuard :: String -> Maybe Value
-tokenizeGuard str = either (const mzero) pure (parseValue str)

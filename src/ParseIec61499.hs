@@ -5,7 +5,9 @@ module ParseIec61499
        where
 
 import BasePrelude hiding (orElse)
-import ParseSt (parseSt, Statement, IECVariable(..), iECtypeFromString)
+import ParseSt
+       (parseSt, parseValue, Statement, IECVariable(..),
+        iECtypeFromString, Value(..))
 import Text.XML.HXT.Core
        (ArrowXml, SysConfig, XmlTree, arr2, arr3, arr4, constA, deep,
         isElem, getAttrValue, hasName, listA, no, orElse, readDocument,
@@ -43,7 +45,7 @@ data ECState = ECState
 data ECTransition = ECTransition
     { ecTransitionSource :: String
     , ecTransitionDestination :: String
-    , ecTransitionCondition :: String
+    , ecTransitionCondition :: Value
     , ecTransitionPosition :: Complex Float
     } deriving (Show,Eq)
 
@@ -123,7 +125,7 @@ getECTransition =
     atTag "ECTransition" >>>
     getAttrValue "Source" &&&
     getAttrValue "Destination" &&&
-    getAttrValue "Condition" &&&
+    (getAttrValue "Condition" >>^ either (error . show) id . parseValue) &&&
     getCoords >>>
     arr4 ECTransition
 
