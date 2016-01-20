@@ -10,6 +10,7 @@ import qualified Data.DList as DList
 import qualified Data.List.NonEmpty as NE
 import           Data.Map.Strict ((!), Map)
 import qualified Data.Map.Strict as Map
+import           Data.Set (Set)
 import qualified Data.Set as Set
 import           OutputUppaal
        (UppaalModel(..), AState(..), UppaalChan(..), UppaalVar(..),
@@ -373,3 +374,40 @@ showMonoValue StNot v = "!" <> showValue v
 showLocation :: LValue -> String
 showLocation (SimpleLValue name) = name
 showLocation (ArrayLValue name idx) = name <> showValue idx
+
+createLibraryFunctions :: Set String -> String
+createLibraryFunctions = foldMap f
+  where
+    f str = "void " <> str <> "()\n{\n}\n"
+
+fbFunctions :: FunctionBlock -> Set String
+fbFunctions fb =
+    foldMap (extractFromStatement . ecAlgorithmStText) (bfbAlgorithms (basicFb fb)) <>
+    foldMap (extractFromValue . ecTransitionCondition) (bfbTransitions (basicFb fb))
+
+-- | Extracts the functions from the supplied statements.
+extractFromStatement :: Foldable t => t Statement -> Set String
+extractFromStatement lst = foldMap statement lst
+  where
+    statement (Assignment lv v) = extractFromLValue lv <> extractFromValue v
+    statement (If v tb) = extractFromValue v <> extractFromStatement tb
+    statement (IfElse v tb eb) =
+        extractFromValue v <> extractFromStatement tb <> extractFromStatement eb
+    statement (For _ _ _ _ sts) = extractFromStatement sts
+    statement (While v sts) = extractFromValue v <> extractFromStatement sts
+    statement (Repeat sts v) = extractFromValue v <> extractFromStatement sts
+    statement (Case v sts eb) =
+        extractFromValue v <> extractFromStatement (foldMap snd sts) <> extractFromStatement eb
+    statement _ = mempty
+
+extractFromLValue :: LValue -> Set String
+extractFromLValue (SimpleLValue _) = mempty
+extractFromLValue (ArrayLValue _ v) = extractFromValue v
+
+extractFromValue :: Value -> Set String
+extractFromValue (StMonoOp _ v) = extractFromValue v
+extractFromValue (StBinaryOp _ v1 v2) = extractFromValue v1 <> extractFromValue v2
+extractFromValue (StLValue lv) = extractFromLValue lv
+extractFromValue (StFunc s vs) = Set.singleton s <> foldMap extractFromValue vs
+extractFromValue (StSubValue v) = extractFromValue v
+extractFromValue _ = mempty
