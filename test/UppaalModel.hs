@@ -16,36 +16,43 @@ uppaalModel =
                              AState
                               { stateName = "__start_Off"
                               , stateId = StateId 4
+                              , statePosition = 646.1995 :+ 894.9202
                               }
                        , UrgentLocation
                              AState
                               { stateName = "__action_Off__Update_TurnOff_"
                               , stateId = StateId 5
+                              , statePosition = 676.1995 :+ 894.9202
                               }
                        , Location
                              AState
                               { stateName = "Off"
                               , stateId = StateId 6
+                              , statePosition = 706.1995 :+ 894.9202
                               }
                        , UrgentLocation
                              AState
                               { stateName = "__start_On"
                               , stateId = StateId 1
+                              , statePosition = 49.98699 :+ (-187.8113)
                               }
                        , UrgentLocation
                              AState
                               { stateName = "__action_On__Update_TurnOn_"
                               , stateId = StateId 2
+                              , statePosition = 79.98699 :+ (-187.8113)
                               }
                        , Location
                              AState
                               { stateName = "On"
                               , stateId = StateId 3
+                              , statePosition = 109.98699 :+ (-187.8113)
                               }
                        , Location
                              AState
                               { stateName = "START"
                               , stateId = StateId 0
+                              , statePosition = (-305.01816) :+ 461.2027
                               }]
     , modelTransitions = [ Transition
                            { transitionSrc = StateId 0

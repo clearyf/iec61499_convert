@@ -37,12 +37,14 @@ data ECState = ECState
     { ecStateName :: String
     , ecStateComment :: String
     , ecStateActions :: [ECAction]
+    , ecStatePosition :: Complex Float
     } deriving (Show,Eq)
 
 data ECTransition = ECTransition
     { ecTransitionSource :: String
     , ecTransitionDestination :: String
     , ecTransitionCondition :: String
+    , ecTransitionPosition :: Complex Float
     } deriving (Show,Eq)
 
 data ECAction = ECAction
@@ -92,6 +94,13 @@ getVariable =
     getAttrValueOrEmpty "Comment" >>>
     arr3 Variable
 
+getCoords :: ArrowXml a => a XmlTree (Complex Float)
+getCoords =
+    getAttrValue "x" &&& getAttrValue "y" >>>
+    arr2
+        (\i j ->
+              mkPolar (read i) (read j))
+
 getListAtElem :: ArrowXml a => a XmlTree c -> String -> a XmlTree [c]
 getListAtElem f tag = (listA f <<< deep (hasName tag)) `orElse` constA mempty
 
@@ -99,8 +108,10 @@ getECState :: ArrowXml a => a XmlTree ECState
 getECState =
     atTag "ECState" >>>
     getAttrValue "Name" &&&
-    getAttrValue "Comment" &&& listA getECAction `orElse` constA mempty >>>
-    arr3 ECState
+    getAttrValue "Comment" &&&
+    listA getECAction `orElse` constA mempty &&&
+    getCoords >>>
+    arr4 ECState
 
 getECAction :: ArrowXml a => a XmlTree ECAction
 getECAction =
@@ -111,8 +122,10 @@ getECTransition :: ArrowXml a => a XmlTree ECTransition
 getECTransition =
     atTag "ECTransition" >>>
     getAttrValue "Source" &&&
-    getAttrValue "Destination" &&& getAttrValue "Condition" >>>
-    arr3 ECTransition
+    getAttrValue "Destination" &&&
+    getAttrValue "Condition" &&&
+    getCoords >>>
+    arr4 ECTransition
 
 -- Parses a string into an XmlTree, then writes it back out using the
 -- 'withOutputPLAIN' option which disables all entity substitutions.

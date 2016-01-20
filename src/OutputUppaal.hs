@@ -43,6 +43,7 @@ data Transition = Transition
 data AState = AState
     { stateName :: String
     , stateId :: StateId
+    , statePosition :: Complex Float
     } deriving (Show,Eq)
 
 --------------------------------------------------------------------------------
@@ -129,11 +130,11 @@ makeLocationDecl l =
         Location s -> mk s mempty
         UrgentLocation s -> mk s [eelem "urgent"]
   where
-    mk (AState n i) extra =
+    mk (AState n i coord) extra =
         mkelem
             "location"
-            [sattr "id" (showStateId i), sattr "x" "0", sattr "y" "0"]
-            ([mkelem "name" [sattr "x" "0", sattr "y" "0"] [txt n]] <> extra)
+            [sattr "id" (showStateId i), sattr "x" (show (realPart coord)), sattr "y" (show (imagPart coord))]
+            ([mkelem "name" [sattr "x" (show ((realPart coord) + 10)), sattr "y" (show ((imagPart coord) + 10))] [txt n]] <> extra)
 
 makeTransitionDecl :: ArrowXml a => Transition -> a n XmlTree
 makeTransitionDecl (Transition src dest sync guard' update) =

@@ -35,6 +35,7 @@ toggleFunctionBlock =
                         { ecStateName = "START"
                         , ecStateComment = "Initial State"
                         , ecStateActions = []
+                        , ecStatePosition = (-305.01816) :+ 461.2027
                         }
                       , ECState
                         { ecStateName = "On"
@@ -43,6 +44,7 @@ toggleFunctionBlock =
                                              { ecActionAlgorithm = "TurnOn"
                                              , ecActionOutput = "Update"
                                              }]
+                        , ecStatePosition = 109.98699 :+ (-187.8113)
                         }
                       , ECState
                         { ecStateName = "Off"
@@ -51,21 +53,25 @@ toggleFunctionBlock =
                                              { ecActionAlgorithm = "TurnOff"
                                              , ecActionOutput = "Update"
                                              }]
+                        , ecStatePosition = 706.1995 :+ 894.9202
                         }]
         , bfbTransitions = [ ECTransition
                              { ecTransitionSource = "START"
                              , ecTransitionDestination = "Off"
                              , ecTransitionCondition = "1"
+                             , ecTransitionPosition = (-770.4371) :+ 464.92926
                              }
                            , ECTransition
                              { ecTransitionSource = "Off"
                              , ecTransitionDestination = "On"
                              , ecTransitionCondition = "Toggle"
+                             , ecTransitionPosition = (-404.7159) :+ 544.991
                              }
                            , ECTransition
                              { ecTransitionSource = "On"
                              , ecTransitionDestination = "Off"
                              , ecTransitionCondition = "Toggle"
+                             , ecTransitionPosition = (-372.27936) :+ (-574.5198)
                              }]
         , bfbAlgorithms = [ ECAlgorithm
                             { ecAlgorithmName = "TurnOn"

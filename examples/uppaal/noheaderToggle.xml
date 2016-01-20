@@ -17,30 +17,30 @@ void TurnOff()
     <declaration>// Local declarations
 int[0,65536] Blah;
 </declaration>
-    <location id="id4" x="0" y="0">
-      <name x="0" y="0">__start_Off</name>
+    <location id="id4" x="646.1995" y="894.9202">
+      <name x="656.1995" y="904.9202">__start_Off</name>
       <urgent/>
     </location>
-    <location id="id5" x="0" y="0">
-      <name x="0" y="0">__action_Off__Update_TurnOff_</name>
+    <location id="id5" x="676.1995" y="894.9202">
+      <name x="686.1995" y="904.9202">__action_Off__Update_TurnOff_</name>
       <urgent/>
     </location>
-    <location id="id6" x="0" y="0">
-      <name x="0" y="0">Off</name>
+    <location id="id6" x="706.1995" y="894.9202">
+      <name x="716.1995" y="904.9202">Off</name>
     </location>
-    <location id="id1" x="0" y="0">
-      <name x="0" y="0">__start_On</name>
+    <location id="id1" x="49.98699" y="-187.8113">
+      <name x="59.98699" y="-177.8113">__start_On</name>
       <urgent/>
     </location>
-    <location id="id2" x="0" y="0">
-      <name x="0" y="0">__action_On__Update_TurnOn_</name>
+    <location id="id2" x="79.98699" y="-187.8113">
+      <name x="89.98699" y="-177.8113">__action_On__Update_TurnOn_</name>
       <urgent/>
     </location>
-    <location id="id3" x="0" y="0">
-      <name x="0" y="0">On</name>
+    <location id="id3" x="109.98699" y="-187.8113">
+      <name x="119.98699" y="-177.8113">On</name>
     </location>
-    <location id="id0" x="0" y="0">
-      <name x="0" y="0">START</name>
+    <location id="id0" x="-305.01816" y="461.2027">
+      <name x="-295.01816" y="471.2027">START</name>
     </location>
     <init ref="id0"/>
     <transition>

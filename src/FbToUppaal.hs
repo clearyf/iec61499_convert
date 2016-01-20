@@ -139,22 +139,35 @@ getStatesMap basicStates =
                   (fmap ecStateName basicStates)
                   (evalState (mapM getLocationsFromState basicStates) 0)))
 
+-- | Calculates the states from each input state
+--
+-- If there are no actions for the state, then the initState &
+-- actionStates will both be empty.
 getLocationsFromState :: ECState -> State Int ([AState],AState)
 getLocationsFromState state = do
+    let endCoord = ecStatePosition state
+    let offset = 30
+    let startCoord =
+            endCoord -
+            (offset * (fromIntegral (length (ecStateActions state) + 1)) :+ 0)
     initState <-
         if null (ecStateActions state)
             then pure mempty
-            else fmap (: mempty) (createState locationStartPrefix state)
+            else fmap
+                     (: mempty)
+                     (createState locationStartPrefix startCoord state)
     actionStates <-
-        mapM (createState (locationEventPrefix state)) (ecStateActions state)
-    destState <- createState ecStateName state
+        mapM
+            (uncurry (createState (locationEventPrefix state)))
+            (zip (tail (iterate (+ (offset :+ 0)) startCoord)) (ecStateActions state))
+    destState <- createState ecStateName endCoord state
     pure (initState <> actionStates, destState)
 
 locationsToMap :: [Location] -> Map String StateId
 locationsToMap lst = Map.fromList (fmap f lst)
   where
-    f (UrgentLocation (AState s i)) = (s, i)
-    f (Location (AState s i)) = (s, i)
+    f (UrgentLocation (AState s i _)) = (s, i)
+    f (Location (AState s i _)) = (s, i)
 
 advancedTransitions :: Map String StateId -> ECState -> [Transition]
 advancedTransitions m s
@@ -166,7 +179,8 @@ advancedTransitions m s
             (m ! a)
             (m ! b)
             (makeSyncStatement act)
-            mzero -- Guard is always empty for advanced transitions.
+            -- Guard is always empty for advanced transitions.
+            mzero
             (makeUpdateStatement act)
     emptyAction = ECAction mempty mempty
     acts = ecStateActions s <> repeat emptyAction
@@ -185,10 +199,10 @@ makeSyncStatement action
   | null (ecActionOutput action) = mzero
   | otherwise = pure (outputChannelPrefix <> ecActionOutput action <> "!")
 
-createState :: (t -> String) -> t -> State Int AState
-createState f x = do
+createState :: (t -> String) -> Complex Float -> t -> State Int AState
+createState f coord x = do
     nextId <- getNextId
-    pure (AState (f x) nextId)
+    pure (AState (f x) nextId coord)
 
 getBasicStates :: FunctionBlock -> [ECState]
 getBasicStates = bfbStates . basicFb
@@ -207,7 +221,7 @@ transitions fb = basicTransitions <> otherTransitions
     otherTransitions =
         foldMap (advancedTransitions (locationsToMap (locations fb))) states
     events = Set.fromList (fmap eventName (eventInputs (interfaceList fb)))
-    createBasicTransition (ECTransition src dest cond) =
+    createBasicTransition (ECTransition src dest cond _) =
         Transition
             (getSrcId src statesMap)
             (getDestId dest statesMap)
@@ -232,14 +246,14 @@ guardToGuard _ = mzero
 
 getSrcId :: String -> StateMap -> StateId
 getSrcId s (StateMap m) =
-    let (AState _ i) = snd (m ! s)
+    let (AState _ i _) = snd (m ! s)
     in i
 
 getDestId :: String -> StateMap -> StateId
 getDestId s (StateMap m)
   | null (fst (m ! s)) = getSrcId s (StateMap m)
   | otherwise =
-      let (AState _ i) = head (fst (m ! s))
+      let (AState _ i _) = head (fst (m ! s))
       in i
 
 anAlgorithm :: ECAlgorithm -> String
