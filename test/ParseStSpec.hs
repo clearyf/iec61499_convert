@@ -16,6 +16,8 @@ spec = do
         Right [Assignment (SimpleLValue "Value") (StBool False)]
       parseSt "Value := 2 ** 3;" `shouldBe`
         Right [Assignment (SimpleLValue "Value") (StBinaryOp StExp (StInt 2) (StInt 3))]
+      parseSt "Value := 2 <> 3;" `shouldBe`
+        Right [Assignment (SimpleLValue "Value") (StBinaryOp StNotEquals (StInt 2) (StInt 3))]
       parseSt "Value := -303;" `shouldBe`
         Right [Assignment (SimpleLValue "Value") (StMonoOp StNegate (StInt 303))]
       parseSt "Value := -0.333;" `shouldBe`

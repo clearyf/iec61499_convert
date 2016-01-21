@@ -13,7 +13,7 @@ import qualified Data.Set as Set
 import           Text.Megaparsec
        (ParseError, ParsecT, (<?>), between, char, choice, digitChar, eof,
         letterChar, lookAhead, manyTill, noneOf, option, parse, satisfy,
-        sepBy, sepBy1, someTill, spaceChar, string, try)
+        sepBy, sepBy1, someTill, spaceChar, string, try, notFollowedBy)
 import           Text.Megaparsec.Expr (Operator(..), makeExprParser)
 import qualified Text.Megaparsec.Lexer as L
 import           Text.Megaparsec.String (Parser)
@@ -288,7 +288,9 @@ operatorTable= [[prefix "-" (StMonoOp StNegate)
                ,[binary "+" (StBinaryOp StAddition)
                 ,binary "-" (StBinaryOp StSubtract)]
                ,[binary "<=" (StBinaryOp StLessThanEquals)
-                ,binary "<" (StBinaryOp StLessThan)
+                 -- This op is special as it’s only valid if the
+                 -- following char isn’t ’>’.
+                ,lessThanOp
                 ,binary ">=" (StBinaryOp StGreaterThanEquals)
                 ,binary ">" (StBinaryOp StGreaterThan)]
                ,[binary "=" (StBinaryOp StEquals)
@@ -347,11 +349,18 @@ lexBool :: Parser Value
 lexBool = try (symbol "TRUE" $> StBool True <|>
                symbol "FALSE" $> StBool False)
 
+lessThanOp :: Operator Parser Value
+lessThanOp =
+    InfixL
+        (try
+             (symbol "<" *> notFollowedBy (symbol ">") *>
+              pure (StBinaryOp StLessThan)))
+
 binary :: String -> (a -> a -> a) -> Operator Parser a
-binary name f = InfixL (reservedOp name >> return f)
+binary name f = InfixL (reservedOp name *> pure f)
 
 prefix :: String -> (a -> a) -> Operator Parser a
-prefix name f = Prefix (reservedOp name >> return f)
+prefix name f = Prefix (reservedOp name *> pure f)
 
 reservedOp :: String -> Parser String
 reservedOp = try . lexeme . string
