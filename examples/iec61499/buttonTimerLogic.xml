@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE FBType SYSTEM "../data/Schemas/LibraryElement.dtd">
+<FBType Name="ButtonTimerLogic" Comment="Basic Function Block Type" Namespace="Loytec.Automation">
+  <Attribute Name="Configuration.FB.IDCounter" Value="0" />
+  <Identification Standard="61499-2" />
+  <VersionInfo Organization="nxtControl GmbH" Version="0.0" Author="trauscher" Date="5/18/2015" Remarks="Template" />
+  <InterfaceList>
+    <EventInputs>
+      <Event Name="BUTTON" Comment="Button event">
+        <With Var="button" />
+        <With Var="longSeconds" />
+      </Event>
+      <Event Name="DELAY_DONE" Comment="External delay event">
+        <With Var="button" />
+      </Event>
+    </EventInputs>
+    <EventOutputs>
+      <Event Name="DELAY_START" Comment="Start external delay">
+        <With Var="delayTime" />
+      </Event>
+      <Event Name="DELAY_STOP" Comment="Stop external delay" />
+      <Event Name="PRESSED" Comment="Event when button is pressed" />
+      <Event Name="RELEASED" Comment="Event when button is released" />
+      <Event Name="SHORT" Comment="Event when short press is detected" />
+      <Event Name="LONG" Comment="Event when long press is detected" />
+    </EventOutputs>
+    <InputVars>
+      <VarDeclaration Name="button" Type="BOOL" Comment="Button input" />
+      <VarDeclaration Name="longSeconds" Type="INT" Comment="Time for long press" />
+    </InputVars>
+    <OutputVars>
+      <VarDeclaration Name="delayTime" Type="INT" Comment="Time for external delay" />
+    </OutputVars>
+  </InterfaceList>
+  <BasicFB>
+    <ECC>
+      <ECState Name="START" Comment="Initial State" x="1344.941" y="109.4117" />
+      <ECState Name="DOWN" x="1412" y="588">
+        <ECAction Algorithm="Down" Output="DELAY_START" />
+        <ECAction Output="PRESSED" />
+      </ECState>
+      <ECState Name="UP" x="1352" y="1760">
+        <ECAction Output="RELEASED" />
+      </ECState>
+      <ECState Name="SHORT" x="952" y="1244">
+        <ECAction Output="SHORT" />
+        <ECAction Output="DELAY_STOP" />
+      </ECState>
+      <ECState Name="LONG" x="1904" y="1236">
+        <ECAction Output="LONG" />
+      </ECState>
+      <ECTransition Source="START" Destination="DOWN" Condition="BUTTON AND button" x="1452.703" y="339.4936">
+        <Attribute Name="Configuration.Transaction.BezierPoints" Value="365.0007,69.16935,369.2571,99.04206" />
+      </ECTransition>
+      <ECTransition Source="DOWN" Destination="SHORT" Condition="BUTTON AND NOT button" x="1090.045" y="858.4637">
+        <Attribute Name="Configuration.Transaction.BezierPoints" Value="274.6995,181.1028,263.5691,238.5397" />
+      </ECTransition>
+      <ECTransition Source="UP" Destination="START" Condition="1" x="425.8619" y="870.0295">
+        <Attribute Name="Configuration.Transaction.BezierPoints" Value="-17.58253,362.587,94.11648,61.57343" />
+      </ECTransition>
+      <ECTransition Source="DOWN" Destination="LONG" Condition="DELAY_DONE" x="1734.34" y="885.2359">
+        <Attribute Name="Configuration.Transaction.BezierPoints" Value="420.9595,196.2395,454.2692,241.9178" />
+      </ECTransition>
+      <ECTransition Source="LONG" Destination="UP" Condition="BUTTON AND NOT button" x="1707.58" y="1501.754">
+        <Attribute Name="Configuration.Transaction.BezierPoints" Value="449.8394,357.7353,412.9742,393.5426" />
+      </ECTransition>
+      <ECTransition Source="SHORT" Destination="UP" Condition="1" x="1186.319" y="1543.395">
+        <Attribute Name="Configuration.Transaction.BezierPoints" Value="285.9843,372.1436,312.6597,406.453" />
+      </ECTransition>
+    </ECC>
+    <Algorithm Name="Down">
+      <ST Text="delayTime := REAL_TO_TIME(longSeconds * 1000.0);&#xD;&#xA;" />
+    </Algorithm>
+  </BasicFB>
+</FBType>

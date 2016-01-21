@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE FBType SYSTEM "../data/Schemas/LibraryElement.dtd">
+<FBType Name="svVerifyBoolLogic" Comment="Basic Function Block Type" Namespace="Loytec.Automation">
+  <Attribute Name="Configuration.FB.IDCounter" Value="0" />
+  <Identification Standard="61499-2" />
+  <VersionInfo Organization="nxtControl GmbH" Version="0.0" Author="Bernd Glatz" Date="3/4/2015" Remarks="Template" />
+  <InterfaceList>
+    <EventInputs>
+      <Event Name="VALUE" Comment="Value input has changed">
+        <With Var="value" />
+      </Event>
+      <Event Name="SETPOINT" Comment="Setpoint has changed">
+        <With Var="value" />
+        <With Var="setpoint" />
+        <With Var="tOn" />
+        <With Var="tOff" />
+      </Event>
+      <Event Name="DELAYEXP" Comment="Delay Expired" />
+    </EventInputs>
+    <EventOutputs>
+      <Event Name="EOOB" Comment="OOB Event">
+        <With Var="OOB" />
+      </Event>
+      <Event Name="START" Comment="Start delay event">
+        <With Var="tDelay" />
+      </Event>
+      <Event Name="STOP" Comment="Stop delay event" />
+    </EventOutputs>
+    <InputVars>
+      <VarDeclaration Name="value" Type="BOOL" Comment="Input value" />
+      <VarDeclaration Name="setpoint" Type="BOOL" Comment="Setpoint" />
+      <VarDeclaration Name="tOn" Type="INT" Comment="Granted time after setpoint becomes TRUE" />
+      <VarDeclaration Name="tOff" Type="INT" Comment="Granted time after setpoint becomes FALSE" />
+    </InputVars>
+    <OutputVars>
+      <VarDeclaration Name="OOB" Type="BOOL" Comment="Out of Bounds indication" />
+      <VarDeclaration Name="tDelay" Type="INT" Comment="Time value for delay" />
+    </OutputVars>
+  </InterfaceList>
+  <BasicFB>
+    <ECC>
+      <ECState Name="START" Comment="Initial State" x="1912.941" y="97.4119" />
+      <ECState Name="OK" x="1276" y="740">
+        <ECAction Algorithm="ok" Output="EOOB" />
+        <ECAction Output="STOP" />
+      </ECState>
+      <ECState Name="WAITING" x="2124" y="1480">
+        <ECAction Algorithm="waiting" Output="START" />
+      </ECState>
+      <ECState Name="OOB" x="2780" y="768.0001">
+        <ECAction Algorithm="oob" Output="EOOB" />
+      </ECState>
+      <ECTransition Source="START" Destination="OK" Condition="SETPOINT AND (setpoint = value)" x="1528.318" y="340.9226">
+        <Attribute Name="Configuration.Transaction.BezierPoints" Value="411.7318,45.39313,350.2948,113.041" />
+      </ECTransition>
+      <ECTransition Source="WAITING" Destination="OOB" Condition="DELAYEXP" x="2638.756" y="1209.103">
+        <Attribute Name="Configuration.Transaction.BezierPoints" Value="648.4499,330.658,689.329,288.0771" />
+      </ECTransition>
+      <ECTransition Source="OK" Destination="OOB" Condition="VALUE AND (value &lt;&gt; setpoint)" x="2053.028" y="454.6079">
+        <Attribute Name="Configuration.Transaction.BezierPoints" Value="446.06,87.94798,584.0724,98.15434" />
+      </ECTransition>
+      <ECTransition Source="OOB" Destination="OK" Condition="value = setpoint" x="2077.188" y="592.0204">
+        <Attribute Name="Configuration.Transaction.BezierPoints" Value="575.7128,137.9949,472.8081,136.9364" />
+      </ECTransition>
+      <ECTransition Source="START" Destination="OOB" Condition="SETPOINT AND (setpoint &lt;&gt; value)" x="2626.277" y="261.6464">
+        <Attribute Name="Configuration.Transaction.BezierPoints" Value="639.9647,36.59803,708.5446,69.24722" />
+      </ECTransition>
+      <ECTransition Source="OK" Destination="WAITING" Condition="SETPOINT AND setpoint &lt;&gt; value" x="1071.692" y="1432.978">
+        <Attribute Name="Configuration.Transaction.BezierPoints" Value="128.6552,330.1644,321.1802,431.9649" />
+      </ECTransition>
+      <ECTransition Source="WAITING" Destination="OK" Condition="setpoint = value" x="1590.343" y="1140.822">
+        <Attribute Name="Configuration.Transaction.BezierPoints" Value="441.1946,326.5779,343.0587,248.9701" />
+      </ECTransition>
+      <ECTransition Source="WAITING" Destination="WAITING" Condition="SETPOINT AND (setpoint &lt;&gt; value)" x="2124" y="1658.336">
+        <Attribute Name="Configuration.Transaction.BezierPoints" Value="563.5319,425.0969,498.4681,425.0969" />
+      </ECTransition>
+    </ECC>
+    <Algorithm Name="ok">
+      <ST Text="&#xD;&#xA;IF OOB THEN&#xD;&#xA;	OOB := FALSE;&#xD;&#xA;ELSE&#xD;&#xA;	EOOB := FALSE;&#xD;&#xA;END_IF;&#xD;&#xA;&#xD;&#xA;IF tDelay &lt;&gt; 0 THEN&#xD;&#xA;	tDelay := 0;&#xD;&#xA;ELSE&#xD;&#xA;	STOP := FALSE;&#xD;&#xA;END_IF;&#xD;&#xA;" />
+    </Algorithm>
+    <Algorithm Name="waiting">
+      <ST Text="&#xD;&#xA;tDelay := SEL(setpoint, tOff, tOn);&#xD;&#xA;SETPOINT := FALSE;&#xD;&#xA;" />
+    </Algorithm>
+    <Algorithm Name="oob">
+      <ST Text="IF NOT OOB THEN&#xD;&#xA;	OOB := TRUE;&#xD;&#xA;ELSE&#xD;&#xA;	EOOB := FALSE;&#xD;&#xA;END_IF;&#xD;&#xA;&#xD;&#xA;IF tDelay &lt;&gt; 0 THEN&#xD;&#xA;	tDelay := 0;&#xD;&#xA;END_IF;&#xD;&#xA;" />
+    </Algorithm>
+  </BasicFB>
+</FBType>
