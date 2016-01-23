@@ -11,8 +11,7 @@ import ParseSt
 import Text.XML.HXT.Core
        (ArrowXml, SysConfig, XmlTree, arr2, arr3, arr4, constA, deep,
         isElem, getAttrValue, hasName, listA, no, orElse, readDocument,
-        root, runX, withOutputPLAIN, withValidate, writeDocumentToString,
-        xread)
+        runX, substAllXHTMLEntityRefs, withValidate)
 
 -- This represents the expected objects in the XML structure.
 data FunctionBlock = FunctionBlock
@@ -129,34 +128,19 @@ getECTransition =
     getCoords >>>
     arr4 ECTransition
 
--- Parses a string into an XmlTree, then writes it back out using the
--- 'withOutputPLAIN' option which disables all entity substitutions.
-entityDecode :: String -> IO [String]
-entityDecode str =
-    runX
-        (root [] [constA str >>> xread] >>>
-         writeDocumentToString [withOutputPLAIN])
-
--- Uses entityDecode, but throws an error if there was a problem, and
--- uses unsafePerformIO to discard the IO monad.
-unescapeXml :: String -> String
-unescapeXml str =
-    case unsafePerformIO (entityDecode str) of
-        [a] -> a
-        _ -> error ("Couldn't decode entities: " <> str)
-
-getSt :: ArrowXml a => a String [Statement]
-getSt =
-    arr unescapeXml >>>
-    arr parseSt >>^
-    either (error . ("ST code in algorithm could not be parsed!" <>) . show) id
+getSt :: String -> [Statement]
+getSt str =
+    parseSt str &
+    either
+        (error . ("ST code in algorithm could not be parsed: " <>) . show)
+        id
 
 getAlgorithm :: ArrowXml a => a XmlTree ECAlgorithm
 getAlgorithm =
     atTag "Algorithm" >>>
     getAttrValue "Name" &&&
     getAttrValueOrEmpty "Comment" &&&
-    (atTag "ST" >>> getAttrValue "Text" >>> getSt) >>>
+    (atTag "ST" >>> substAllXHTMLEntityRefs >>> getAttrValue "Text" >>^ getSt) >>>
     arr3 ECAlgorithm
 
 -- We can presume that there is always an interface list element, but
