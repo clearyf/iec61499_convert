@@ -11,9 +11,10 @@ import qualified Data.List.NonEmpty as NE
 import           Data.Set (Set)
 import qualified Data.Set as Set
 import           Text.Megaparsec
-       (ParseError, ParsecT, (<?>), between, char, choice, digitChar, eof,
-        letterChar, lookAhead, manyTill, noneOf, option, parse, satisfy,
-        sepBy, sepBy1, someTill, spaceChar, string, try, notFollowedBy)
+       (ParseError, ParsecT, (<?>), alphaNumChar, between, char, choice,
+        eof, letterChar, lookAhead, manyTill, noneOf, option, parse,
+        satisfy, sepBy, sepBy1, someTill, spaceChar, string, try,
+        notFollowedBy)
 import           Text.Megaparsec.Expr (Operator(..), makeExprParser)
 import qualified Text.Megaparsec.Lexer as L
 import           Text.Megaparsec.String (Parser)
@@ -197,8 +198,8 @@ parseIf =
              <?> "statement"
   where
     parseIfToThen = try (symbol "IF") *> value <* symbol "THEN"
-    parseFirstBranch = statementsTill (symbol "ELSE")
-    parseLastBranch = statementsTill (symbol "END_IF")
+    parseFirstBranch = statementsTill (try (symbol "ELSE"))
+    parseLastBranch = statementsTill (try (symbol "END_IF"))
     -- If the first branch can't be parsed because there is no "ELSE"
     -- clause, then the "last" branch parsed is actually the true
     -- branch and not the false one.
@@ -212,18 +213,18 @@ parseFor =
       <*> (assignmentOp *> lexInt)
       <*> (symbol "TO" *> lexInt)
       <*> optional (symbol "BY" *> lexInt)
-      <*> (symbol "DO" *> statementsTill (symbol "END_FOR"))
+      <*> (symbol "DO" *> statementsTill (try (symbol "END_FOR")))
       <?> "FOR loop"
 
 parseWhile :: Parser Statement
 parseWhile =
   While <$> (try (symbol "WHILE") *> value <* symbol "DO")
-        <*> statementsTill (symbol "END_WHILE")
+        <*> statementsTill (try (symbol "END_WHILE"))
         <?> "WHILE loop"
 
 parseRepeat :: Parser Statement
 parseRepeat =
-  Repeat <$> (try (symbol "REPEAT") *> statementsTill (symbol "UNTIL"))
+  Repeat <$> (try (symbol "REPEAT") *> statementsTill (try (symbol "UNTIL")))
          <*> value <* symbol "END_REPEAT"
          <?> "REPEAT loop"
 
@@ -271,11 +272,11 @@ value = makeExprParser terminals operatorTable <?> "value"
 
 terminals :: Parser Value
 terminals = parseSubValue <|>
-            parseFunction <|>
             number <|>
             lexBool <|>
             parseTime <|>
-            fmap StLValue lValue
+            fmap StLValue (try lValue) <|>
+            parseFunction
 
 operatorTable:: [[Operator Parser Value]]
 operatorTable= [[prefix "-" (StMonoOp StNegate)
@@ -302,8 +303,7 @@ operatorTable= [[prefix "-" (StMonoOp StNegate)
                 ,binary "|" (StBinaryOp StOr)]]
 
 parseFunction :: Parser Value
-parseFunction = StFunc <$> try (identifier <* lookAhead (symbol "("))
-                       <*> parens parseArgs
+parseFunction = StFunc <$> identifier <*> parens parseArgs
 
 parseArgs :: Parser [Value]
 parseArgs = value `sepBy` comma
@@ -326,7 +326,7 @@ keywords = Set.fromList ["IF", "THEN", "ELSE", "END_IF", "FOR", "END_FOR"
                          "END_WHILE", "REPEAT", "END_REPEAT", "EXIT", "RETURN"]
 
 parseTime :: Parser Value
-parseTime = lexeme (symbol "t#" *> (try parseShortTime <|> parseLongTime))
+parseTime = lexeme (try (symbol "t#") *> (try parseShortTime <|> parseLongTime))
 
 parseLongTime :: Parser Value
 parseLongTime = StTime . sum <$> parseStuff `someTill` lookAhead notDigit
@@ -380,12 +380,12 @@ number = fmap (either StInt StFloat) lexNumber
 identifier :: Parser String
 identifier = do
     word <- lexeme ((:) <$> letterChar
-                        <*> many (letterChar <|> digitChar <|> char '_'))
+                        <*> many (alphaNumChar <|> char '_'))
     guard (word `notElem` keywords) <?> "non-keyword"
     pure word
 
 lValue :: Parser LValue
-lValue = f <$> identifier <*> optional (brackets value)
+lValue = f <$> identifier <*> optional (brackets value) <* notFollowedBy (symbol "(")
   where
     f name Nothing = SimpleLValue name
     f name (Just s) = ArrayLValue name s

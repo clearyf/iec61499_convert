@@ -16,6 +16,10 @@ spec = do
         Right [Assignment (SimpleLValue "Value") (StBool False)]
       parseSt "Value := 2 ** 3;" `shouldBe`
         Right [Assignment (SimpleLValue "Value") (StBinaryOp StExp (StInt 2) (StInt 3))]
+      parseSt "Value := 2 > 3;" `shouldBe`
+        Right [Assignment (SimpleLValue "Value") (StBinaryOp StGreaterThan (StInt 2) (StInt 3))]
+      parseSt "Value := 2 < 3;" `shouldBe`
+        Right [Assignment (SimpleLValue "Value") (StBinaryOp StLessThan (StInt 2) (StInt 3))]
       parseSt "Value := 2 <> 3;" `shouldBe`
         Right [Assignment (SimpleLValue "Value") (StBinaryOp StNotEquals (StInt 2) (StInt 3))]
       parseSt "Value := -303;" `shouldBe`
@@ -95,3 +99,18 @@ spec = do
                       ,StBinaryOp StMultiply
                        (StFunc "abs" [StLValue (SimpleLValue "ao")])
                        (StInt 3)])]
+  it "svVerifyBoolLogic" $
+    do parseSt
+           "IF OOB THEN OOB := FALSE; ELSE EOOB := FALSE;END_IF;IF tDelay <> 0 THEN tDelay := 0;ELSE STOP := FALSE; END_IF;" `shouldBe`
+           Right
+               [ IfElse
+                     (StLValue (SimpleLValue "OOB"))
+                     [Assignment (SimpleLValue "OOB") (StBool False)]
+                     [Assignment (SimpleLValue "EOOB") (StBool False)]
+               , IfElse
+                     (StBinaryOp
+                          StNotEquals
+                          (StLValue (SimpleLValue "tDelay"))
+                          (StInt 0))
+                     [Assignment (SimpleLValue "tDelay") (StInt 0)]
+                     [Assignment (SimpleLValue "STOP") (StBool False)]]
