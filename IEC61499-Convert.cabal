@@ -49,6 +49,7 @@ test-suite test_iec61499_convert
                      , ButtonTimerLogic
                      , FbToUppaal
                      , FbToUppaalSpec
+                     , MinMax
                      , OutputModelSpec
                      , OutputUppaal
                      , ParseGuard

@@ -8,13 +8,15 @@ import ToggleFunctionBlock
 import Demux8
 import ButtonTimerLogic
 import SvVerifyBoolLogic
+import MinMax
 
 spec :: Spec
 spec = do
-    checkFile toggleFunctionBlock "examples/iec61499/toggle_fb.xml"
-    checkFile demux8Block "examples/iec61499/demux8.xml"
     checkFile buttonTimerLogicBlock "examples/iec61499/buttonTimerLogic.xml"
+    checkFile demux8Block "examples/iec61499/demux8.xml"
+    checkFile minMaxBlock "examples/iec61499/minMax.xml"
     checkFile svVerifyBoolLogicBlock "examples/iec61499/svVerifyBoolLogic.xml"
+    checkFile toggleFunctionBlock "examples/iec61499/toggle_fb.xml"
 
 checkFile :: [FunctionBlock] -> FilePath -> Spec
 checkFile block filename = do
