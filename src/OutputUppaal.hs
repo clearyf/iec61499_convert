@@ -53,29 +53,29 @@ data AState = AState
 -- the template declarations (locations & transitions) and finally the
 -- system declaration.
 
--- uppaalDtd :: String
--- uppaalDtd = "http://www.it.uu.se/research/group/darts/uppaal/flat-1_1.dtd"
+uppaalDtd :: String
+uppaalDtd = "http://www.it.uu.se/research/group/darts/uppaal/flat-1_1.dtd"
 
--- uppaalDecl :: String
--- uppaalDecl = "-//Uppaal Team//DTD Flat System 1.1//EN"
+uppaalDecl :: String
+uppaalDecl = "-//Uppaal Team//DTD Flat System 1.1//EN"
 
--- dtd = addDoctypeDecl "nta" uppaalDecl uppaalDtd
+addDtd :: ArrowXml a => a XmlTree XmlTree
+addDtd = addDoctypeDecl "nta" uppaalDecl uppaalDtd
 
-outputUppaalToFile :: UppaalModel -> String -> IO [XmlTree]
-outputUppaalToFile um name =
+outputModel :: IOSLA (XIOState ()) XmlTree c -> UppaalModel -> IO [c]
+outputModel outputFunction um =
     runX
         (root [] [selem "nta" [sections]] >>>
-         writeDocument [withXmlPi yes] name)
+         addDtd >>>
+         addXmlPi >>> addXmlPiEncoding "utf-8" >>> outputFunction)
   where
     sections = globalDecl um <+> templateDecl um <+> systemDecl um
+
+outputUppaalToFile :: String -> UppaalModel -> IO [XmlTree]
+outputUppaalToFile name = outputModel (writeDocument [withXmlPi yes] name)
 
 outputUppaal :: UppaalModel -> IO [String]
-outputUppaal um =
-    runX
-        (root [] [selem "nta" [sections]] >>>
-         writeDocumentToString [withIndent yes, withXmlPi yes])
-  where
-    sections = globalDecl um <+> templateDecl um <+> systemDecl um
+outputUppaal = outputModel (writeDocumentToString [withIndent yes, withXmlPi yes])
 
 --------------------------------------------------------------------------------
 -- The global declaration first.

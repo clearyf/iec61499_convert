@@ -17,7 +17,7 @@ theStdout = mempty
 doFile :: FilePath -> IO [XmlTree]
 doFile path = do
     (contents:_) <- readFunctionBlock path
-    outputUppaalToFile (fbToUppaalModel contents) theStdout
+    outputUppaalToFile theStdout (fbToUppaalModel contents)
 
 main :: IO ()
 main = do
