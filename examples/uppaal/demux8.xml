@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE nta PUBLIC "-//Uppaal Team//DTD Flat System 1.1//EN" "http://www.it.uu.se/research/group/darts/uppaal/flat-1_1.dtd">
+<nta>
+  <declaration>// Global declarations
+chan ic_REQ;
+chan oc_CNF;
+int[-32768,32767] inValue;
+bool outValue1;
+bool outValue2;
+bool outValue3;
+bool outValue4;
+bool outValue5;
+bool outValue6;
+bool outValue7;
+bool outValue8;
+void REQ()
+{
+	if (inValue = 1)
+	{
+		outValue1 = true;
+	}
+	else
+	{
+		outValue1 = false;
+	}
+	if (inValue = 2)
+	{
+		outValue2 = true;
+	}
+	else
+	{
+		outValue2 = false;
+	}
+	if (inValue = 3)
+	{
+		outValue3 = true;
+	}
+	else
+	{
+		outValue3 = false;
+	}
+	if (inValue = 4)
+	{
+		outValue4 = true;
+	}
+	else
+	{
+		outValue4 = false;
+	}
+	if (inValue = 5)
+	{
+		outValue5 = true;
+	}
+	else
+	{
+		outValue5 = false;
+	}
+	if (inValue = 6)
+	{
+		outValue6 = true;
+	}
+	else
+	{
+		outValue6 = false;
+	}
+	if (inValue = 7)
+	{
+		outValue7 = true;
+	}
+	else
+	{
+		outValue7 = false;
+	}
+	if (inValue = 8)
+	{
+		outValue8 = true;
+	}
+	else
+	{
+		outValue8 = false;
+	}
+}
+</declaration>
+  <template>
+    <name x="0" y="0">Demux8</name>
+    <declaration>// Local declarations
+</declaration>
+    <location id="id1" x="49.98699" y="-187.8113">
+      <name x="59.98699" y="-177.8113">__start_REQ</name>
+      <urgent/>
+    </location>
+    <location id="id2" x="79.98699" y="-187.8113">
+      <name x="89.98699" y="-177.8113">__action_REQ__CNF_REQ_</name>
+      <urgent/>
+    </location>
+    <location id="id3" x="109.98699" y="-187.8113">
+      <name x="119.98699" y="-177.8113">REQ</name>
+    </location>
+    <location id="id0" x="-305.01816" y="461.2027">
+      <name x="-295.01816" y="471.2027">START</name>
+    </location>
+    <init ref="id0"/>
+    <transition>
+      <source ref="id0"/>
+      <target ref="id1"/>
+      <label kind="synchronisation" x="0" y="0">ic_REQ?</label>
+    </transition>
+    <transition>
+      <source ref="id3"/>
+      <target ref="id0"/>
+    </transition>
+    <transition>
+      <source ref="id1"/>
+      <target ref="id2"/>
+      <label kind="synchronisation" x="0" y="0">oc_CNF!</label>
+      <label kind="update" x="0" y="0">REQ();</label>
+    </transition>
+    <transition>
+      <source ref="id2"/>
+      <target ref="id3"/>
+    </transition>
+  </template>
+  <system>// System setup
+Demux8blk = Demux8();
+system Demux8blk;
+</system>
+</nta>

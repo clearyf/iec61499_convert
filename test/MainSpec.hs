@@ -21,9 +21,9 @@ spec = do
     -- -- checkFile
     -- --     "examples/iec61499/compareString.xml"
     -- --     "examples/uppaal/noheaderToggle.xml"
-    -- checkFile
-    --     "examples/iec61499/demux8.xml"
-    --     "examples/uppaal/demux8.xml"
+    checkFile
+        "examples/iec61499/demux8.xml"
+        "examples/uppaal/demux8.xml"
     -- -- checkFile
     -- --     "examples/iec61499/hcSetpointCalcLogic.xml"
     -- --     "examples/uppaal/noheaderToggle.xml"
