@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE FBType SYSTEM "../data/Schemas/LibraryElement.dtd">
+<FBType GUID="92FBD680171B668B" Name="HVglobalError" Comment="Basic Function Block Type" Namespace="Loytec.HVAC">
+  <Attribute Name="Configuration.FB.IDCounter" Value="0" />
+  <Identification Standard="61499-2" />
+  <VersionInfo Organization="nxtControl GmbH" Version="0.0" Author="bglatz" Date="11/17/2015" Remarks="Template" />
+  <InterfaceList>
+    <EventInputs>
+      <Event Name="ERR_LOC" Comment="Normal Execution Request">
+        <With Var="errLoc" />
+      </Event>
+      <Event Name="ERR_GLOBAL">
+        <With Var="errGlobal" />
+      </Event>
+      <Event Name="EXP_DELAY">
+        <With Var="errLoc" />
+        <With Var="errGlobal" />
+      </Event>
+    </EventInputs>
+    <EventOutputs>
+      <Event Name="ERR_LOCAL" Comment="Execution Confirmation">
+        <With Var="errLocal" />
+      </Event>
+      <Event Name="START_DELAY" />
+      <Event Name="STOP_DELAY" />
+    </EventOutputs>
+    <InputVars>
+      <VarDeclaration Name="errLoc" Type="BOOL" />
+      <VarDeclaration Name="errGlobal" Type="BOOL" />
+    </InputVars>
+    <OutputVars>
+      <VarDeclaration Name="errLocal" Type="BOOL" InitialValue="FALSE" Comment="Output event qualifier" />
+    </OutputVars>
+  </InterfaceList>
+  <BasicFB>
+    <InternalVars>
+      <VarDeclaration Name="timerRun" Type="BOOL" InitialValue="FALSE" />
+    </InternalVars>
+    <ECC>
+      <ECState Name="START" Comment="Initial State" x="1336.941" y="833.4117" />
+      <ECState Name="errLoc" x="2232" y="836.0002">
+        <ECAction Algorithm="errLoc" Output="START_DELAY" />
+        <ECAction Output="STOP_DELAY" />
+        <ECAction Output="ERR_LOCAL" />
+      </ECState>
+      <ECState Name="delay" x="1764" y="1520">
+        <ECAction Algorithm="expire" Output="ERR_LOCAL" />
+      </ECState>
+      <ECState Name="errGlobal" x="1772" y="236">
+        <ECAction Algorithm="errGlobal" Output="ERR_LOCAL" />
+        <ECAction Output="STOP_DELAY" />
+      </ECState>
+      <ECTransition Source="START" Destination="errLoc" Condition="ERR_LOC AND errLoc = TRUE AND errLocal = FALSE OR&#xD;&#xA;ERR_LOC AND errLoc = FALSE AND errLocal = TRUE" x="1794.76" y="745.4952">
+        <Attribute Name="Configuration.Transaction.BezierPoints" Value="422.0443,182.1051,476.0652,182.2024" />
+      </ECTransition>
+      <ECTransition Source="errLoc" Destination="delay" Condition="EXP_DELAY AND timerRun = TRUE" x="2067.894" y="1214.747">
+        <Attribute Name="Configuration.Transaction.BezierPoints" Value="536.8984,282.6683,504.3414,330.8295" />
+      </ECTransition>
+      <ECTransition Source="errLoc" Destination="START" Condition="timerRun = FALSE" x="1792.432" y="921.7496">
+        <Attribute Name="Configuration.Transaction.BezierPoints" Value="475.2801,234.598,421.2776,234.511" />
+      </ECTransition>
+      <ECTransition Source="errLoc" Destination="errLoc" Condition="ERR_LOC" x="2486.572" y="635.338">
+        <Attribute Name="Configuration.Transaction.BezierPoints" Value="701,159,574,133" />
+      </ECTransition>
+      <ECTransition Source="delay" Destination="START" Condition="1" x="1508.879" y="1236.264">
+        <Attribute Name="Configuration.Transaction.BezierPoints" Value="390.1178,337.2075,361.1419,290.8506" />
+      </ECTransition>
+      <ECTransition Source="START" Destination="errGlobal" Condition="ERR_GLOBAL" x="1489.266" y="417.3757">
+        <Attribute Name="Configuration.Transaction.BezierPoints" Value="336,101,403.5783,88.13284" />
+      </ECTransition>
+      <ECTransition Source="errLoc" Destination="errGlobal" Condition="ERR_GLOBAL AND errGlobal = TRUE" x="2021.458" y="589.4773">
+        <Attribute Name="Configuration.Transaction.BezierPoints" Value="516.3328,179.6515,500,124" />
+      </ECTransition>
+      <ECTransition Source="errGlobal" Destination="errLoc" Condition="errLoc = TRUE AND errLocal = FALSE AND errGlobal = FALSE" x="2069.725" y="490.3677">
+        <Attribute Name="Configuration.Transaction.BezierPoints" Value="504.5074,98.13775,536.173,139.4407" />
+      </ECTransition>
+      <ECTransition Source="errGlobal" Destination="START" Condition="1" x="1623.146" y="578.8569">
+        <Attribute Name="Configuration.Transaction.BezierPoints" Value="423.7874,127.8499,393.866,168.9371" />
+      </ECTransition>
+    </ECC>
+    <Algorithm Name="errLoc">
+      <ST Text="VAR&#xD;&#xA;	tmp : BOOL;&#xD;&#xA;END_VAR;&#xD;&#xA;&#xD;&#xA;tmp := errLocal;&#xD;&#xA;&#xD;&#xA;ERR_LOC := FALSE;&#xD;&#xA;&#xD;&#xA;errLocal := FALSE;&#xD;&#xA;&#xD;&#xA;IF errLoc = TRUE THEN&#xD;&#xA;	IF timerRun = FALSE THEN&#xD;&#xA;		timerRun := TRUE;&#xD;&#xA;		STOP_DELAY := FALSE;&#xD;&#xA;	ELSE&#xD;&#xA;		STOP_DELAY := FALSE;&#xD;&#xA;		START_DELAY := FALSE;&#xD;&#xA;	END_IF;&#xD;&#xA;ELSE&#xD;&#xA;	IF timerRun = TRUE THEN&#xD;&#xA;		timerRun := FALSE;&#xD;&#xA;		START_DELAY := FALSE;&#xD;&#xA;	ELSE&#xD;&#xA;		START_DELAY := FALSE;&#xD;&#xA;		STOP_DELAY := FALSE;&#xD;&#xA;	END_IF;&#xD;&#xA;END_IF;&#xD;&#xA;&#xD;&#xA;IF tmp = errLocal THEN&#xD;&#xA;	ERR_LOCAL := FALSE;&#xD;&#xA;END_IF;&#xD;&#xA;" />
+    </Algorithm>
+    <Algorithm Name="expire">
+      <ST Text="&#xD;&#xA;timerRun := FALSE;&#xD;&#xA;&#xD;&#xA;errLocal := TRUE;&#xD;&#xA;" />
+    </Algorithm>
+    <Algorithm Name="errGlobal">
+      <ST Text="VAR&#xD;&#xA;	tmp : BOOL;&#xD;&#xA;END_VAR;&#xD;&#xA;&#xD;&#xA;tmp := errLocal;&#xD;&#xA;&#xD;&#xA;ERR_GLOBAL := FALSE;&#xD;&#xA;&#xD;&#xA;(* from armed timer *)&#xD;&#xA;IF timerRun = TRUE THEN&#xD;&#xA;	timerRun := FALSE;&#xD;&#xA;	errLocal := FALSE;&#xD;&#xA;ELSE&#xD;&#xA;	(* from idle state *)&#xD;&#xA;	IF errGlobal = TRUE THEN&#xD;&#xA;		errLocal := FALSE;&#xD;&#xA;	END_IF;&#xD;&#xA;	STOP_DELAY := FALSE;&#xD;&#xA;END_IF;&#xD;&#xA;&#xD;&#xA;IF tmp = errLocal THEN&#xD;&#xA;	ERR_LOCAL := FALSE;&#xD;&#xA;END_IF;&#xD;&#xA;" />
+    </Algorithm>
+  </BasicFB>
+</FBType>

@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE nta PUBLIC "-//Uppaal Team//DTD Flat System 1.1//EN" "http://www.it.uu.se/research/group/darts/uppaal/flat-1_1.dtd">
+<nta>
+  <declaration>// Global declarations
+chan ic_ERR_LOC;
+chan ic_ERR_GLOBAL;
+chan ic_EXP_DELAY;
+chan oc_ERR_LOCAL;
+chan oc_START_DELAY;
+chan oc_STOP_DELAY;
+bool errLoc;
+bool errGlobal;
+bool errLocal;
+void errLoc()
+{
+	bool tmp;
+	tmp = errLocal;
+	ERR_LOC = false;
+	errLocal = false;
+	if (errLoc = true)
+	{
+		if (timerRun = false)
+		{
+			timerRun = true;
+			STOP_DELAY = false;
+		}
+		else
+		{
+			STOP_DELAY = false;
+			START_DELAY = false;
+		}
+	}
+	else
+	{
+		if (timerRun = true)
+		{
+			timerRun = false;
+			START_DELAY = false;
+		}
+		else
+		{
+			START_DELAY = false;
+			STOP_DELAY = false;
+		}
+	}
+	if (tmp = errLocal)
+	{
+		ERR_LOCAL = false;
+	}
+}
+void expire()
+{
+	timerRun = false;
+	errLocal = true;
+}
+void errGlobal()
+{
+	bool tmp;
+	tmp = errLocal;
+	ERR_GLOBAL = false;
+	if (timerRun = true)
+	{
+		timerRun = false;
+		errLocal = false;
+	}
+	else
+	{
+		if (errGlobal = true)
+		{
+			errLocal = false;
+		}
+		STOP_DELAY = false;
+	}
+	if (tmp = errLocal)
+	{
+		ERR_LOCAL = false;
+	}
+}
+</declaration>
+  <template>
+    <name x="0" y="0">HVglobalError</name>
+    <declaration>// Local declarations
+bool timerRun;
+</declaration>
+    <location id="id0" x="-841.87225" y="-1038.5868">
+      <name x="-831.87225" y="-1028.5868">START</name>
+    </location>
+    <location id="id6" x="1461.2382" y="-893.04553">
+      <name x="1471.2382" y="-883.04553">__start_delay</name>
+      <urgent/>
+    </location>
+    <location id="id7" x="1491.2382" y="-893.04553">
+      <name x="1501.2382" y="-883.04553">__action_delay__ERR_LOCAL_expire_</name>
+      <urgent/>
+    </location>
+    <location id="id8" x="1521.2382" y="-893.04553">
+      <name x="1531.2382" y="-883.04553">delay</name>
+    </location>
+    <location id="id9" x="-1735.2313" y="-658.1777">
+      <name x="-1725.2313" y="-648.1777">__start_errGlobal</name>
+      <urgent/>
+    </location>
+    <location id="id10" x="-1705.2313" y="-658.1777">
+      <name x="-1695.2313" y="-648.1777">__action_errGlobal__ERR_LOCAL_errGlobal_</name>
+      <urgent/>
+    </location>
+    <location id="id11" x="-1675.2313" y="-658.1777">
+      <name x="-1665.2313" y="-648.1777">__action_errGlobal__STOP_DELAY__</name>
+      <urgent/>
+    </location>
+    <location id="id12" x="-1645.2313" y="-658.1777">
+      <name x="-1635.2313" y="-648.1777">errGlobal</name>
+    </location>
+    <location id="id1" x="1986.7932" y="737.0523">
+      <name x="1996.7932" y="747.0523">__start_errLoc</name>
+      <urgent/>
+    </location>
+    <location id="id2" x="2016.7932" y="737.0523">
+      <name x="2026.7932" y="747.0523">__action_errLoc__START_DELAY_errLoc_</name>
+      <urgent/>
+    </location>
+    <location id="id3" x="2046.7932" y="737.0523">
+      <name x="2056.7932" y="747.0523">__action_errLoc__STOP_DELAY__</name>
+      <urgent/>
+    </location>
+    <location id="id4" x="2076.7932" y="737.0523">
+      <name x="2086.7932" y="747.0523">__action_errLoc__ERR_LOCAL__</name>
+      <urgent/>
+    </location>
+    <location id="id5" x="2106.7932" y="737.0523">
+      <name x="2116.7932" y="747.0523">errLoc</name>
+    </location>
+    <init ref="id0"/>
+    <transition>
+      <source ref="id0"/>
+      <target ref="id1"/>
+      <label kind="synchronisation" x="0" y="0">ic_ERR_LOC?</label>
+      <label kind="guard" x="0" y="0">errLoc = true &amp;&amp; errLocal = false || ERR_LOC &amp;&amp; errLoc = false &amp;&amp; errLocal = true</label>
+    </transition>
+    <transition>
+      <source ref="id5"/>
+      <target ref="id6"/>
+      <label kind="synchronisation" x="0" y="0">ic_EXP_DELAY?</label>
+      <label kind="guard" x="0" y="0">timerRun = true</label>
+    </transition>
+    <transition>
+      <source ref="id5"/>
+      <target ref="id0"/>
+      <label kind="guard" x="0" y="0">timerRun = false</label>
+    </transition>
+    <transition>
+      <source ref="id5"/>
+      <target ref="id1"/>
+      <label kind="synchronisation" x="0" y="0">ic_ERR_LOC?</label>
+    </transition>
+    <transition>
+      <source ref="id8"/>
+      <target ref="id0"/>
+    </transition>
+    <transition>
+      <source ref="id0"/>
+      <target ref="id9"/>
+      <label kind="synchronisation" x="0" y="0">ic_ERR_GLOBAL?</label>
+    </transition>
+    <transition>
+      <source ref="id5"/>
+      <target ref="id9"/>
+      <label kind="synchronisation" x="0" y="0">ic_ERR_GLOBAL?</label>
+      <label kind="guard" x="0" y="0">errGlobal = true</label>
+    </transition>
+    <transition>
+      <source ref="id12"/>
+      <target ref="id1"/>
+      <label kind="guard" x="0" y="0">errLoc = true &amp;&amp; errLocal = false &amp;&amp; errGlobal = false</label>
+    </transition>
+    <transition>
+      <source ref="id12"/>
+      <target ref="id0"/>
+    </transition>
+    <transition>
+      <source ref="id1"/>
+      <target ref="id2"/>
+      <label kind="synchronisation" x="0" y="0">oc_START_DELAY!</label>
+      <label kind="update" x="0" y="0">errLoc();</label>
+    </transition>
+    <transition>
+      <source ref="id2"/>
+      <target ref="id3"/>
+      <label kind="synchronisation" x="0" y="0">oc_STOP_DELAY!</label>
+    </transition>
+    <transition>
+      <source ref="id3"/>
+      <target ref="id4"/>
+      <label kind="synchronisation" x="0" y="0">oc_ERR_LOCAL!</label>
+    </transition>
+    <transition>
+      <source ref="id4"/>
+      <target ref="id5"/>
+    </transition>
+    <transition>
+      <source ref="id6"/>
+      <target ref="id7"/>
+      <label kind="synchronisation" x="0" y="0">oc_ERR_LOCAL!</label>
+      <label kind="update" x="0" y="0">expire();</label>
+    </transition>
+    <transition>
+      <source ref="id7"/>
+      <target ref="id8"/>
+    </transition>
+    <transition>
+      <source ref="id9"/>
+      <target ref="id10"/>
+      <label kind="synchronisation" x="0" y="0">oc_ERR_LOCAL!</label>
+      <label kind="update" x="0" y="0">errGlobal();</label>
+    </transition>
+    <transition>
+      <source ref="id10"/>
+      <target ref="id11"/>
+      <label kind="synchronisation" x="0" y="0">oc_STOP_DELAY!</label>
+    </transition>
+    <transition>
+      <source ref="id11"/>
+      <target ref="id12"/>
+    </transition>
+  </template>
+  <system>// System setup
+HVglobalErrorblk = HVglobalError();
+system HVglobalErrorblk;
+</system>
+</nta>

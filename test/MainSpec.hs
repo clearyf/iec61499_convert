@@ -27,9 +27,9 @@ spec = do
     -- -- checkFile
     -- --     "examples/iec61499/hcSetpointCalcLogic.xml"
     -- --     "examples/uppaal/noheaderToggle.xml"
-    -- checkFile
-    --     "examples/iec61499/HVglobalError.xml"
-    --     "examples/uppaal/HVglobalError.xml"
+    checkFile
+        "examples/iec61499/HVglobalError.xml"
+        "examples/uppaal/HVglobalError.xml"
     -- -- checkFile
     -- --     "examples/iec61499/minMax.xml"
     -- --     "examples/uppaal/noheaderToggle.xml"
