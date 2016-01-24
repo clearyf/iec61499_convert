@@ -1,25 +1,25 @@
 module Main where
 
-import BasePrelude hiding (orElse)
-import ParseIec61499 (readFunctionBlock, FunctionBlock)
-import FbToUppaal
-import OutputUppaal
-import Text.XML.HXT.Core
+import BasePrelude
+import ParseIec61499 (readFunctionBlock)
+import FbToUppaal (fbToUppaalModel)
+import OutputUppaal (outputUppaalToFile)
 
-test :: IO [FunctionBlock]
-test = do
-    let path = "examples/iec61499/toggle_fb.xml"
-    readFunctionBlock path
+convertFile :: FilePath -> FilePath -> IO ()
+convertFile inputPath outputPath = do
+    putStrLn
+        ("Converting: " <> inputPath <> ", writing output to: " <> outputPath)
+    (contents:_) <- readFunctionBlock inputPath
+    _ <- outputUppaalToFile outputPath (fbToUppaalModel contents)
+    pure ()
 
-theStdout :: Monoid m => m
-theStdout = mempty
-
-doFile :: FilePath -> IO [XmlTree]
-doFile path = do
-    (contents:_) <- readFunctionBlock path
-    outputUppaalToFile theStdout (fbToUppaalModel contents)
+showHelp :: IO ()
+showHelp = putStrLn "Require 2 arguments, input file & output file"
 
 main :: IO ()
 main = do
     arguments <- getArgs
-    traverse_ doFile arguments
+    -- Using a proper argument parser would be overkill for this...
+    if length arguments == 2
+        then convertFile (arguments !! 0) (arguments !! 1)
+        else showHelp
