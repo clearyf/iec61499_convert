@@ -45,9 +45,9 @@ spec = do
     checkFile
         "examples/iec61499/svVerifyBoolLogic.xml"
         "examples/uppaal/svVerifyBoolLogic.xml"
-    -- checkFile
-    --     "examples/iec61499/toggle_fb.xml"
-    --     "examples/uppaal/noheaderToggle.xml"
+    checkFile
+        "examples/iec61499/toggle_fb.xml"
+        "examples/uppaal/noheaderToggle.xml"
     -- -- checkFile
     -- --     "examples/iec61499/unitConvTemp.xml"
     -- --     "examples/uppaal/noheaderToggle.xml"
