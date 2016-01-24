@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE FBType SYSTEM "../data/Schemas/LibraryElement.dtd">
+<FBType Name="registerLogic" Comment="Basic Function Block Type" Namespace="Loytec.Communication">
+  <Attribute Name="Configuration.FB.IDCounter" Value="0" />
+  <Identification Standard="61499-2" />
+  <VersionInfo Organization="nxtControl GmbH" Version="0.0" Author="herrric" Date="8/1/2013" Remarks="Template" />
+  <InterfaceList>
+    <EventInputs>
+      <Event Name="GLOBAL_REG_REQ" Comment="Initialization Request" />
+      <Event Name="IND_ZONEID" />
+      <Event Name="SC_INITO" />
+      <Event Name="SC_RECV">
+        <With Var="isMasterIn" />
+        <With Var="moduleIdIn" />
+      </Event>
+      <Event Name="IND_SEGID" />
+      <Event Name="CYC_IND" />
+    </EventInputs>
+    <EventOutputs>
+      <Event Name="INIT_ZONEID" Comment="Initialization Confirm" />
+      <Event Name="SC_INIT" />
+      <Event Name="SC_SEND" />
+      <Event Name="CYC_START" />
+      <Event Name="CYC_STOP" />
+      <Event Name="PENDING">
+        <With Var="reqPending" />
+      </Event>
+      <Event Name="INITO">
+        <With Var="moduleId" />
+        <With Var="isMaster" />
+      </Event>
+      <Event Name="MASTER">
+        <With Var="isMaster" />
+      </Event>
+      <Event Name="STATE">
+        <With Var="state" />
+      </Event>
+    </EventOutputs>
+    <InputVars>
+      <VarDeclaration Name="isMasterIn" Type="BOOL" />
+      <VarDeclaration Name="moduleIdIn" Type="UDINT" />
+    </InputVars>
+    <OutputVars>
+      <VarDeclaration Name="state" Type="UDINT" />
+      <VarDeclaration Name="reqPending" Type="BOOL" />
+      <VarDeclaration Name="moduleId" Type="UDINT" />
+      <VarDeclaration Name="isMaster" Type="BOOL" />
+    </OutputVars>
+  </InterfaceList>
+  <BasicFB>
+    <InternalVars>
+      <VarDeclaration Name="zoneIdAvailable" Type="BOOL" InitialValue="FALSE" />
+    </InternalVars>
+    <ECC>
+      <ECState Name="START" Comment="Initial State" x="812.9412" y="549.4117" />
+      <ECState Name="INIT_ZONEID" x="1496" y="780">
+        <ECAction Algorithm="algInitZoneId" Output="INIT_ZONEID" />
+      </ECState>
+      <ECState Name="UNREGISTERED" x="1452" y="1704.002">
+        <ECAction Algorithm="algUnreg" Output="SC_INIT" />
+        <ECAction Output="SC_SEND" />
+        <ECAction Output="CYC_START" />
+        <ECAction Output="PENDING" />
+        <ECAction Output="MASTER" />
+      </ECState>
+      <ECState Name="REGISTERED" x="1461" y="2255.5">
+        <ECAction Algorithm="algReg" Output="INITO" />
+        <ECAction Output="CYC_STOP" />
+        <ECAction Output="PENDING" />
+        <ECAction Output="SC_INIT" />
+        <ECAction Output="MASTER" />
+      </ECState>
+      <ECState Name="SC_INIT" x="1527.333" y="1174.667">
+        <ECAction Output="SC_INIT" />
+      </ECState>
+      <ECState Name="ZONE_ID" x="760" y="180">
+        <ECAction Algorithm="algZoneId" />
+      </ECState>
+      <ECTransition Source="START" Destination="INIT_ZONEID" Condition="GLOBAL_REG_REQ" x="1237.916" y="536.7087">
+        <Attribute Name="Configuration.Transaction.BezierPoints" Value="294.1576,119.045,331.0133,134.4965" />
+      </ECTransition>
+      <ECTransition Source="INIT_ZONEID" Destination="SC_INIT" Condition="IND_ZONEID OR zoneIdAvailable" x="1574.23" y="971.2674">
+        <Attribute Name="Configuration.Transaction.BezierPoints" Value="396.1067,230.2216,397.024,254.4011" />
+      </ECTransition>
+      <ECTransition Source="UNREGISTERED" Destination="REGISTERED" Condition="SC_RECV AND ((moduleId = 0) OR (moduleIdIn = moduleId))" x="1655.603" y="1964.583">
+        <Attribute Name="Configuration.Transaction.BezierPoints" Value="424.5012,471.2271,425.8188,508.5363" />
+      </ECTransition>
+      <ECTransition Source="REGISTERED" Destination="UNREGISTERED" Condition="IND_ZONEID" x="1169.02" y="1961.812">
+        <Attribute Name="Configuration.Transaction.BezierPoints" Value="276.3922,507.5775,275.6287,470.3387" />
+      </ECTransition>
+      <ECTransition Source="REGISTERED" Destination="REGISTERED" Condition="IND_SEGID" x="1509.874" y="2451.822">
+        <Attribute Name="Configuration.Transaction.BezierPoints" Value="412.9906,624.9672,347.9268,624.9672" />
+      </ECTransition>
+      <ECTransition Source="UNREGISTERED" Destination="UNREGISTERED" Condition="IND_SEGID" x="1861.769" y="1551.996">
+        <Attribute Name="Configuration.Transaction.BezierPoints" Value="520.3992,379.6803,455.3354,379.6803" />
+      </ECTransition>
+      <ECTransition Source="UNREGISTERED" Destination="UNREGISTERED" Condition="CYC_IND" x="1280.05" y="1548.572">
+        <Attribute Name="Configuration.Transaction.BezierPoints" Value="302.0745,388.377,319.6254,368.7013" />
+      </ECTransition>
+      <ECTransition Source="START" Destination="ZONE_ID" Condition="IND_ZONEID" x="672.5544" y="391.1686">
+        <Attribute Name="Configuration.Transaction.BezierPoints" Value="162.0879,111.9148,164.7827,88.07995" />
+      </ECTransition>
+      <ECTransition Source="ZONE_ID" Destination="START" Condition="1" x="859.9799" y="352.9438">
+        <Attribute Name="Configuration.Transaction.BezierPoints" Value="218.1339,75.44017,218.3694,99.07138" />
+      </ECTransition>
+      <ECTransition Source="SC_INIT" Destination="UNREGISTERED" Condition="1" x="1576.352" y="1448.259">
+        <Attribute Name="Configuration.Transaction.BezierPoints" Value="401.3352,345.1058,396.443,380.5108" />
+      </ECTransition>
+      <ECTransition Source="REGISTERED" Destination="REGISTERED" Condition="SC_RECV AND ((moduleId = 0) OR (moduleIdIn = moduleId))" x="1433.049" y="2037.87">
+        <Attribute Name="Configuration.Transaction.BezierPoints" Value="389.0234,495.6802,323.9598,495.6802" />
+      </ECTransition>
+    </ECC>
+    <Algorithm Name="algUnreg">
+      <ST Text="state := 1;&#xD;&#xA;SC_INIT := IND_SEGID;&#xD;&#xA;reqPending := TRUE;&#xD;&#xA;&#xD;&#xA;IF isMaster = TRUE THEN&#xD;&#xA;	isMaster := FALSE;&#xD;&#xA;ELSE&#xD;&#xA;	MASTER := FALSE;&#xD;&#xA;END_IF;" />
+    </Algorithm>
+    <Algorithm Name="algReg">
+      <ST Text="state := 2;&#xD;&#xA;reqPending := FALSE;&#xD;&#xA;&#xD;&#xA;IF moduleId = 0 OR moduleId = moduleIdIn THEN&#xD;&#xA;	moduleId := moduleIdIn;&#xD;&#xA;	IF isMaster &lt;&gt; isMasterIn THEN&#xD;&#xA;		isMaster := isMasterIn;&#xD;&#xA;	ELSE&#xD;&#xA;		MASTER := FALSE;&#xD;&#xA;	END_IF;&#xD;&#xA;ELSE&#xD;&#xA;	MASTER := FALSE;&#xD;&#xA;	INITO := FALSE;&#xD;&#xA;END_IF;&#xD;&#xA;&#xD;&#xA;SC_RECV := FALSE;&#xD;&#xA;&#xD;&#xA;" />
+    </Algorithm>
+    <Algorithm Name="algZoneId">
+      <ST Text="zoneIdAvailable := TRUE;" />
+    </Algorithm>
+    <Algorithm Name="algInitZoneId">
+      <ST Text="IF zoneIdAvailable THEN&#xD;&#xA;	INIT_ZONEID := FALSE;&#xD;&#xA;END_IF;" />
+    </Algorithm>
+  </BasicFB>
+</FBType>
