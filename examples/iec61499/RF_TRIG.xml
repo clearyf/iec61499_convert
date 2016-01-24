@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE FBType SYSTEM "../data/Schemas/LibraryElement.dtd">
+<FBType Name="RF_TRIG" Comment="Basic Function Block Type" Namespace="Loytec.Automation">
+  <Attribute Name="Configuration.FB.IDCounter" Value="0" />
+  <Identification Standard="61499-2" />
+  <VersionInfo Organization="nxtControl GmbH" Version="0.0" Author="herrric" Date="08.09.2011" Remarks="Template" />
+  <InterfaceList>
+    <EventInputs>
+      <Event Name="REQ" Comment="Normal Execution Request">
+        <With Var="QI" />
+      </Event>
+    </EventInputs>
+    <EventOutputs>
+      <Event Name="RISE" />
+      <Event Name="FALL" />
+    </EventOutputs>
+    <InputVars>
+      <VarDeclaration Name="QI" Type="BOOL" Comment="Input event qualifier" />
+    </InputVars>
+  </InterfaceList>
+  <BasicFB>
+    <ECC>
+      <ECState Name="START" Comment="Initial State" x="552.9412" y="429.4117" />
+      <ECState Name="1" Comment="Initialization" x="1099.529" y="429.1765">
+        <ECAction Output="RISE" />
+      </ECState>
+      <ECState Name="0" Comment="Normal execution" x="1097.647" y="772.9412">
+        <ECAction Output="FALL" />
+      </ECState>
+      <ECTransition Source="0" Destination="1" Condition="QI = TRUE" x="959.0177" y="596.3776">
+        <Attribute Name="Configuration.Transaction.BezierPoints" Value="232.4684,149.0698,232.4084,148.3388" />
+      </ECTransition>
+      <ECTransition Source="1" Destination="0" Condition="QI = FALSE" x="1342.63" y="596.5098">
+        <Attribute Name="Configuration.Transaction.BezierPoints" Value="350.8823,138.8647,350.7731,158.8147" />
+      </ECTransition>
+      <ECTransition Source="START" Destination="1" Condition="QI = TRUE" x="822.118" y="327.3201">
+        <Attribute Name="Configuration.Transaction.BezierPoints" Value="189.3213,76.91572,218.9196,76.90298" />
+      </ECTransition>
+      <ECTransition Source="START" Destination="0" Condition="QI = FALSE" x="587.8873" y="714.9999">
+        <Attribute Name="Configuration.Transaction.BezierPoints" Value="113.8832,175.4844,147.2136,196.5049" />
+      </ECTransition>
+    </ECC>
+    <Algorithm Name="INIT" Comment="Initialization algorithm">
+      <ST Text=";" />
+    </Algorithm>
+    <Algorithm Name="REQ" Comment="Normally executed algorithm">
+      <ST Text=";" />
+    </Algorithm>
+  </BasicFB>
+</FBType>

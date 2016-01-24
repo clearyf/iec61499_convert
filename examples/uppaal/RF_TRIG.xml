@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE nta PUBLIC "-//Uppaal Team//DTD Flat System 1.1//EN" "http://www.it.uu.se/research/group/darts/uppaal/flat-1_1.dtd">
+<nta>
+  <declaration>// Global declarations
+chan ic_REQ;
+chan oc_RISE;
+chan oc_FALL;
+bool QI;
+void INIT()
+{
+}
+void REQ()
+{
+}
+</declaration>
+  <template>
+    <name x="0" y="0">RF_TRIG</name>
+    <declaration>// Local declarations
+</declaration>
+    <location id="id4" x="1031.0814" y="119.87631">
+      <name x="1041.0814" y="129.87631">__start_0</name>
+      <urgent/>
+    </location>
+    <location id="id5" x="1061.0814" y="119.87631">
+      <name x="1071.0814" y="129.87631">__action_0__FALL__</name>
+      <urgent/>
+    </location>
+    <location id="id6" x="1091.0814" y="119.87631">
+      <name x="1101.0814" y="129.87631">0</name>
+    </location>
+    <location id="id1" x="-436.11337" y="1033.2003">
+      <name x="-426.11337" y="1043.2003">__start_1</name>
+      <urgent/>
+    </location>
+    <location id="id2" x="-406.11337" y="1033.2003">
+      <name x="-396.11337" y="1043.2003">__action_1__RISE__</name>
+      <urgent/>
+    </location>
+    <location id="id3" x="-376.11337" y="1033.2003">
+      <name x="-366.11337" y="1043.2003">1</name>
+    </location>
+    <location id="id0" x="-305.01816" y="461.2027">
+      <name x="-295.01816" y="471.2027">START</name>
+    </location>
+    <init ref="id0"/>
+    <transition>
+      <source ref="id6"/>
+      <target ref="id1"/>
+      <label kind="guard" x="0" y="0">QI = true</label>
+    </transition>
+    <transition>
+      <source ref="id3"/>
+      <target ref="id4"/>
+      <label kind="guard" x="0" y="0">QI = false</label>
+    </transition>
+    <transition>
+      <source ref="id0"/>
+      <target ref="id1"/>
+      <label kind="guard" x="0" y="0">QI = true</label>
+    </transition>
+    <transition>
+      <source ref="id0"/>
+      <target ref="id4"/>
+      <label kind="guard" x="0" y="0">QI = false</label>
+    </transition>
+    <transition>
+      <source ref="id1"/>
+      <target ref="id2"/>
+      <label kind="synchronisation" x="0" y="0">oc_RISE!</label>
+    </transition>
+    <transition>
+      <source ref="id2"/>
+      <target ref="id3"/>
+    </transition>
+    <transition>
+      <source ref="id4"/>
+      <target ref="id5"/>
+      <label kind="synchronisation" x="0" y="0">oc_FALL!</label>
+    </transition>
+    <transition>
+      <source ref="id5"/>
+      <target ref="id6"/>
+    </transition>
+  </template>
+  <system>// System setup
+RF_TRIGblk = RF_TRIG();
+system RF_TRIGblk;
+</system>
+</nta>

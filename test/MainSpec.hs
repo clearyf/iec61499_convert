@@ -36,9 +36,9 @@ spec = do
     checkFile
         "examples/iec61499/registerLogic.xml"
         "examples/uppaal/registerLogic.xml"
-    -- checkFile
-    --     "examples/iec61499/RF_TRIG.xml"
-    --     "examples/uppaal/RF_TRIG.xml"
+    checkFile
+        "examples/iec61499/RF_TRIG.xml"
+        "examples/uppaal/RF_TRIG.xml"
     -- -- checkFile
     -- --     "examples/iec61499/segRoomIdLogic.xml"
     -- --     "examples/uppaal/noheaderToggle.xml"
