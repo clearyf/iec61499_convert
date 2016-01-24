@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE nta PUBLIC "-//Uppaal Team//DTD Flat System 1.1//EN" "http://www.it.uu.se/research/group/darts/uppaal/flat-1_1.dtd">
+<nta>
+  <declaration>// Global declarations
+chan ic_BUTTON;
+chan ic_DELAY_DONE;
+chan oc_DELAY_START;
+chan oc_DELAY_STOP;
+chan oc_PRESSED;
+chan oc_RELEASED;
+chan oc_SHORT;
+chan oc_LONG;
+bool button;
+int[-32768,32767] longSeconds;
+int[-32768,32767] delayTime;
+void Down()
+{
+	delayTime = REAL_TO_TIME(longSeconds * 1000000);
+}
+</declaration>
+  <template>
+    <name x="0" y="0">ButtonTimerLogic</name>
+    <declaration>// Local declarations
+</declaration>
+    <location id="id1" x="-1313.8326" y="-704.2568">
+      <name x="-1303.8326" y="-694.2568">__start_DOWN</name>
+      <urgent/>
+    </location>
+    <location id="id2" x="-1283.8326" y="-704.2568">
+      <name x="-1273.8326" y="-694.2568">__action_DOWN__DELAY_START_Down_</name>
+      <urgent/>
+    </location>
+    <location id="id3" x="-1253.8326" y="-704.2568">
+      <name x="-1243.8326" y="-694.2568">__action_DOWN__PRESSED__</name>
+      <urgent/>
+    </location>
+    <location id="id4" x="-1223.8326" y="-704.2568">
+      <name x="-1213.8326" y="-694.2568">DOWN</name>
+    </location>
+    <location id="id12" x="-469.39227" y="-1859.4661">
+      <name x="-459.39227" y="-1849.4661">__start_LONG</name>
+      <urgent/>
+    </location>
+    <location id="id13" x="-439.39227" y="-1859.4661">
+      <name x="-429.39227" y="-1849.4661">__action_LONG__LONG__</name>
+      <urgent/>
+    </location>
+    <location id="id14" x="-409.39227" y="-1859.4661">
+      <name x="-399.39227" y="-1849.4661">LONG</name>
+    </location>
+    <location id="id8" x="859.6223" y="-67.24162">
+      <name x="869.6223" y="-57.241623">__start_SHORT</name>
+      <urgent/>
+    </location>
+    <location id="id9" x="889.6223" y="-67.24162">
+      <name x="899.6223" y="-57.241623">__action_SHORT__SHORT__</name>
+      <urgent/>
+    </location>
+    <location id="id10" x="919.6223" y="-67.24162">
+      <name x="929.6223" y="-57.241623">__action_SHORT__DELAY_STOP__</name>
+      <urgent/>
+    </location>
+    <location id="id11" x="949.6223" y="-67.24162">
+      <name x="959.6223" y="-57.241623">SHORT</name>
+    </location>
+    <location id="id0" x="-1150.7609" y="696.1437">
+      <name x="-1140.7609" y="706.1437">START</name>
+    </location>
+    <location id="id5" x="966.9656" y="879.34393">
+      <name x="976.9656" y="889.34393">__start_UP</name>
+      <urgent/>
+    </location>
+    <location id="id6" x="996.9656" y="879.34393">
+      <name x="1006.9656" y="889.34393">__action_UP__RELEASED__</name>
+      <urgent/>
+    </location>
+    <location id="id7" x="1026.9656" y="879.34393">
+      <name x="1036.9656" y="889.34393">UP</name>
+    </location>
+    <init ref="id0"/>
+    <transition>
+      <source ref="id0"/>
+      <target ref="id1"/>
+      <label kind="synchronisation" x="0" y="0">ic_BUTTON?</label>
+      <label kind="guard" x="0" y="0">button</label>
+    </transition>
+    <transition>
+      <source ref="id4"/>
+      <target ref="id8"/>
+      <label kind="synchronisation" x="0" y="0">ic_BUTTON?</label>
+      <label kind="guard" x="0" y="0">!button</label>
+    </transition>
+    <transition>
+      <source ref="id7"/>
+      <target ref="id0"/>
+    </transition>
+    <transition>
+      <source ref="id4"/>
+      <target ref="id12"/>
+      <label kind="synchronisation" x="0" y="0">ic_DELAY_DONE?</label>
+    </transition>
+    <transition>
+      <source ref="id14"/>
+      <target ref="id5"/>
+      <label kind="synchronisation" x="0" y="0">ic_BUTTON?</label>
+      <label kind="guard" x="0" y="0">!button</label>
+    </transition>
+    <transition>
+      <source ref="id11"/>
+      <target ref="id5"/>
+    </transition>
+    <transition>
+      <source ref="id1"/>
+      <target ref="id2"/>
+      <label kind="synchronisation" x="0" y="0">oc_DELAY_START!</label>
+      <label kind="update" x="0" y="0">Down();</label>
+    </transition>
+    <transition>
+      <source ref="id2"/>
+      <target ref="id3"/>
+      <label kind="synchronisation" x="0" y="0">oc_PRESSED!</label>
+    </transition>
+    <transition>
+      <source ref="id3"/>
+      <target ref="id4"/>
+    </transition>
+    <transition>
+      <source ref="id5"/>
+      <target ref="id6"/>
+      <label kind="synchronisation" x="0" y="0">oc_RELEASED!</label>
+    </transition>
+    <transition>
+      <source ref="id6"/>
+      <target ref="id7"/>
+    </transition>
+    <transition>
+      <source ref="id8"/>
+      <target ref="id9"/>
+      <label kind="synchronisation" x="0" y="0">oc_SHORT!</label>
+    </transition>
+    <transition>
+      <source ref="id9"/>
+      <target ref="id10"/>
+      <label kind="synchronisation" x="0" y="0">oc_DELAY_STOP!</label>
+    </transition>
+    <transition>
+      <source ref="id10"/>
+      <target ref="id11"/>
+    </transition>
+    <transition>
+      <source ref="id12"/>
+      <target ref="id13"/>
+      <label kind="synchronisation" x="0" y="0">oc_LONG!</label>
+    </transition>
+    <transition>
+      <source ref="id13"/>
+      <target ref="id14"/>
+    </transition>
+  </template>
+  <system>// System setup
+ButtonTimerLogicblk = ButtonTimerLogic();
+system ButtonTimerLogicblk;
+</system>
+</nta>
