@@ -346,7 +346,9 @@ showValue (StMonoOp op a) = showMonoValue op a
 showValue (StTime t) = show t
 showValue (StInt i) = show i
 showValue (StLValue v) = showLocation v
-showValue (StFloat i) = show i -- TODO Uppaal can’t handle floats!
+-- This entry will not be required once the float -> int conversion is
+-- working correctly.
+showValue (StFloat i) = showFFloat Nothing i ""
 showValue (StFunc name args) = name <> "(" <> showArgs args <> ")"
 
 showBinaryValue :: Value -> StBinaryOp -> Value -> String

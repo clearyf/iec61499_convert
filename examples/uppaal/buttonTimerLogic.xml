@@ -15,7 +15,7 @@ int[-32768,32767] longSeconds;
 int[-32768,32767] delayTime;
 void Down()
 {
-	delayTime = REAL_TO_TIME(longSeconds * 1000000);
+	delayTime = REAL_TO_TIME(longSeconds * 1000.0);
 }
 
 void REAL_TO_TIME()
