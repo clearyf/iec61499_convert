@@ -80,6 +80,7 @@ void REQ()
 		outValue8 = false;
 	}
 }
+
 </declaration>
   <template>
     <name x="0" y="0">Demux8</name>

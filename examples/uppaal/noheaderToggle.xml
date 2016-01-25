@@ -9,10 +9,12 @@ void TurnOn()
 {
 	Value = true;
 }
+
 void TurnOff()
 {
 	Value = false;
 }
+
 </declaration>
   <template>
     <name x="0" y="0">Toggle</name>

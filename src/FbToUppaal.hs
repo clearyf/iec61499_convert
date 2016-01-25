@@ -37,7 +37,8 @@ fbToUppaalModel fb =
         (localParameters fb)
         (locations fb)
         (transitions fb)
-        (fmap anAlgorithm (bfbAlgorithms (basicFb fb)))
+        (fmap anAlgorithm (bfbAlgorithms (basicFb fb)) <>
+         createLibraryFunctions fb)
 
 --------------------------------------------------------------------------------
 -- Handle events
@@ -263,6 +264,8 @@ anAlgorithm al = fold (execWriter (runReaderT writeFunction 0))
     writeFunction = do
       writeLine ("void " <> ecAlgorithmName al <> "()")
       writeBlock (ecAlgorithmStText al)
+      -- Append blank line for formatting.
+      writeLine mempty
 
 writeLine :: Monad m => String -> ReaderT Int (WriterT (DList String) m) ()
 writeLine l = do
@@ -375,10 +378,10 @@ showLocation :: LValue -> String
 showLocation (SimpleLValue name) = name
 showLocation (ArrayLValue name idx) = name <> showValue idx
 
-createLibraryFunctions :: Set String -> String
-createLibraryFunctions = foldMap f
+createLibraryFunctions :: FunctionBlock -> [String]
+createLibraryFunctions = foldMap f . fbFunctions
   where
-    f str = "void " <> str <> "()\n{\n}\n"
+    f str = ["void " <> str <> "()\n{\n}\n\n"]
 
 fbFunctions :: FunctionBlock -> Set String
 fbFunctions fb =

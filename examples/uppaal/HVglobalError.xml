@@ -48,11 +48,13 @@ void errLoc()
 		ERR_LOCAL = false;
 	}
 }
+
 void expire()
 {
 	timerRun = false;
 	errLocal = true;
 }
+
 void errGlobal()
 {
 	bool tmp;
@@ -76,6 +78,7 @@ void errGlobal()
 		ERR_LOCAL = false;
 	}
 }
+
 </declaration>
   <template>
     <name x="0" y="0">HVglobalError</name>

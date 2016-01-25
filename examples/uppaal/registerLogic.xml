@@ -37,6 +37,7 @@ void algUnreg()
 		MASTER = false;
 	}
 }
+
 void algReg()
 {
 	state = 2;
@@ -60,10 +61,12 @@ void algReg()
 	}
 	SC_RECV = false;
 }
+
 void algZoneId()
 {
 	zoneIdAvailable = true;
 }
+
 void algInitZoneId()
 {
 	if (zoneIdAvailable)
@@ -71,6 +74,7 @@ void algInitZoneId()
 		INIT_ZONEID = false;
 	}
 }
+
 </declaration>
   <template>
     <name x="0" y="0">registerLogic</name>

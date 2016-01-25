@@ -17,6 +17,11 @@ void Down()
 {
 	delayTime = REAL_TO_TIME(longSeconds * 1000000);
 }
+
+void REAL_TO_TIME()
+{
+}
+
 </declaration>
   <template>
     <name x="0" y="0">ButtonTimerLogic</name>

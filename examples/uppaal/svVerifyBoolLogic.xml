@@ -33,11 +33,13 @@ void ok()
 		STOP = false;
 	}
 }
+
 void waiting()
 {
 	tDelay = SEL(setpoint, tOff, tOn);
 	SETPOINT = false;
 }
+
 void oob()
 {
 	if (!OOB)
@@ -53,6 +55,11 @@ void oob()
 		tDelay = 0;
 	}
 }
+
+void SEL()
+{
+}
+
 </declaration>
   <template>
     <name x="0" y="0">svVerifyBoolLogic</name>
