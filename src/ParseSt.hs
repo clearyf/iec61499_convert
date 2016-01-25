@@ -6,14 +6,14 @@ module ParseSt
 
 import           BasePrelude hiding (Prefix, try)
 import           Data.Functor.Identity (Identity)
-import           Data.List.NonEmpty (NonEmpty)
+import           Data.List.NonEmpty (NonEmpty(..))
 import qualified Data.List.NonEmpty as NE
 import           Data.Set (Set)
 import qualified Data.Set as Set
 import           Text.Megaparsec
-       (ParseError, ParsecT, (<?>), alphaNumChar, between, char, choice,
-        eof, letterChar, lookAhead, manyTill, noneOf, option, parse,
-        satisfy, sepBy, sepBy1, someTill, spaceChar, string, try,
+       (ParseError, ParsecT, (<?>), alphaNumChar, anyChar, between, char,
+        choice, eof, letterChar, lookAhead, manyTill, noneOf, option,
+        parse, satisfy, sepBy, sepBy1, someTill, spaceChar, string, try,
         notFollowedBy)
 import           Text.Megaparsec.Expr (Operator(..), makeExprParser)
 import qualified Text.Megaparsec.Lexer as L
@@ -22,79 +22,101 @@ import           Text.Megaparsec.String (Parser)
 --------------------------------------------------------------------------------
 
 data Statement
-  = Assignment LValue Value
-  | Declaration String IECVariable
-  | If Value [Statement]
-  | IfElse Value [Statement] [Statement]
-  | For String Int Int (Maybe Int) [Statement] -- Start End Step
-  | While Value [Statement]
-  | Repeat [Statement] Value
-  | Case Value [(NonEmpty CaseSubExpression, [Statement])] [Statement]
-  | Break
-  | Return
-  deriving (Show,Eq)
+    = Assignment LValue
+                 Value
+    | Declaration String
+                  IECVariable
+    | If Value
+         [Statement]
+    | IfElse Value
+             [Statement]
+             [Statement]
+    | For String
+          Int
+          Int
+          (Maybe Int)
+          [Statement] -- Start End Step
+    | While Value
+            [Statement]
+    | Repeat [Statement]
+             Value
+    | Case Value
+           [(NonEmpty CaseSubExpression, [Statement])]
+           [Statement]
+    | Break
+    | Return
+    deriving (Show,Eq)
 
 data CaseSubExpression
-  = CaseInt Int
-  | CaseRange Int Int
-  deriving (Show,Eq)
+    = CaseInt Int
+    | CaseRange Int
+                Int
+    deriving (Show,Eq)
 
 data Value
-  = StBool Bool
-  | StMonoOp StMonoOp Value
-  | StBinaryOp StBinaryOp Value Value
-  | StLValue LValue
-  | StInt Integer
-  | StFloat Double
-  | StTime Integer
-  | StFunc String [Value]
-  | StSubValue Value
-  deriving (Show,Eq)
+    = StBool Bool
+    | StChar Char
+    | StMonoOp StMonoOp
+               Value
+    | StBinaryOp StBinaryOp
+                 Value
+                 Value
+    | StLValue LValue
+    | StInt Integer
+    | StFloat Double
+    | StTime Integer
+    | StFunc String
+             [Value]
+    | StSubValue Value
+    deriving (Show,Eq)
 
 data StMonoOp
-  = StNegate
-  | StNot
-  deriving (Show,Eq)
+    = StNegate
+    | StNot
+    deriving (Show,Eq)
 
 data StBinaryOp
-  = StAddition
-  | StSubtract
-  | StExp
-  | StMultiply
-  | StDivide
-  | StEquals
-  | StNotEquals
-  | StLessThanEquals
-  | StLessThan
-  | StGreaterThanEquals
-  | StGreaterThan
-  | StMod
-  | StBitwiseAnd
-  | StAnd
-  | StOr
-  | StXor
-  deriving (Show,Eq)
+    = StAddition
+    | StSubtract
+    | StExp
+    | StMultiply
+    | StDivide
+    | StEquals
+    | StNotEquals
+    | StLessThanEquals
+    | StLessThan
+    | StGreaterThanEquals
+    | StGreaterThan
+    | StMod
+    | StBitwiseAnd
+    | StAnd
+    | StOr
+    | StXor
+    deriving (Show,Eq)
 
 data LValue
-  = SimpleLValue String
-  | ArrayLValue String Value
-  deriving (Show,Eq)
+    = SimpleLValue String
+    | ArrayLValue String
+                  Value
+    deriving (Show,Eq)
 
 data Width
-  = Eight
-  | Sixteen
-  | ThirtyTwo
-  | SixtyFour
-  deriving (Show,Eq)
+    = Eight
+    | Sixteen
+    | ThirtyTwo
+    | SixtyFour
+    deriving (Show,Eq)
 
 data IECVariable
-  = IECReal
-  | IECInt Width
-  | IECUInt Width
-  | IECBool
-  | IECTime
-  | IECArray (NonEmpty Int) IECVariable
-  deriving (Show,Eq)
+    = IECReal
+    | IECInt Width
+    | IECUInt Width
+    | IECBool
+    | IECTime
+    | IECArray (NonEmpty Int)
+               IECVariable
+    | IECString Int
+    deriving (Show,Eq)
 
 parseSt :: String -> Either ParseError [Statement]
 parseSt str = parse stParser str str
@@ -110,8 +132,7 @@ parseValue str = parse value str str
 stParser :: Parser [Statement]
 stParser =
     spaceConsumer *>
-    (mappend <$> option mempty (try parseVarDecls)
-             <*> statementsTill eof)
+    (mappend <$> option mempty (try parseVarDecls) <*> statementsTill eof)
 
 --------------------------------------------------------------------------------
 
@@ -131,17 +152,27 @@ parseVarType = f <$> identifier
                  <?> "variable type"
   where
     parseIndices = fmap NE.fromList (lexInt `sepBy1` comma)
-    f name Nothing = vartypeFromString name
-    f name (Just indices) = IECArray indices (vartypeFromString name)
+    f name Nothing = vartypeFromString name Nothing
+    f name x@(Just indices) = IECArray indices (vartypeFromString name x)
 
 iECtypeFromString :: String -> Either ParseError IECVariable
 iECtypeFromString str = parse parseVarType str str
 
-vartypeFromString :: String -> IECVariable
-vartypeFromString str =
-    fromMaybe (error "Unhandled IEC variable type!") (lookup lowerCased alist)
+vartypeFromString :: String -> Maybe (NonEmpty Int) -> IECVariable
+vartypeFromString str indices =
+    fromMaybe
+        (error ("Unhandled IEC variable type: " <> str))
+        (lookup lowerCased alist)
   where
     lowerCased = fmap toLower str
+    stringSize =
+        case indices of
+            Just (size :| []) -> size
+            _ ->
+                error
+                    ("Invalid indices: " <> show indices <>
+                     " for variable type: " <>
+                     str)
     alist =
         [ ("bool", IECBool)
         ,
@@ -167,7 +198,8 @@ vartypeFromString str =
           -- Various other types
           ("time", IECTime)
         , ("date_and_time", error "Can't handle DATE_AND_TIME type!")
-        , ("time_of_day", error "Can't handle TIME_OF_DAY type!")]
+        , ("time_of_day", error "Can't handle TIME_OF_DAY type!")
+        , ("string", IECString stringSize)]
 
 --------------------------------------------------------------------------------
 
@@ -249,12 +281,12 @@ parseCaseExpression =
 
 parseCaseSubExpression :: Parser (NonEmpty CaseSubExpression)
 parseCaseSubExpression =
-  fmap NE.fromList ((parseCaseInt `sepBy1` symbol ",") <* symbol ":")
+    fmap NE.fromList ((parseCaseInt `sepBy1` symbol ",") <* symbol ":")
 
 parseCaseInt :: Parser CaseSubExpression
 parseCaseInt =
-  try (CaseRange <$> lexInt <*> (symbol "-" *> lexInt)) <|>
-  (CaseInt <$> lexInt)
+    try (CaseRange <$> lexInt <*> (symbol "-" *> lexInt)) <|>
+    (CaseInt <$> lexInt)
 
 parseReturn :: Parser Statement
 parseReturn = const Return <$> try (symbol "RETURN")
@@ -272,6 +304,7 @@ value = makeExprParser terminals operatorTable <?> "value"
 
 terminals :: Parser Value
 terminals = parseSubValue <|>
+            parseChar <|>
             number <|>
             lexBool <|>
             parseTime <|>
@@ -302,6 +335,11 @@ operatorTable= [[prefix "-" (StMonoOp StNegate)
                ,[binary "OR" (StBinaryOp StOr)
                 ,binary "|" (StBinaryOp StOr)]]
 
+parseChar :: Parser Value
+parseChar = StChar <$> (singleQuote *> anyChar) <* singleQuote
+  where
+    singleQuote = lexeme (char '\'')
+
 parseFunction :: Parser Value
 parseFunction = StFunc <$> identifier <*> parens parseArgs
 
@@ -331,10 +369,10 @@ parseTime = lexeme (try (symbol "t#") *> (try parseShortTime <|> parseLongTime))
 parseLongTime :: Parser Value
 parseLongTime = StTime . sum <$> parseStuff `someTill` lookAhead notDigit
   where
-    units = [("h", 60 * 60 * 1000),("ms", 1),("s", 1000),("m", 60 * 1000)]
+    units = [("h", 60 * 60 * 1000), ("ms", 1), ("s", 1000), ("m", 60 * 1000)]
     parseUnits = choice (fmap (try . string . fst) units)
-                 -- fromJust is completely safe here, s must be one of
-                 -- the strings that was in units.
+    -- fromJust is completely safe here, s must be one of
+    -- the strings that was in units.
     calcTime n s = n * fromJust (lookup s units)
     parseStuff = calcTime <$> justAnInteger <*> parseUnits
     notDigit = satisfy (not . isDigit) <?> "non digit"
@@ -346,8 +384,7 @@ justAnInteger :: Parser Integer
 justAnInteger = L.integer
 
 lexBool :: Parser Value
-lexBool = try (symbol "TRUE" $> StBool True <|>
-               symbol "FALSE" $> StBool False)
+lexBool = try (symbol "TRUE" $> StBool True <|> symbol "FALSE" $> StBool False)
 
 lessThanOp :: Operator Parser Value
 lessThanOp =
@@ -379,13 +416,14 @@ number = fmap (either StInt StFloat) lexNumber
 
 identifier :: Parser String
 identifier = do
-    word <- lexeme ((:) <$> letterChar
-                        <*> many (alphaNumChar <|> char '_'))
+    word <- lexeme ((:) <$> letterChar <*> many (alphaNumChar <|> char '_'))
     guard (word `notElem` keywords) <?> "non-keyword"
     pure word
 
 lValue :: Parser LValue
-lValue = f <$> identifier <*> optional (brackets value) <* notFollowedBy (symbol "(")
+lValue =
+    f <$> identifier <*> optional (brackets value) <*
+    notFollowedBy (symbol "(")
   where
     f name Nothing = SimpleLValue name
     f name (Just s) = ArrayLValue name s

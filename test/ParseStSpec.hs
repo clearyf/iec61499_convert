@@ -32,6 +32,8 @@ spec = do
         Right
         [ Assignment (SimpleLValue "Value") (StBool True)
         , Assignment (SimpleLValue "i") (StInt 3)]
+  it "Char/Strings" $ do
+    parseSt "a := 'b';" `shouldBe` Right [Assignment (SimpleLValue "a") (StChar 'b')]
   it "Time" $ do
     parseSt "a := t#11h22m30s435ms;" `shouldBe`
       Right [Assignment (SimpleLValue "a") (StTime 40950435)]

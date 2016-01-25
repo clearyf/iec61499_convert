@@ -73,6 +73,7 @@ showVarType (IECInt Sixteen) = (intWithRange ((-2::Integer)^(15::Integer)) ((2::
 showVarType (IECInt ThirtyTwo) = (intWithRange ((-2::Integer)^(31::Integer)) ((2::Integer)^(31::Integer)-1),mempty)
 showVarType (IECInt SixtyFour) = (intWithRange ((-2::Integer)^(63::Integer)) ((2::Integer)^(63::Integer)-1),mempty)
 showVarType (IECArray idxs var) = (fst (showVarType var), "[" <> foldMap id (NE.intersperse "," (fmap show idxs)) <> "]")
+showVarType (IECString size) = (intWithRange 0 127, "[" <> show size <> "]")
 showVarType t = error ("Uppaal doesn't support " <> show t <> " type!")
 
 intWithRange :: Integer -> Integer -> String
@@ -350,6 +351,7 @@ showValue (StLValue v) = showLocation v
 -- working correctly.
 showValue (StFloat i) = showFFloat Nothing i ""
 showValue (StFunc name args) = name <> "(" <> showArgs args <> ")"
+showValue (StChar c) = show (ord c)
 
 showBinaryValue :: Value -> StBinaryOp -> Value -> String
 showBinaryValue a op b = showValue a <> " " <> opStr <> " " <> showValue b
