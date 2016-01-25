@@ -1,0 +1,110 @@
+-*- org -*-
+
+* Introduction
+
+  This program converts basic function blocks from IEC61499 data
+  interchange files to an Uppaal model.  As basic function blocks are
+  useless on their own, the resulting models still need modifying.
+
+  The main executable is ’iec61499_convert’, see the Building section
+  for instructions on how to compile it.  There is a also a test
+  suite, please run it as detailed to ensure that everything is
+  working as expected.
+
+* Building
+
+  Please use ‘stack test’ to first check that all of the required
+  dependencies are built and that all functionality is working as
+  expected, the output should end with ‘0 failures’.
+
+  Once the tests are complete, ‘stack build’ will build the main
+  ‘iec61499_convert’ executable, the easiest way to use it is to
+  simply run:
+
+  stack exec iec61499_convert examples/iec61499/buttonTimerLogic.xml out.xml
+
+  This will convert the ‘examples/iec61499/buttonTimerLogic.xml’ file,
+  and leave the output in out.xml in the current directory.
+
+* Program organisation
+
+  The program is structured around a ‘frontend’ for IEC61499, a
+  ‘backend’ which outputs Uppaal models, and a module (FbToUppaal)
+  which converts from the frontend format to the backend format.
+
+  The frontend is the ‘ParseIec61499’ file, the ‘readFunctionBlock’
+  function returns the FunctionBlock.  This FunctionBlock structure
+  also has the algorithms and guard conditions parsed using ParseSt.
+
+  The backend is the ‘OutputUppaal’ file.  The two OutputUppaal
+  functions (‘outputUppaal’ and ‘outputUppaalToFile’) take a different
+  data structure to the one produced by the frontend, so ‘FbToUppaal’
+  does the conversion.  The conversion process creates some new states
+  to deal differences between how states work in both systems,
+  rewrites the IEC61499 algorithms for Uppaal, separates the guard
+  conditions into the event condition and the guard condition, along
+  with other minor changes.  The guard event and condition are
+  seperated in ‘ParseGuard’, due to the precedence rules in IEC61499
+  the value tree parsed may have to rotated to shift the AND operator
+  to the bottom of the tree, see the ParseGuard source file for
+  details.
+
+  At the moment all error conditions are thrown as exceptions, ideally
+  all code which code possibly fail should return an ‘Either’ value
+  (or similar).  However, until the code starts to stabilise it’s much
+  easier just to add ‘error "This doesn’t work yet"’ in the right
+  places.
+
+** Coding Style
+
+   The majority of the code has been formatted using hindent's
+   ‘johan-tibell’ style.
+
+* Current Issues
+
+** Strings are only partially supported
+
+   Strings are modelled as arrays of int, this abstraction will have
+   to change, as the array is statically allocated, yet the actual
+   length of the string itself needs to be stored elsewhere.  All of
+   the string manipulation functions will need to be reimplemented for
+   Uppaal, so those functions can written as desired.
+
+** Floats aren’t supported
+
+   Floating point values aren’t supported by Uppaal in any way, so
+   they must be emulated by using INT.  However, this means that the
+   type of all expressions must be checked, as if 1.0 is actually
+   stored as 1000, then an expression of this form:
+
+   a := 1 + x;
+
+   must check the type of x, as if it is a REAL then the 1 must be
+   multiplied by 1000, and similarly if a is not a REAL then the
+   result of the expression must also be divided by 1000.
+
+** Library functions are not implemented
+
+   As stated.
+
+** TIME values
+
+   TIME values may be entered and are usable, however as there is no
+   support for anything beyond a basic function block they can’t
+   actually do anything useful at the moment.
+
+** State diagram layout
+
+   The states are actually placed in the correct locations, based on
+   the original diagram, but the extra sub-states which are inserted
+   for Uppaal are only roughly laid out to the left of the target
+   state.  The transitions statements are not placed in the correct
+   locations, and no attempt is made to ensure that anything fits and
+   doesn’t overlap.
+
+* Future plans
+
+  The biggest issue which must be addressed first is that the
+  FbToUppaal module needs to assign types to all values, this allows
+  insertion of the correct REAL <-> INT conversions, library functions
+  and fixes handling of STRING.
