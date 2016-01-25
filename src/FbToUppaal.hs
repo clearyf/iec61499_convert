@@ -63,16 +63,38 @@ outputChannels = extractChannels outputChannelPrefix eventOutputs
 -- Handle variables
 
 showVarType :: IECVariable -> (String,String)
-showVarType IECBool = ("bool",mempty)
-showVarType (IECUInt Eight) = (intWithRange 0 ((2::Integer)^(8::Integer)),mempty)
-showVarType (IECUInt Sixteen) = (intWithRange 0 ((2::Integer)^(16::Integer)),mempty)
-showVarType (IECUInt ThirtyTwo) = (intWithRange 0 ((2::Integer)^(32::Integer)),mempty)
-showVarType (IECUInt SixtyFour) = (intWithRange 0 ((2::Integer)^(64::Integer)),mempty)
-showVarType (IECInt Eight) = (intWithRange ((-2::Integer)^(7::Integer)) ((2::Integer)^(7::Integer)-1),mempty)
-showVarType (IECInt Sixteen) = (intWithRange ((-2::Integer)^(15::Integer)) ((2::Integer)^(15::Integer)-1),mempty)
-showVarType (IECInt ThirtyTwo) = (intWithRange ((-2::Integer)^(31::Integer)) ((2::Integer)^(31::Integer)-1),mempty)
-showVarType (IECInt SixtyFour) = (intWithRange ((-2::Integer)^(63::Integer)) ((2::Integer)^(63::Integer)-1),mempty)
-showVarType (IECArray idxs var) = (fst (showVarType var), "[" <> foldMap id (NE.intersperse "," (fmap show idxs)) <> "]")
+showVarType IECBool = ("bool", mempty)
+showVarType (IECUInt Eight) =
+    (intWithRange 0 ((2 :: Integer) ^ (8 :: Integer)), mempty)
+showVarType (IECUInt Sixteen) =
+    (intWithRange 0 ((2 :: Integer) ^ (16 :: Integer)), mempty)
+showVarType (IECUInt ThirtyTwo) =
+    (intWithRange 0 ((2 :: Integer) ^ (32 :: Integer)), mempty)
+showVarType (IECUInt SixtyFour) =
+    (intWithRange 0 ((2 :: Integer) ^ (64 :: Integer)), mempty)
+showVarType (IECInt Eight) =
+    ( intWithRange
+          ((-2 :: Integer) ^ (7 :: Integer))
+          ((2 :: Integer) ^ (7 :: Integer) - 1)
+    , mempty)
+showVarType (IECInt Sixteen) =
+    ( intWithRange
+          ((-2 :: Integer) ^ (15 :: Integer))
+          ((2 :: Integer) ^ (15 :: Integer) - 1)
+    , mempty)
+showVarType (IECInt ThirtyTwo) =
+    ( intWithRange
+          ((-2 :: Integer) ^ (31 :: Integer))
+          ((2 :: Integer) ^ (31 :: Integer) - 1)
+    , mempty)
+showVarType (IECInt SixtyFour) =
+    ( intWithRange
+          ((-2 :: Integer) ^ (63 :: Integer))
+          ((2 :: Integer) ^ (63 :: Integer) - 1)
+    , mempty)
+showVarType (IECArray idxs var) =
+    ( fst (showVarType var)
+    , "[" <> foldMap id (NE.intersperse "," (fmap show idxs)) <> "]")
 showVarType (IECString size) = (intWithRange 0 127, "[" <> show size <> "]")
 showVarType t = error ("Uppaal doesn't support " <> show t <> " type!")
 
@@ -90,7 +112,8 @@ localParameters = fmap createUppaalVar . bfbVariables . basicFb
 
 createUppaalVar :: Variable -> UppaalVar
 createUppaalVar var = UppaalVar varType (variableName var <> suffix)
-    where (varType,suffix) = showVarType (variableType var)
+  where
+    (varType,suffix) = showVarType (variableType var)
 
 --------------------------------------------------------------------------------
 -- 3. Handle Locations
@@ -108,14 +131,15 @@ locationStartPrefix :: ECState -> String
 locationStartPrefix state = "__start_" <> ecStateName state
 
 locationEventPrefix :: ECState -> ECAction -> String
-locationEventPrefix state action = fold ["__action_"
-                                        ,(ecStateName state)
-                                        ,"__"
-                                        ,(ecActionOutput action)
-                                        ,"_"
-                                        ,(ecActionAlgorithm action)
-                                        ,"_"
-                                        ]
+locationEventPrefix state action =
+    fold
+        [ "__action_"
+        , (ecStateName state)
+        , "__"
+        , (ecActionOutput action)
+        , "_"
+        , (ecActionAlgorithm action)
+        , "_"]
 
 locations :: FunctionBlock -> [Location]
 locations fb = doFold states
@@ -162,7 +186,9 @@ getLocationsFromState state = do
     actionStates <-
         mapM
             (uncurry (createState (locationEventPrefix state)))
-            (zip (tail (iterate (+ (offset :+ 0)) startCoord)) (ecStateActions state))
+            (zip
+                 (tail (iterate (+ (offset :+ 0)) startCoord))
+                 (ecStateActions state))
     destState <- createState ecStateName endCoord state
     pure (initState <> actionStates, destState)
 
@@ -263,75 +289,77 @@ anAlgorithm :: ECAlgorithm -> String
 anAlgorithm al = fold (execWriter (runReaderT writeFunction 0))
   where
     writeFunction = do
-      writeLine ("void " <> ecAlgorithmName al <> "()")
-      writeBlock (ecAlgorithmStText al)
-      -- Append blank line for formatting.
-      writeLine mempty
+        writeLine ("void " <> ecAlgorithmName al <> "()")
+        writeBlock (ecAlgorithmStText al)
+        -- Append blank line for formatting.
+        writeLine
+            mempty
 
 writeLine :: Monad m => String -> ReaderT Int (WriterT (DList String) m) ()
 writeLine l = do
-  n <- ask
-  lift (tell (DList.singleton (replicate n '\t' <> l <> "\n")))
+    n <- ask
+    lift (tell (DList.singleton (replicate n '\t' <> l <> "\n")))
 
 increaseIndent :: ReaderT Int m a -> ReaderT Int m a
-increaseIndent =
-  withReaderT (1 +)
+increaseIndent = withReaderT (1 +)
 
 writeBlock :: Monad m => [Statement] -> ReaderT Int (WriterT (DList String) m) ()
 writeBlock statements = do
-  writeLine "{"
-  increaseIndent (traverse_ writeStatement statements)
-  writeLine "}"
+    writeLine "{"
+    increaseIndent (traverse_ writeStatement statements)
+    writeLine "}"
 
 writeStatement :: Monad m => Statement -> ReaderT Int (WriterT (DList String) m) ()
 writeStatement (Declaration name typeIn) =
-  writeLine (typeOut <> " " <> name <> suffix <> ";")
-  where (typeOut, suffix) = showVarType typeIn
+    writeLine (typeOut <> " " <> name <> suffix <> ";")
+  where
+    (typeOut,suffix) = showVarType typeIn
 writeStatement (Assignment lvalue rvalue) =
-  writeLine (showLocation lvalue <> " = " <> showValue rvalue <> ";")
+    writeLine (showLocation lvalue <> " = " <> showValue rvalue <> ";")
 writeStatement (For name start end step body) = do
-  writeLine
-    ("for (int " <> name <> " = " <> show start <> "; " <>
-     name <> " != " <> show end <> "; " <>
-     name <> " = " <> name <> " + (" <>
-     show (fromMaybe 1 step) <> "))")
-  writeBlock body
+    writeLine
+        ("for (int " <> name <> " = " <> show start <> "; " <> name <> " != " <>
+         show end <> "; " <> name <> " = " <> name <> " + (" <>
+         show (fromMaybe 1 step) <> "))")
+    writeBlock body
 writeStatement (While cond body) = do
-  writeLine ("while (" <> showValue cond <> ")")
-  writeBlock body
+    writeLine ("while (" <> showValue cond <> ")")
+    writeBlock body
 writeStatement (Repeat body cond) = do
-  writeLine "do"
-  writeBlock body
-  writeLine ("while (" <> showValue cond <> ")")
+    writeLine "do"
+    writeBlock body
+    writeLine ("while (" <> showValue cond <> ")")
 writeStatement (Case var branches defaultBranch) = do
-  writeLine ("case (" <> showValue var <> ")")
-  writeLine "{"
-  traverse_ writeBranch branches
-  writeDefaultBranch
-  writeLine "}"
-    where
-      writeCase i = writeLine (i <> ":")
-      writeCases = traverse_ (writeCase . show)
-      writeCaseExp (CaseInt i) = writeCase (show i)
-      writeCaseExp (CaseRange from to)
-        | from <= to = writeCases (enumFromTo from to)
-        | otherwise = writeCases (enumFromThenTo from (from-1) to)
-      writeBranch (cases, body) = do
+    writeLine ("case (" <> showValue var <> ")")
+    writeLine "{"
+    traverse_ writeBranch branches
+    writeDefaultBranch
+    writeLine "}"
+  where
+    writeCase i = writeLine (i <> ":")
+    writeCases = traverse_ (writeCase . show)
+    writeCaseExp (CaseInt i) = writeCase (show i)
+    writeCaseExp (CaseRange from to)
+      | from <= to = writeCases (enumFromTo from to)
+      | otherwise = writeCases (enumFromThenTo from (from - 1) to)
+    writeBranch (cases,body) = do
         traverse_ writeCaseExp cases
-        increaseIndent $ do traverse_ writeStatement body
-                            writeStatement Break
-      writeDefaultBranch = do
+        increaseIndent $
+            do traverse_ writeStatement body
+               writeStatement Break
+    writeDefaultBranch = do
         writeCase "default"
-        increaseIndent $ do traverse_ writeStatement defaultBranch
-                            writeStatement Break
+        increaseIndent $
+            do traverse_ writeStatement defaultBranch
+               writeStatement Break
 writeStatement (If cond branch) = do
-  writeLine ("if (" <> showValue cond <> ")")
-  writeBlock branch
+    writeLine ("if (" <> showValue cond <> ")")
+    writeBlock branch
 writeStatement (IfElse cond branch1 branch2) = do
-  writeLine ("if (" <> showValue cond <> ")")
-  writeBlock branch1
-  writeLine "else"
-  writeBlock branch2
+    writeLine ("if (" <> showValue cond <> ")")
+    writeBlock branch1
+    writeLine "else"
+    writeBlock branch2
 writeStatement Break = writeLine "break;"
 writeStatement Return = writeLine "return;"
 
@@ -356,23 +384,24 @@ showValue (StChar c) = show (ord c)
 showBinaryValue :: Value -> StBinaryOp -> Value -> String
 showBinaryValue a op b = showValue a <> " " <> opStr <> " " <> showValue b
   where
-    opStr = case op of
-      StAddition -> "+"
-      StSubtract -> "-"
-      StExp -> error "Uppaal doesn't support exponentiation!"
-      StMultiply -> "*"
-      StDivide -> "/"
-      StEquals -> "="
-      StNotEquals -> "!="
-      StLessThanEquals -> "<="
-      StLessThan -> "<"
-      StGreaterThanEquals -> ">="
-      StGreaterThan -> ">"
-      StMod -> "%"
-      StBitwiseAnd -> "&"
-      StAnd -> "&&"
-      StOr -> "||"
-      StXor -> "^"
+    opStr =
+        case op of
+            StAddition -> "+"
+            StSubtract -> "-"
+            StExp -> error "Uppaal doesn't support exponentiation!"
+            StMultiply -> "*"
+            StDivide -> "/"
+            StEquals -> "="
+            StNotEquals -> "!="
+            StLessThanEquals -> "<="
+            StLessThan -> "<"
+            StGreaterThanEquals -> ">="
+            StGreaterThan -> ">"
+            StMod -> "%"
+            StBitwiseAnd -> "&"
+            StAnd -> "&&"
+            StOr -> "||"
+            StXor -> "^"
 
 showMonoValue :: StMonoOp -> Value -> String
 showMonoValue StNegate v = "-" <> showValue v
@@ -389,32 +418,38 @@ createLibraryFunctions = foldMap f . fbFunctions
 
 fbFunctions :: FunctionBlock -> Set String
 fbFunctions fb =
-    foldMap (extractFromStatement . ecAlgorithmStText) (bfbAlgorithms (basicFb fb)) <>
-    foldMap (extractFromValue . ecTransitionCondition) (bfbTransitions (basicFb fb))
+    foldMap
+        (extractFunctionStatement . ecAlgorithmStText)
+        (bfbAlgorithms (basicFb fb)) <>
+    foldMap
+        (extractFunctionValue . ecTransitionCondition)
+        (bfbTransitions (basicFb fb))
 
 -- | Extracts the functions from the supplied statements.
-extractFromStatement :: Foldable t => t Statement -> Set String
-extractFromStatement lst = foldMap statement lst
+extractFunctionStatement :: Foldable t => t Statement -> Set String
+extractFunctionStatement lst = foldMap statement lst
   where
-    statement (Assignment lv v) = extractFromLValue lv <> extractFromValue v
-    statement (If v tb) = extractFromValue v <> extractFromStatement tb
+    statement (Assignment lv v) = extractFunctionLValue lv <> extractFunctionValue v
+    statement (If v tb) = extractFunctionValue v <> extractFunctionStatement tb
     statement (IfElse v tb eb) =
-        extractFromValue v <> extractFromStatement tb <> extractFromStatement eb
-    statement (For _ _ _ _ sts) = extractFromStatement sts
-    statement (While v sts) = extractFromValue v <> extractFromStatement sts
-    statement (Repeat sts v) = extractFromValue v <> extractFromStatement sts
+        extractFunctionValue v <> extractFunctionStatement tb <>
+        extractFunctionStatement eb
+    statement (For _ _ _ _ sts) = extractFunctionStatement sts
+    statement (While v sts) = extractFunctionValue v <> extractFunctionStatement sts
+    statement (Repeat sts v) = extractFunctionValue v <> extractFunctionStatement sts
     statement (Case v sts eb) =
-        extractFromValue v <> extractFromStatement (foldMap snd sts) <> extractFromStatement eb
+        extractFunctionValue v <> extractFunctionStatement (foldMap snd sts) <>
+        extractFunctionStatement eb
     statement _ = mempty
 
-extractFromLValue :: LValue -> Set String
-extractFromLValue (SimpleLValue _) = mempty
-extractFromLValue (ArrayLValue _ v) = extractFromValue v
+extractFunctionLValue :: LValue -> Set String
+extractFunctionLValue (SimpleLValue _) = mempty
+extractFunctionLValue (ArrayLValue _ v) = extractFunctionValue v
 
-extractFromValue :: Value -> Set String
-extractFromValue (StMonoOp _ v) = extractFromValue v
-extractFromValue (StBinaryOp _ v1 v2) = extractFromValue v1 <> extractFromValue v2
-extractFromValue (StLValue lv) = extractFromLValue lv
-extractFromValue (StFunc s vs) = Set.singleton s <> foldMap extractFromValue vs
-extractFromValue (StSubValue v) = extractFromValue v
-extractFromValue _ = mempty
+extractFunctionValue :: Value -> Set String
+extractFunctionValue (StMonoOp _ v) = extractFunctionValue v
+extractFunctionValue (StBinaryOp _ v1 v2) = extractFunctionValue v1 <> extractFunctionValue v2
+extractFunctionValue (StLValue lv) = extractFunctionLValue lv
+extractFunctionValue (StFunc s vs) = Set.singleton s <> foldMap extractFunctionValue vs
+extractFunctionValue (StSubValue v) = extractFunctionValue v
+extractFunctionValue _ = mempty

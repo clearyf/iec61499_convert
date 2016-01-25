@@ -15,9 +15,10 @@ parseGuard events v =
     justCondition v
 
 justEvent :: Set String -> Value -> Maybe Guard
-justEvent set v = case v of
-  StLValue (SimpleLValue s) -> fmap f (find (==s) set)
-  _ -> mzero
+justEvent set v =
+    case v of
+        StLValue (SimpleLValue s) -> fmap f (find (== s) set)
+        _ -> mzero
   where
     f s = Guard (pure s) mzero
 
@@ -25,9 +26,11 @@ justCondition :: Value -> Maybe Guard
 justCondition = pure . Guard mzero . pure
 
 eventCondition :: Set String -> Value -> Maybe Guard
-eventCondition set v = case v of
-  StBinaryOp StAnd (StLValue (SimpleLValue s)) e -> fmap (f e) (find (==s) set)
-  _ -> mzero
+eventCondition set v =
+    case v of
+        StBinaryOp StAnd (StLValue (SimpleLValue s)) e ->
+            fmap (f e) (find (== s) set)
+        _ -> mzero
   where
     f e s = Guard (pure s) (pure e)
 
@@ -37,17 +40,18 @@ eventCondition set v = case v of
 -- so move that to the outside.  Note that XOR also has lower
 -- precedence than AND, so that needs to be checked as well.
 isRewriteRequired :: Set String -> Value -> Maybe String
-isRewriteRequired set v = case v of
-  StBinaryOp StAnd (StBinaryOp StAnd (StLValue (SimpleLValue s)) _) _ ->
-    find (==s) set
-  StBinaryOp StOr (StBinaryOp StAnd (StLValue (SimpleLValue s)) _) _ ->
-    find (==s) set
-  StBinaryOp StXor (StBinaryOp StAnd (StLValue (SimpleLValue s)) _) _ ->
-    find (==s) set
-  StBinaryOp StAnd l _ -> isRewriteRequired set l
-  StBinaryOp StOr l _ -> isRewriteRequired set l
-  StBinaryOp StXor l _ -> isRewriteRequired set l
-  _ -> mzero
+isRewriteRequired set v =
+    case v of
+        StBinaryOp StAnd (StBinaryOp StAnd (StLValue (SimpleLValue s)) _) _ ->
+            find (== s) set
+        StBinaryOp StOr (StBinaryOp StAnd (StLValue (SimpleLValue s)) _) _ ->
+            find (== s) set
+        StBinaryOp StXor (StBinaryOp StAnd (StLValue (SimpleLValue s)) _) _ ->
+            find (== s) set
+        StBinaryOp StAnd l _ -> isRewriteRequired set l
+        StBinaryOp StOr l _ -> isRewriteRequired set l
+        StBinaryOp StXor l _ -> isRewriteRequired set l
+        _ -> mzero
 
 rewriteValue :: Set String -> Value -> Value
 rewriteValue set v = maybe v (recurse v) (isRewriteRequired set v)
@@ -59,5 +63,5 @@ rewriteValue set v = maybe v (recurse v) (isRewriteRequired set v)
 
 leftRotate :: Value -> Value
 leftRotate (StBinaryOp op1 (StBinaryOp op2 vll vlr) vr) =
-  StBinaryOp op2 vll (StBinaryOp op1 vlr vr)
+    StBinaryOp op2 vll (StBinaryOp op1 vlr vr)
 leftRotate x = x

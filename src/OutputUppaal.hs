@@ -94,16 +94,14 @@ createGlobalDecl um =
     "// Global declarations\n" <>
     foldMap
         (<> ";\n")
-        (inputChannels um <>
-         outputChannels um <>
-         parameters modelInputVars um <>
+        (inputChannels um <> outputChannels um <> parameters modelInputVars um <>
          parameters modelOutputVars um) <>
     fold (modelDeclarations um)
 
 createLocalDeclarations :: UppaalModel -> String
 createLocalDeclarations um =
-  "// Local declarations\n" <>
-  foldMap (<> ";\n") (parameters modelInternalVars um)
+    "// Local declarations\n" <>
+    foldMap (<> ";\n") (parameters modelInternalVars um)
 
 -- The global declarations consist of the input/output events and
 -- input/output values.
@@ -133,8 +131,15 @@ makeLocationDecl l =
     mk (AState n i coord) extra =
         mkelem
             "location"
-            [sattr "id" (showStateId i), sattr "x" (show (realPart coord)), sattr "y" (show (imagPart coord))]
-            ([mkelem "name" [sattr "x" (show ((realPart coord) + 10)), sattr "y" (show ((imagPart coord) + 10))] [txt n]] <> extra)
+            [ sattr "id" (showStateId i)
+            , sattr "x" (show (realPart coord))
+            , sattr "y" (show (imagPart coord))]
+            ([ mkelem
+                   "name"
+                   [ sattr "x" (show ((realPart coord) + 10))
+                   , sattr "y" (show ((imagPart coord) + 10))]
+                   [txt n]] <>
+             extra)
 
 makeTransitionDecl :: ArrowXml a => Transition -> a n XmlTree
 makeTransitionDecl (Transition src dest sync guard' update) =
