@@ -184,11 +184,10 @@ getLocationsFromState state = do
                      (: mempty)
                      (createState locationStartPrefix startCoord state)
     actionStates <-
-        mapM
-            (uncurry (createState (locationEventPrefix state)))
-            (zip
-                 (tail (iterate (+ (offset :+ 0)) startCoord))
-                 (ecStateActions state))
+        zipWithM
+            (createState (locationEventPrefix state))
+            (tail (iterate (+ (offset :+ 0)) startCoord))
+            (ecStateActions state)
     destState <- createState ecStateName endCoord state
     pure (initState <> actionStates, destState)
 
