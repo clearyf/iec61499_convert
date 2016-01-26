@@ -60,6 +60,9 @@
    The majority of the code has been formatted using hindent's
    ‘johan-tibell’ style.
 
+   The ‘base-prelude’ package has also been used to streamline the
+   list of imports.
+
 * Current Issues
 
 ** Strings are only partially supported
