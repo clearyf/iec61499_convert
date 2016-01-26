@@ -1,7 +1,7 @@
 module OutputUppaal
        (UppaalModel(..), AState(..), UppaalChan(..), UppaalVar(..),
         Location(..), StateId(..), Transition(..), outputUppaal,
-        outputUppaalToFile, showStateId)
+        outputUppaalToFile)
        where
 
 import           BasePrelude
