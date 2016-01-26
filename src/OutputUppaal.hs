@@ -16,7 +16,7 @@ data UppaalModel = UppaalModel
     , modelInternalVars :: [UppaalVar]
     , modelLocations :: [Location]
     , modelTransitions :: [Transition]
-    , modelDeclarations :: [String]
+    , modelDeclarations :: String
     } deriving (Show,Eq)
 
 data UppaalVar = UppaalVar String String deriving (Show,Eq)
@@ -96,7 +96,7 @@ createGlobalDecl um =
         (<> ";\n")
         (inputChannels um <> outputChannels um <> parameters modelInputVars um <>
          parameters modelOutputVars um) <>
-    fold (modelDeclarations um)
+    modelDeclarations um
 
 createLocalDeclarations :: UppaalModel -> String
 createLocalDeclarations um =

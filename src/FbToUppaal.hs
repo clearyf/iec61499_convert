@@ -37,7 +37,7 @@ fbToUppaalModel fb =
         (localParameters fb)
         (locations fb)
         (transitions fb)
-        (fmap anAlgorithm (bfbAlgorithms (basicFb fb)) <>
+        (foldMap anAlgorithm (bfbAlgorithms (basicFb fb)) <>
          createLibraryFunctions fb)
 
 --------------------------------------------------------------------------------
@@ -411,10 +411,10 @@ showLocation :: LValue -> String
 showLocation (SimpleLValue name) = name
 showLocation (ArrayLValue name idx) = name <> showValue idx
 
-createLibraryFunctions :: FunctionBlock -> [String]
+createLibraryFunctions :: FunctionBlock -> String
 createLibraryFunctions = foldMap f . fbFunctions
   where
-    f str = ["void " <> str <> "()\n{\n}\n\n"]
+    f str = "void " <> str <> "()\n{\n}\n\n"
 
 fbFunctions :: FunctionBlock -> Set String
 fbFunctions fb =

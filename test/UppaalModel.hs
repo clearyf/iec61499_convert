@@ -103,6 +103,6 @@ uppaalModel =
                            , transitionGuard = mzero
                            , transitionUpdate = mzero
                            }]
-    , modelDeclarations = [ "void TurnOn()\n{\n\tValue = true;\n}\n\n"
-                          , "void TurnOff()\n{\n\tValue = false;\n}\n\n"]
+    , modelDeclarations = "void TurnOn()\n{\n\tValue = true;\n}\n\n" <>
+                          "void TurnOff()\n{\n\tValue = false;\n}\n\n"
     }
