@@ -81,13 +81,13 @@ outputUppaal = outputModel (writeDocumentToString [withIndent yes, withXmlPi yes
 -- The global declaration first.
 
 inputChannels :: UppaalModel -> [String]
-inputChannels um = fmap (\ (UppaalChan c) -> "chan " <> c) (modelInputEvents um)
+inputChannels um = map (\ (UppaalChan c) -> "chan " <> c) (modelInputEvents um)
 
 outputChannels :: UppaalModel -> [String]
-outputChannels um = fmap (\ (UppaalChan c) -> "chan " <> c) (modelOutputEvents um)
+outputChannels um = map (\ (UppaalChan c) -> "chan " <> c) (modelOutputEvents um)
 
-parameters :: Functor f => (t -> f UppaalVar) -> t -> f String
-parameters f um = fmap (\ (UppaalVar t v) -> t <> " " <> v) (f um)
+parameters :: (t -> [UppaalVar]) -> t -> [String]
+parameters f um = map (\ (UppaalVar t v) -> t <> " " <> v) (f um)
 
 createGlobalDecl :: UppaalModel -> String
 createGlobalDecl um =
@@ -118,9 +118,9 @@ templateDecl um =
         "template"
         ([ mkelem "name" [sattr "x" "0", sattr "y" "0"] [txt (modelName um)]
          , selem "declaration" [txt (createLocalDeclarations um)]] <>
-         fmap makeLocationDecl (modelLocations um) <>
+         map makeLocationDecl (modelLocations um) <>
          makeInitialLocation <>
-         fmap makeTransitionDecl (modelTransitions um))
+         map makeTransitionDecl (modelTransitions um))
 
 makeLocationDecl :: ArrowXml a => Location -> a n XmlTree
 makeLocationDecl l =

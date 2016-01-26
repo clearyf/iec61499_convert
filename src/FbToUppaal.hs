@@ -45,7 +45,7 @@ fbToUppaalModel fb =
 
 extractChannels :: String -> (InterfaceList -> [Event]) -> FunctionBlock -> [UppaalChan]
 extractChannels prefix f =
-    fmap (UppaalChan . (prefix <>) . eventName) . f . interfaceList
+    map (UppaalChan . (prefix <>) . eventName) . f . interfaceList
 
 inputChannelPrefix :: String
 inputChannelPrefix = "ic_"
@@ -102,13 +102,13 @@ intWithRange :: Integer -> Integer -> String
 intWithRange from to = "int[" <> show from <> "," <> show to <> "]"
 
 inputParameters :: FunctionBlock -> [UppaalVar]
-inputParameters = fmap createUppaalVar . inputVariables . interfaceList
+inputParameters = map createUppaalVar . inputVariables . interfaceList
 
 outputParameters :: FunctionBlock -> [UppaalVar]
-outputParameters = fmap createUppaalVar . outputVariables . interfaceList
+outputParameters = map createUppaalVar . outputVariables . interfaceList
 
 localParameters :: FunctionBlock -> [UppaalVar]
-localParameters = fmap createUppaalVar . bfbVariables . basicFb
+localParameters = map createUppaalVar . bfbVariables . basicFb
 
 createUppaalVar :: Variable -> UppaalVar
 createUppaalVar var = UppaalVar varType (variableName var <> suffix)
@@ -146,7 +146,7 @@ locations fb = doFold states
   where
     states = getStatesMap (getBasicStates fb)
     doFold (StateMap m) = foldMap f m
-    f (u,n) = fmap UrgentLocation u <> [Location n]
+    f (u,n) = map UrgentLocation u <> [Location n]
 
 newtype StateMap =
     StateMap (Map String ([AState], AState))
@@ -163,7 +163,7 @@ getStatesMap basicStates =
     StateMap
         (Map.fromList
              (zip
-                  (fmap ecStateName basicStates)
+                  (map ecStateName basicStates)
                   (evalState (mapM getLocationsFromState basicStates) 0)))
 
 -- | Calculates the states from each input state
@@ -193,7 +193,7 @@ getLocationsFromState state = do
     pure (initState <> actionStates, destState)
 
 locationsToMap :: [Location] -> Map String StateId
-locationsToMap lst = Map.fromList (fmap f lst)
+locationsToMap lst = Map.fromList (map f lst)
   where
     f (UrgentLocation (AState s i _)) = (s, i)
     f (Location (AState s i _)) = (s, i)
@@ -201,7 +201,7 @@ locationsToMap lst = Map.fromList (fmap f lst)
 advancedTransitions :: Map String StateId -> ECState -> [Transition]
 advancedTransitions m s
   | null (ecStateActions s) = mempty
-  | otherwise = fmap makeTransition trTriples
+  | otherwise = map makeTransition trTriples
   where
     makeTransition (act,a,b) =
         Transition
@@ -216,7 +216,7 @@ advancedTransitions m s
     trTriples = zip3 acts trSrcs (tail trSrcs)
     trSrcs =
         locationStartPrefix s :
-        fmap (locationEventPrefix s) (ecStateActions s) <> [ecStateName s]
+        map (locationEventPrefix s) (ecStateActions s) <> [ecStateName s]
 
 makeUpdateStatement :: MonadPlus m => ECAction -> m String
 makeUpdateStatement action
@@ -242,14 +242,14 @@ transitions fb = basicTransitions <> otherTransitions
     states = getBasicStates fb
     statesMap = getStatesMap states
     -- Transitions which are defined in the input FunctionBlock.
-    basicTransitions = fmap createBasicTransition (bfbTransitions (basicFb fb))
+    basicTransitions = map createBasicTransition (bfbTransitions (basicFb fb))
     -- Transitions which are required to handle the urgent
     -- locations.  The list of required transitions is one
     -- transition from urgent state to the next and then one final
     -- transition to the end state.
     otherTransitions =
         foldMap (advancedTransitions (locationsToMap (locations fb))) states
-    events = Set.fromList (fmap eventName (eventInputs (interfaceList fb)))
+    events = Set.fromList (map eventName (eventInputs (interfaceList fb)))
     createBasicTransition (ECTransition src dest cond _) =
         Transition
             (getSrcId src statesMap)
@@ -364,7 +364,7 @@ writeStatement Break = writeLine "break;"
 writeStatement Return = writeLine "return;"
 
 showArgs :: [Value] -> String
-showArgs = fold . intersperse ", " . fmap showValue
+showArgs = fold . intersperse ", " . map showValue
 
 showValue :: Value -> String
 showValue (StSubValue values) = "(" <> showValue values <> ")"

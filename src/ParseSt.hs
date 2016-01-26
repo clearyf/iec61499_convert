@@ -370,7 +370,7 @@ parseLongTime :: Parser Value
 parseLongTime = StTime . sum <$> parseStuff `someTill` lookAhead notDigit
   where
     units = [("h", 60 * 60 * 1000), ("ms", 1), ("s", 1000), ("m", 60 * 1000)]
-    parseUnits = choice (fmap (try . string . fst) units)
+    parseUnits = choice (map (try . string . fst) units)
     -- fromJust is completely safe here, s must be one of
     -- the strings that was in units.
     calcTime n s = n * fromJust (lookup s units)
