@@ -7,8 +7,8 @@ import ParseSt
 demux8Block :: [BasicFunctionBlock]
 demux8Block =
     [ BasicFunctionBlock
-      { fbName = "Demux8"
-      , interfaceList = InterfaceList
+      { bfbName = "Demux8"
+      , bfbInterfaceList = InterfaceList
         { eventInputs = [ Event
                           { eventName = "REQ"
                           , eventComment = "Normal Execution Request"

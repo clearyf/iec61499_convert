@@ -7,8 +7,8 @@ import ParseSt
 buttonTimerLogicBlock :: [BasicFunctionBlock]
 buttonTimerLogicBlock =
     [ BasicFunctionBlock
-      { fbName = "ButtonTimerLogic"
-      , interfaceList = InterfaceList
+      { bfbName = "ButtonTimerLogic"
+      , bfbInterfaceList = InterfaceList
         { eventInputs = [ Event
                           { eventName = "BUTTON"
                           , eventComment = "Button event"

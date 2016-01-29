@@ -15,8 +15,8 @@ import Text.XML.HXT.Core
 
 -- This represents the expected objects in the XML structure.
 data BasicFunctionBlock = BasicFunctionBlock
-    { fbName :: String
-    , interfaceList :: InterfaceList
+    { bfbName :: String
+    , bfbInterfaceList :: InterfaceList
     , bfbVariables :: [Variable]
     , bfbStates :: [ECState]
     , bfbTransitions :: [ECTransition]

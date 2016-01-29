@@ -29,7 +29,7 @@ import           ParseSt
 fbToUppaalModel :: BasicFunctionBlock -> UppaalModel
 fbToUppaalModel fb =
     UppaalModel
-        (fbName fb)
+        (bfbName fb)
         (inputChannels fb)
         (outputChannels fb)
         (inputParameters fb)
@@ -45,7 +45,7 @@ fbToUppaalModel fb =
 
 extractChannels :: String -> (InterfaceList -> [Event]) -> BasicFunctionBlock -> [UppaalChan]
 extractChannels prefix f =
-    map (UppaalChan . (prefix <>) . eventName) . f . interfaceList
+    map (UppaalChan . (prefix <>) . eventName) . f . bfbInterfaceList
 
 inputChannelPrefix :: String
 inputChannelPrefix = "ic_"
@@ -102,10 +102,10 @@ intWithRange :: Integer -> Integer -> String
 intWithRange from to = "int[" <> show from <> "," <> show to <> "]"
 
 inputParameters :: BasicFunctionBlock -> [UppaalVar]
-inputParameters = map createUppaalVar . inputVariables . interfaceList
+inputParameters = map createUppaalVar . inputVariables . bfbInterfaceList
 
 outputParameters :: BasicFunctionBlock -> [UppaalVar]
-outputParameters = map createUppaalVar . outputVariables . interfaceList
+outputParameters = map createUppaalVar . outputVariables . bfbInterfaceList
 
 localParameters :: BasicFunctionBlock -> [UppaalVar]
 localParameters = map createUppaalVar . bfbVariables
@@ -248,7 +248,7 @@ transitions fb = basicTransitions <> otherTransitions
     -- transition to the end state.
     otherTransitions =
         foldMap (advancedTransitions (locationsToMap (locations fb))) states
-    events = Set.fromList (map eventName (eventInputs (interfaceList fb)))
+    events = Set.fromList (map eventName (eventInputs (bfbInterfaceList fb)))
     createBasicTransition (ECTransition src dest cond _) =
         Transition
             (getSrcId src statesMap)

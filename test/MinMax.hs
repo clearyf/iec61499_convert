@@ -7,8 +7,8 @@ import ParseSt
 minMaxBlock :: [BasicFunctionBlock]
 minMaxBlock =
     [ BasicFunctionBlock
-      { fbName = "minMax"
-      , interfaceList = InterfaceList
+      { bfbName = "minMax"
+      , bfbInterfaceList = InterfaceList
         { eventInputs = [ Event
                           { eventName = "REQ"
                           , eventComment = "Normal Execution Request"

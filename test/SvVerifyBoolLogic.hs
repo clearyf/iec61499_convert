@@ -7,8 +7,8 @@ import ParseSt
 svVerifyBoolLogicBlock :: [BasicFunctionBlock]
 svVerifyBoolLogicBlock =
     [ BasicFunctionBlock
-      { fbName = "svVerifyBoolLogic"
-      , interfaceList = InterfaceList
+      { bfbName = "svVerifyBoolLogic"
+      , bfbInterfaceList = InterfaceList
         { eventInputs = [ Event
                           { eventName = "VALUE"
                           , eventComment = "Value input has changed"
