@@ -4,9 +4,9 @@ import BasePrelude
 import ParseIec61499
 import ParseSt
 
-demux8Block :: [FunctionBlock]
+demux8Block :: [BasicFunctionBlock]
 demux8Block =
-    [ FunctionBlock
+    [ BasicFunctionBlock
       { fbName = "Demux8"
       , interfaceList = InterfaceList
         { eventInputs = [ Event
@@ -72,39 +72,41 @@ demux8Block =
                               , variableComment = "Output TRUE if inValue = 8"
                               }]
         }
-      , basicFb = BasicFunctionBlock
-        { bfbVariables = []
-        , bfbStates = [ ECState
-                        { ecStateName = "START"
-                        , ecStateComment = "Initial State"
-                        , ecStateActions = []
-                        , ecStatePosition = (-305.01816) :+ 461.2027
-                        }
-                      , ECState
-                        { ecStateName = "REQ"
-                        , ecStateComment = "Normal execution"
-                        , ecStateActions = [ ECAction
-                                             { ecActionAlgorithm = "REQ"
-                                             , ecActionOutput = "CNF"
-                                             }]
-                        , ecStatePosition = 109.98699 :+ (-187.8113)
-                        }]
-        , bfbTransitions = [ ECTransition
-                             { ecTransitionSource = "START"
-                             , ecTransitionDestination = "REQ"
-                             , ecTransitionCondition = StLValue (SimpleLValue "REQ")
-                             , ecTransitionPosition = 175.91646 :+ 411.85184
-                             }
-                           , ECTransition
-                             { ecTransitionSource = "REQ"
-                             , ecTransitionDestination = "START"
-                             , ecTransitionCondition = StInt 1
-                             , ecTransitionPosition = (-280.46118) :+ (-245.7205)
-                             }]
-        , bfbAlgorithms = [ ECAlgorithm
-                            { ecAlgorithmName = "REQ"
-                            , ecAlgorithmComment = "Normally executed algorithm"
-                            , ecAlgorithmStText = theAlgorithm}]}}]
+      , bfbVariables = []
+      , bfbStates = [ ECState
+                      { ecStateName = "START"
+                      , ecStateComment = "Initial State"
+                      , ecStateActions = []
+                      , ecStatePosition = (-305.01816) :+ 461.2027
+                      }
+                    , ECState
+                      { ecStateName = "REQ"
+                      , ecStateComment = "Normal execution"
+                      , ecStateActions = [ ECAction
+                                           { ecActionAlgorithm = "REQ"
+                                           , ecActionOutput = "CNF"
+                                           }]
+                      , ecStatePosition = 109.98699 :+ (-187.8113)
+                      }]
+      , bfbTransitions = [ ECTransition
+                           { ecTransitionSource = "START"
+                           , ecTransitionDestination = "REQ"
+                           , ecTransitionCondition = StLValue
+                                 (SimpleLValue "REQ")
+                           , ecTransitionPosition = 175.91646 :+ 411.85184
+                           }
+                         , ECTransition
+                           { ecTransitionSource = "REQ"
+                           , ecTransitionDestination = "START"
+                           , ecTransitionCondition = StInt 1
+                           , ecTransitionPosition = (-280.46118) :+ (-245.7205)
+                           }]
+      , bfbAlgorithms = [ ECAlgorithm
+                          { ecAlgorithmName = "REQ"
+                          , ecAlgorithmComment = "Normally executed algorithm"
+                          , ecAlgorithmStText = theAlgorithm
+                          }]
+      }]
 
 theAlgorithm :: [Statement]
 theAlgorithm =

@@ -33,9 +33,9 @@
   which converts from the frontend format to the backend format.
 
   The frontend is the ‘ParseIec61499’ file, the
-  ‘readBasicFunctionBlock’ function returns the FunctionBlock.  This
-  FunctionBlock structure also has the algorithms and guard conditions
-  parsed using ParseSt.
+  ‘readBasicFunctionBlock’ function returns a BasicFunctionBlock.
+  This BasicFunctionBlock structure also has the algorithms and guard
+  conditions parsed using ParseSt.
 
   The backend is the ‘OutputUppaal’ file.  The two OutputUppaal
   functions (‘outputUppaal’ and ‘outputUppaalToFile’) take a different

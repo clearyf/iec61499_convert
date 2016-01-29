@@ -17,16 +17,16 @@ import           OutputUppaal
         Location(..), StateId(..), Transition(..))
 import           ParseGuard (Guard(..), parseGuard)
 import           ParseIec61499
-       (ECTransition(..), ECState(..), FunctionBlock(..),
+       (ECTransition(..), ECState(..), BasicFunctionBlock(..),
         InterfaceList(..), Event(..), Variable(..), ECAction(..),
         BasicFunctionBlock(..), ECAlgorithm(..))
 import           ParseSt
        (LValue(..), Statement(..), Value(..), IECVariable(..), Width(..),
         StMonoOp(..), StBinaryOp(..), CaseSubExpression(..))
 
--- | Converts IEC61499 FunctionBlock to an UppaalModel
+-- | Converts IEC61499 BasicFunctionBlock to an UppaalModel
 -- If something goes wrong then an exception is thrown.
-fbToUppaalModel :: FunctionBlock -> UppaalModel
+fbToUppaalModel :: BasicFunctionBlock -> UppaalModel
 fbToUppaalModel fb =
     UppaalModel
         (fbName fb)
@@ -37,13 +37,13 @@ fbToUppaalModel fb =
         (localParameters fb)
         (locations fb)
         (transitions fb)
-        (foldMap anAlgorithm (bfbAlgorithms (basicFb fb)) <>
+        (foldMap anAlgorithm (bfbAlgorithms fb) <>
          createLibraryFunctions fb)
 
 --------------------------------------------------------------------------------
 -- Handle events
 
-extractChannels :: String -> (InterfaceList -> [Event]) -> FunctionBlock -> [UppaalChan]
+extractChannels :: String -> (InterfaceList -> [Event]) -> BasicFunctionBlock -> [UppaalChan]
 extractChannels prefix f =
     map (UppaalChan . (prefix <>) . eventName) . f . interfaceList
 
@@ -53,10 +53,10 @@ inputChannelPrefix = "ic_"
 outputChannelPrefix :: String
 outputChannelPrefix = "oc_"
 
-inputChannels :: FunctionBlock -> [UppaalChan]
+inputChannels :: BasicFunctionBlock -> [UppaalChan]
 inputChannels = extractChannels inputChannelPrefix eventInputs
 
-outputChannels :: FunctionBlock -> [UppaalChan]
+outputChannels :: BasicFunctionBlock -> [UppaalChan]
 outputChannels = extractChannels outputChannelPrefix eventOutputs
 
 --------------------------------------------------------------------------------
@@ -101,14 +101,14 @@ showVarType t = error ("Uppaal doesn't support " <> show t <> " type!")
 intWithRange :: Integer -> Integer -> String
 intWithRange from to = "int[" <> show from <> "," <> show to <> "]"
 
-inputParameters :: FunctionBlock -> [UppaalVar]
+inputParameters :: BasicFunctionBlock -> [UppaalVar]
 inputParameters = map createUppaalVar . inputVariables . interfaceList
 
-outputParameters :: FunctionBlock -> [UppaalVar]
+outputParameters :: BasicFunctionBlock -> [UppaalVar]
 outputParameters = map createUppaalVar . outputVariables . interfaceList
 
-localParameters :: FunctionBlock -> [UppaalVar]
-localParameters = map createUppaalVar . bfbVariables . basicFb
+localParameters :: BasicFunctionBlock -> [UppaalVar]
+localParameters = map createUppaalVar . bfbVariables
 
 createUppaalVar :: Variable -> UppaalVar
 createUppaalVar var = UppaalVar varType (variableName var <> suffix)
@@ -141,7 +141,7 @@ locationEventPrefix state action =
         , (ecActionAlgorithm action)
         , "_"]
 
-locations :: FunctionBlock -> [Location]
+locations :: BasicFunctionBlock -> [Location]
 locations fb = doFold states
   where
     states = getStatesMap (getBasicStates fb)
@@ -232,16 +232,16 @@ createState f coord x = do
     nextId <- getNextId
     pure (AState (f x) nextId coord)
 
-getBasicStates :: FunctionBlock -> [ECState]
-getBasicStates = bfbStates . basicFb
+getBasicStates :: BasicFunctionBlock -> [ECState]
+getBasicStates = bfbStates
 
-transitions :: FunctionBlock -> [Transition]
+transitions :: BasicFunctionBlock -> [Transition]
 transitions fb = basicTransitions <> otherTransitions
   where
     states = getBasicStates fb
     statesMap = getStatesMap states
-    -- Transitions which are defined in the input FunctionBlock.
-    basicTransitions = map createBasicTransition (bfbTransitions (basicFb fb))
+    -- Transitions which are defined in the input BasicFunctionBlock.
+    basicTransitions = map createBasicTransition (bfbTransitions fb)
     -- Transitions which are required to handle the urgent
     -- locations.  The list of required transitions is one
     -- transition from urgent state to the next and then one final
@@ -410,19 +410,19 @@ showLocation :: LValue -> String
 showLocation (SimpleLValue name) = name
 showLocation (ArrayLValue name idx) = name <> showValue idx
 
-createLibraryFunctions :: FunctionBlock -> String
+createLibraryFunctions :: BasicFunctionBlock -> String
 createLibraryFunctions = foldMap f . fbFunctions
   where
     f str = "void " <> str <> "()\n{\n}\n\n"
 
-fbFunctions :: FunctionBlock -> Set String
+fbFunctions :: BasicFunctionBlock -> Set String
 fbFunctions fb =
     foldMap
         (extractFunctionStatement . ecAlgorithmStText)
-        (bfbAlgorithms (basicFb fb)) <>
+        (bfbAlgorithms fb) <>
     foldMap
         (extractFunctionValue . ecTransitionCondition)
-        (bfbTransitions (basicFb fb))
+        (bfbTransitions fb)
 
 -- | Extracts the functions from the supplied statements.
 extractFunctionStatement :: Foldable t => t Statement -> Set String

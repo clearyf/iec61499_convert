@@ -1,7 +1,7 @@
 module ParseIec61499
-       (readBasicFunctionBlock, FunctionBlock(..), InterfaceList(..),
-        BasicFunctionBlock(..), ECState(..), ECTransition(..),
-        ECAction(..), ECAlgorithm(..), Event(..), Variable(..))
+       (readBasicFunctionBlock, BasicFunctionBlock(..), InterfaceList(..),
+        ECState(..), ECTransition(..), ECAction(..), ECAlgorithm(..),
+        Event(..), Variable(..))
        where
 
 import BasePrelude hiding (orElse)
@@ -9,15 +9,18 @@ import ParseSt
        (parseSt, parseValue, Statement, IECVariable(..),
         iECtypeFromString, Value(..))
 import Text.XML.HXT.Core
-       (ArrowXml, SysConfig, XmlTree, arr2, arr3, arr4, constA, deep,
-        isElem, getAttrValue, hasName, listA, no, orElse, readDocument,
-        runX, substAllXHTMLEntityRefs, withValidate)
+       (ArrowXml, SysConfig, XmlTree, arr2, arr3, arr4, constA,
+        deep, isElem, getAttrValue, hasName, listA, no, orElse,
+        readDocument, runX, substAllXHTMLEntityRefs, withValidate)
 
 -- This represents the expected objects in the XML structure.
-data FunctionBlock = FunctionBlock
+data BasicFunctionBlock = BasicFunctionBlock
     { fbName :: String
     , interfaceList :: InterfaceList
-    , basicFb :: BasicFunctionBlock
+    , bfbVariables :: [Variable]
+    , bfbStates :: [ECState]
+    , bfbTransitions :: [ECTransition]
+    , bfbAlgorithms :: [ECAlgorithm]
     } deriving (Show,Eq)
 
 data InterfaceList = InterfaceList
@@ -25,13 +28,6 @@ data InterfaceList = InterfaceList
     , eventOutputs :: [Event]
     , inputVariables :: [Variable]
     , outputVariables :: [Variable]
-    } deriving (Show,Eq)
-
-data BasicFunctionBlock = BasicFunctionBlock
-    { bfbVariables :: [Variable]
-    , bfbStates :: [ECState]
-    , bfbTransitions :: [ECTransition]
-    , bfbAlgorithms :: [ECAlgorithm]
     } deriving (Show,Eq)
 
 data ECState = ECState
@@ -158,22 +154,23 @@ getInterfaceList =
 -- number of algorithms.
 getBasicFunctionBlock :: ArrowXml a => a XmlTree BasicFunctionBlock
 getBasicFunctionBlock =
-    atTag "BasicFB" >>>
-    getListAtElem getVariable "InternalVars" &&&
-    getListAtElem getECState "ECC" &&&
-    getListAtElem getECTransition "ECC" &&&
-    (listA getAlgorithm `orElse` constA mempty) >>>
-    arr4 BasicFunctionBlock
-
-getFunctionBlock :: ArrowXml a => a XmlTree FunctionBlock
-getFunctionBlock =
     atTag "FBType" >>>
-    getAttrValue "Name" &&& getInterfaceList &&& getBasicFunctionBlock >>>
-    arr3 FunctionBlock
+    getAttrValue "Name" &&&
+    getInterfaceList &&&
+    (atTag "BasicFB" >>>
+     getListAtElem getVariable "InternalVars" &&&
+     getListAtElem getECState "ECC" &&&
+     getListAtElem getECTransition "ECC" &&&
+     (listA getAlgorithm `orElse` constA mempty)) >>>
+    arr6 BasicFunctionBlock
+
+-- Not implemented in HXT, but it’s a mechanical extension of arr4.
+arr6 :: Arrow a => (t -> t1 -> t2 -> t3 -> t4 -> t5 -> c) -> a (t, (t1, (t2, (t3, (t4, t5))))) c
+arr6 f = arr (\ ~(x1, ~(x2, ~(x3, ~(x4, ~(x5, ~(x6)))))) -> f x1 x2 x3 x4 x5 x6)
 
 xmlOptions :: [SysConfig]
 xmlOptions = [withValidate no]
 
-readBasicFunctionBlock :: FilePath -> IO [FunctionBlock]
+readBasicFunctionBlock :: FilePath -> IO [BasicFunctionBlock]
 readBasicFunctionBlock path =
-    runX (readDocument xmlOptions path >>> getFunctionBlock)
+    runX (readDocument xmlOptions path >>> getBasicFunctionBlock)

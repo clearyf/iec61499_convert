@@ -18,7 +18,7 @@ spec = do
     checkFile svVerifyBoolLogicBlock "examples/iec61499/svVerifyBoolLogic.xml"
     checkFile toggleFunctionBlock "examples/iec61499/toggle_fb.xml"
 
-checkFile :: [FunctionBlock] -> FilePath -> Spec
+checkFile :: [BasicFunctionBlock] -> FilePath -> Spec
 checkFile block filename = do
     fromFile <- runIO (readBasicFunctionBlock filename)
     it ("Function Block: " <> filename) (fromFile `shouldBe` block)
