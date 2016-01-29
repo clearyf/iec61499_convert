@@ -1,7 +1,7 @@
 module Main where
 
 import BasePrelude
-import ParseIec61499 (readFunctionBlock)
+import ParseIec61499 (readBasicFunctionBlock)
 import FbToUppaal (fbToUppaalModel)
 import OutputUppaal (outputUppaalToFile)
 
@@ -9,7 +9,7 @@ convertFile :: FilePath -> FilePath -> IO ()
 convertFile inputPath outputPath = do
     putStrLn
         ("Converting: " <> inputPath <> ", writing output to: " <> outputPath)
-    (contents:_) <- readFunctionBlock inputPath
+    (contents:_) <- readBasicFunctionBlock inputPath
     _ <- outputUppaalToFile outputPath (fbToUppaalModel contents)
     pure ()
 

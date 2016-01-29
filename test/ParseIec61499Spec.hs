@@ -20,5 +20,5 @@ spec = do
 
 checkFile :: [FunctionBlock] -> FilePath -> Spec
 checkFile block filename = do
-    fromFile <- runIO (readFunctionBlock filename)
+    fromFile <- runIO (readBasicFunctionBlock filename)
     it ("Function Block: " <> filename) (fromFile `shouldBe` block)

@@ -1,5 +1,5 @@
 module ParseIec61499
-       (readFunctionBlock, FunctionBlock(..), InterfaceList(..),
+       (readBasicFunctionBlock, FunctionBlock(..), InterfaceList(..),
         BasicFunctionBlock(..), ECState(..), ECTransition(..),
         ECAction(..), ECAlgorithm(..), Event(..), Variable(..))
        where
@@ -174,6 +174,6 @@ getFunctionBlock =
 xmlOptions :: [SysConfig]
 xmlOptions = [withValidate no]
 
-readFunctionBlock :: FilePath -> IO [FunctionBlock]
-readFunctionBlock path =
+readBasicFunctionBlock :: FilePath -> IO [FunctionBlock]
+readBasicFunctionBlock path =
     runX (readDocument xmlOptions path >>> getFunctionBlock)
