@@ -7,7 +7,7 @@ import ParseSt
 demux8Block :: [BasicFunctionBlock]
 demux8Block =
     [ BasicFunctionBlock
-      { bfbName = "Demux8"
+      { bfbDescription = FunctionBlockDescription "Demux8" "Basic Function Block Type" "Loytec.HVAC"
       , bfbInterfaceList = InterfaceList
         { eventInputs = [ Event
                           { eventName = "REQ"

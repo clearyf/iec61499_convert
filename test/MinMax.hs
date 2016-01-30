@@ -7,7 +7,7 @@ import ParseSt
 minMaxBlock :: [BasicFunctionBlock]
 minMaxBlock =
     [ BasicFunctionBlock
-      { bfbName = "minMax"
+      { bfbDescription = FunctionBlockDescription "minMax" "Basic Function Block Type" "Loytec.HVAC"
       , bfbInterfaceList = InterfaceList
         { eventInputs = [ Event
                           { eventName = "REQ"

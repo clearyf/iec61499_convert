@@ -1,7 +1,9 @@
 module ParseIec61499
-       (readBasicFunctionBlock, BasicFunctionBlock(..), InterfaceList(..),
-        ECState(..), ECTransition(..), ECAction(..), ECAlgorithm(..),
-        Event(..), Variable(..))
+       (readBasicFunctionBlock, readCompositeFunctionBlock,
+        BasicFunctionBlock(..), CompositeFunctionBlock(..),
+        FunctionBlockDescription(..), InterfaceList(..), ECState(..),
+        ECTransition(..), ECAction(..), ECAlgorithm(..), Event(..),
+        Variable(..))
        where
 
 import BasePrelude hiding (orElse)
@@ -16,12 +18,18 @@ import Text.XML.HXT.Core
 
 -- This represents the expected objects in the XML structure.
 data BasicFunctionBlock = BasicFunctionBlock
-    { bfbName :: String
+    { bfbDescription :: FunctionBlockDescription
     , bfbInterfaceList :: InterfaceList
     , bfbVariables :: [Variable]
     , bfbStates :: [ECState]
     , bfbTransitions :: [ECTransition]
     , bfbAlgorithms :: [ECAlgorithm]
+    } deriving (Show,Eq)
+
+data FunctionBlockDescription = FunctionBlockDescription
+    { fbName :: String
+    , fbComment :: String
+    , fbNamespace :: String
     } deriving (Show,Eq)
 
 data InterfaceList = InterfaceList
@@ -151,12 +159,19 @@ getInterfaceList =
     getListAtElem getVariable "OutputVars" >>>
     arr4 InterfaceList
 
+getFunctionBlockDescription :: ArrowXml a => a XmlTree FunctionBlockDescription
+getFunctionBlockDescription =
+    getAttrValue "Name" &&&
+    getAttrValueOrEmpty "Comment" &&&
+    getAttrValue "Namespace" >>>
+    arr3 FunctionBlockDescription
+
 -- We again presume the ECC is there, and there may or may not be a
 -- number of algorithms.
 getBasicFunctionBlock :: ArrowXml a => a XmlTree BasicFunctionBlock
 getBasicFunctionBlock =
     atTag "FBType" >>>
-    getAttrValue "Name" &&&
+    getFunctionBlockDescription &&&
     getInterfaceList &&&
     (atTag "BasicFB" >>>
      getListAtElem getVariable "InternalVars" &&&

@@ -7,7 +7,7 @@ import ParseSt
 svVerifyBoolLogicBlock :: [BasicFunctionBlock]
 svVerifyBoolLogicBlock =
     [ BasicFunctionBlock
-      { bfbName = "svVerifyBoolLogic"
+      { bfbDescription = FunctionBlockDescription "svVerifyBoolLogic" "Basic Function Block Type" "Loytec.Automation"
       , bfbInterfaceList = InterfaceList
         { eventInputs = [ Event
                           { eventName = "VALUE"

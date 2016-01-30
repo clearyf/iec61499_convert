@@ -7,7 +7,7 @@ import ParseSt
 buttonTimerLogicBlock :: [BasicFunctionBlock]
 buttonTimerLogicBlock =
     [ BasicFunctionBlock
-      { bfbName = "ButtonTimerLogic"
+      { bfbDescription = FunctionBlockDescription "ButtonTimerLogic" "Basic Function Block Type" "Loytec.Automation"
       , bfbInterfaceList = InterfaceList
         { eventInputs = [ Event
                           { eventName = "BUTTON"

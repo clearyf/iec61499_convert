@@ -18,8 +18,9 @@ import           OutputUppaal
 import           ParseGuard (Guard(..), parseGuard)
 import           ParseIec61499
        (ECTransition(..), ECState(..), BasicFunctionBlock(..),
-        InterfaceList(..), Event(..), Variable(..), ECAction(..),
-        BasicFunctionBlock(..), ECAlgorithm(..))
+        FunctionBlockDescription(..), InterfaceList(..), Event(..),
+        Variable(..), ECAction(..), BasicFunctionBlock(..),
+        ECAlgorithm(..))
 import           ParseSt
        (LValue(..), Statement(..), Value(..), IECVariable(..), Width(..),
         StMonoOp(..), StBinaryOp(..), CaseSubExpression(..))
@@ -29,7 +30,7 @@ import           ParseSt
 fbToUppaalModel :: BasicFunctionBlock -> UppaalModel
 fbToUppaalModel fb =
     UppaalModel
-        (bfbName fb)
+        (fbName (bfbDescription fb))
         (inputChannels fb)
         (outputChannels fb)
         (inputParameters fb)

@@ -7,7 +7,7 @@ import ParseSt
 toggleFunctionBlock :: [BasicFunctionBlock]
 toggleFunctionBlock =
     [ BasicFunctionBlock
-      { bfbName = "Toggle"
+      { bfbDescription = FunctionBlockDescription "Toggle" "Basic Function Block Type" "Main"
       , bfbInterfaceList = InterfaceList
         { eventInputs = [ Event
                           { eventName = "Toggle"
