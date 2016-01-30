@@ -9,8 +9,8 @@ import ParseSt
        (parseSt, parseValue, Statement, IECVariable(..),
         iECtypeFromString, Value(..))
 import Text.XML.HXT.Core
-       (ArrowXml, SysConfig, XmlTree, arr2, arr3, arr4, constA,
-        deep, isElem, getAttrValue, hasName, listA, no, orElse,
+       (ArrowXml, SysConfig, XmlTree, arr2, arr3, arr4, constA, isElem,
+        getAttrValue, getChildren, hasName, listA, no, orElse,
         readDocument, runX, substAllXHTMLEntityRefs, withValidate)
 
 -- This represents the expected objects in the XML structure.
@@ -68,7 +68,7 @@ data Variable = Variable
     } deriving (Show,Eq)
 
 atTag :: ArrowXml a => String -> a XmlTree XmlTree
-atTag tag = deep (isElem >>> hasName tag)
+atTag tag = getChildren >>> isElem >>> hasName tag
 
 getAttrValueOrEmpty :: ArrowXml a => String -> a XmlTree String
 getAttrValueOrEmpty str = getAttrValue str `orElse` constA ""
@@ -99,7 +99,7 @@ getCoords =
               mkPolar (read i) (read j))
 
 getListAtElem :: ArrowXml a => a XmlTree c -> String -> a XmlTree [c]
-getListAtElem f tag = (listA f <<< deep (hasName tag)) `orElse` constA mempty
+getListAtElem f tag = (listA f <<< atTag tag) `orElse` constA mempty
 
 getECState :: ArrowXml a => a XmlTree ECState
 getECState =
