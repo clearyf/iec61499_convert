@@ -11,7 +11,8 @@ import ParseSt
 import Text.XML.HXT.Core
        (ArrowXml, SysConfig, XmlTree, arr2, arr3, arr4, constA, isElem,
         getAttrValue, getChildren, hasName, listA, no, orElse,
-        readDocument, runX, substAllXHTMLEntityRefs, withValidate)
+        readDocument, runX, substAllXHTMLEntityRefs, withSubstDTDEntities,
+        withValidate)
 
 -- This represents the expected objects in the XML structure.
 data BasicFunctionBlock = BasicFunctionBlock
@@ -169,7 +170,7 @@ arr6 :: Arrow a => (t -> t1 -> t2 -> t3 -> t4 -> t5 -> c) -> a (t, (t1, (t2, (t3
 arr6 f = arr (\ ~(x1, ~(x2, ~(x3, ~(x4, ~(x5, ~(x6)))))) -> f x1 x2 x3 x4 x5 x6)
 
 xmlOptions :: [SysConfig]
-xmlOptions = [withValidate no]
+xmlOptions = [withValidate no, withSubstDTDEntities no]
 
 readBasicFunctionBlock :: FilePath -> IO [BasicFunctionBlock]
 readBasicFunctionBlock path =
