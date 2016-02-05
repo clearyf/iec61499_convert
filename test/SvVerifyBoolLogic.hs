@@ -78,7 +78,7 @@ svVerifyBoolLogicBlock =
                       { ecStateName = "START"
                       , ecStateComment = "Initial State"
                       , ecStateActions = []
-                      , ecStatePosition = (-1912.4556) :+ (-43.097057)
+                      , ecStatePosition = 1912.941 :+ 97.4119
                       }
                     , ECState
                       { ecStateName = "OK"
@@ -91,7 +91,7 @@ svVerifyBoolLogicBlock =
                                            { ecActionAlgorithm = ""
                                            , ecActionOutput = "STOP"
                                            }]
-                      , ecStatePosition = 196.90086 :+ (-1260.7164)
+                      , ecStatePosition = 1276.0 :+ 740.0
                       }
                     , ECState
                       { ecStateName = "WAITING"
@@ -100,7 +100,7 @@ svVerifyBoolLogicBlock =
                                            { ecActionAlgorithm = "waiting"
                                            , ecActionOutput = "START"
                                            }]
-                      , ecStatePosition = (-2022.8472) :+ (-647.6617)
+                      , ecStatePosition = 2124.0 :+ 1480.0
                       }
                     , ECState
                       { ecStateName = "OOB"
@@ -109,7 +109,7 @@ svVerifyBoolLogicBlock =
                                            { ecActionAlgorithm = "oob"
                                            , ecActionOutput = "EOOB"
                                            }]
-                      , ecStatePosition = 330.8174 :+ 2760.2463
+                      , ecStatePosition = 2780.0 :+ 768.0001
                       }]
       , bfbTransitions = [ ECTransition
                            { ecTransitionSource = "START"
@@ -122,14 +122,14 @@ svVerifyBoolLogicBlock =
                                            StEquals
                                            (StLValue (SimpleLValue "setpoint"))
                                            (StLValue (SimpleLValue "value"))))
-                           , ecTransitionPosition = (-91.345825) :+ 1525.5857
+                           , ecTransitionPosition = 1528.318 :+ 340.9226
                            }
                          , ECTransition
                            { ecTransitionSource = "WAITING"
                            , ecTransitionDestination = "OOB"
                            , ecTransitionCondition = StLValue
                                  (SimpleLValue "DELAYEXP")
-                           , ecTransitionPosition = (-2419.9063) :+ 1052.182
+                           , ecTransitionPosition = 2638.756 :+ 1209.103
                            }
                          , ECTransition
                            { ecTransitionSource = "OK"
@@ -142,7 +142,7 @@ svVerifyBoolLogicBlock =
                                            StNotEquals
                                            (StLValue (SimpleLValue "value"))
                                            (StLValue (SimpleLValue "setpoint"))))
-                           , ecTransitionPosition = (-1238.8197) :+ 1637.1469
+                           , ecTransitionPosition = 2053.028 :+ 454.6079
                            }
                          , ECTransition
                            { ecTransitionSource = "OOB"
@@ -151,7 +151,7 @@ svVerifyBoolLogicBlock =
                                  StEquals
                                  (StLValue (SimpleLValue "value"))
                                  (StLValue (SimpleLValue "setpoint"))
-                           , ecTransitionPosition = 351.0744 :+ 2047.3047
+                           , ecTransitionPosition = 2077.188 :+ 592.0204
                            }
                          , ECTransition
                            { ecTransitionSource = "START"
@@ -164,8 +164,7 @@ svVerifyBoolLogicBlock =
                                            StNotEquals
                                            (StLValue (SimpleLValue "setpoint"))
                                            (StLValue (SimpleLValue "value"))))
-                           , ecTransitionPosition = (-1644.4192) :+
-                             (-2047.7346)
+                           , ecTransitionPosition = 2626.277 :+ 261.6464
                            }
                          , ECTransition
                            { ecTransitionSource = "OK"
@@ -177,7 +176,7 @@ svVerifyBoolLogicBlock =
                                       StNotEquals
                                       (StLValue (SimpleLValue "setpoint"))
                                       (StLValue (SimpleLValue "value")))
-                           , ecTransitionPosition = 982.1103 :+ 428.93262
+                           , ecTransitionPosition = 1071.692 :+ 1432.978
                            }
                          , ECTransition
                            { ecTransitionSource = "WAITING"
@@ -186,8 +185,7 @@ svVerifyBoolLogicBlock =
                                  StEquals
                                  (StLValue (SimpleLValue "setpoint"))
                                  (StLValue (SimpleLValue "value"))
-                           , ecTransitionPosition = (-1449.5922) :+
-                             (-654.12024)
+                           , ecTransitionPosition = 1590.343 :+ 1140.822
                            }
                          , ECTransition
                            { ecTransitionSource = "WAITING"
@@ -200,7 +198,7 @@ svVerifyBoolLogicBlock =
                                            StNotEquals
                                            (StLValue (SimpleLValue "setpoint"))
                                            (StLValue (SimpleLValue "value"))))
-                           , ecTransitionPosition = 1935.1675 :+ (-875.50134)
+                           , ecTransitionPosition = 2124.0 :+ 1658.336
                            }]
       , bfbAlgorithms = [ ECAlgorithm
                           { ecAlgorithmName = "ok"

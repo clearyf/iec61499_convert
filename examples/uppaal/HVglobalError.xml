@@ -85,53 +85,53 @@ void errGlobal()
     <declaration>// Local declarations
 bool timerRun;
 </declaration>
-    <location id="id0" x="-841.87225" y="-1038.5868">
-      <name x="-831.87225" y="-1028.5868">START</name>
+    <location id="id0" x="1336.941" y="833.4117">
+      <name x="1346.941" y="843.4117">START</name>
     </location>
-    <location id="id6" x="1461.2382" y="-893.04553">
-      <name x="1471.2382" y="-883.04553">__start_delay</name>
+    <location id="id6" x="1704.0" y="1520.0">
+      <name x="1714.0" y="1530.0">__start_delay</name>
       <urgent/>
     </location>
-    <location id="id7" x="1491.2382" y="-893.04553">
-      <name x="1501.2382" y="-883.04553">__action_delay__ERR_LOCAL_expire_</name>
+    <location id="id7" x="1734.0" y="1520.0">
+      <name x="1744.0" y="1530.0">__action_delay__ERR_LOCAL_expire_</name>
       <urgent/>
     </location>
-    <location id="id8" x="1521.2382" y="-893.04553">
-      <name x="1531.2382" y="-883.04553">delay</name>
+    <location id="id8" x="1764.0" y="1520.0">
+      <name x="1774.0" y="1530.0">delay</name>
     </location>
-    <location id="id9" x="-1735.2313" y="-658.1777">
-      <name x="-1725.2313" y="-648.1777">__start_errGlobal</name>
+    <location id="id9" x="1682.0" y="236.0">
+      <name x="1692.0" y="246.0">__start_errGlobal</name>
       <urgent/>
     </location>
-    <location id="id10" x="-1705.2313" y="-658.1777">
-      <name x="-1695.2313" y="-648.1777">__action_errGlobal__ERR_LOCAL_errGlobal_</name>
+    <location id="id10" x="1712.0" y="236.0">
+      <name x="1722.0" y="246.0">__action_errGlobal__ERR_LOCAL_errGlobal_</name>
       <urgent/>
     </location>
-    <location id="id11" x="-1675.2313" y="-658.1777">
-      <name x="-1665.2313" y="-648.1777">__action_errGlobal__STOP_DELAY__</name>
+    <location id="id11" x="1742.0" y="236.0">
+      <name x="1752.0" y="246.0">__action_errGlobal__STOP_DELAY__</name>
       <urgent/>
     </location>
-    <location id="id12" x="-1645.2313" y="-658.1777">
-      <name x="-1635.2313" y="-648.1777">errGlobal</name>
+    <location id="id12" x="1772.0" y="236.0">
+      <name x="1782.0" y="246.0">errGlobal</name>
     </location>
-    <location id="id1" x="1986.7932" y="737.0523">
-      <name x="1996.7932" y="747.0523">__start_errLoc</name>
+    <location id="id1" x="2112.0" y="836.0002">
+      <name x="2122.0" y="846.0002">__start_errLoc</name>
       <urgent/>
     </location>
-    <location id="id2" x="2016.7932" y="737.0523">
-      <name x="2026.7932" y="747.0523">__action_errLoc__START_DELAY_errLoc_</name>
+    <location id="id2" x="2142.0" y="836.0002">
+      <name x="2152.0" y="846.0002">__action_errLoc__START_DELAY_errLoc_</name>
       <urgent/>
     </location>
-    <location id="id3" x="2046.7932" y="737.0523">
-      <name x="2056.7932" y="747.0523">__action_errLoc__STOP_DELAY__</name>
+    <location id="id3" x="2172.0" y="836.0002">
+      <name x="2182.0" y="846.0002">__action_errLoc__STOP_DELAY__</name>
       <urgent/>
     </location>
-    <location id="id4" x="2076.7932" y="737.0523">
-      <name x="2086.7932" y="747.0523">__action_errLoc__ERR_LOCAL__</name>
+    <location id="id4" x="2202.0" y="836.0002">
+      <name x="2212.0" y="846.0002">__action_errLoc__ERR_LOCAL__</name>
       <urgent/>
     </location>
-    <location id="id5" x="2106.7932" y="737.0523">
-      <name x="2116.7932" y="747.0523">errLoc</name>
+    <location id="id5" x="2232.0" y="836.0002">
+      <name x="2242.0" y="846.0002">errLoc</name>
     </location>
     <init ref="id0"/>
     <transition>

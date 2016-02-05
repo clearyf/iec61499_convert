@@ -19,30 +19,30 @@ void REQ()
     <name x="0" y="0">RF_TRIG</name>
     <declaration>// Local declarations
 </declaration>
-    <location id="id4" x="1031.0814" y="119.87631">
-      <name x="1041.0814" y="129.87631">__start_0</name>
+    <location id="id4" x="1037.647" y="772.9412">
+      <name x="1047.647" y="782.9412">__start_0</name>
       <urgent/>
     </location>
-    <location id="id5" x="1061.0814" y="119.87631">
-      <name x="1071.0814" y="129.87631">__action_0__FALL__</name>
+    <location id="id5" x="1067.647" y="772.9412">
+      <name x="1077.647" y="782.9412">__action_0__FALL__</name>
       <urgent/>
     </location>
-    <location id="id6" x="1091.0814" y="119.87631">
-      <name x="1101.0814" y="129.87631">0</name>
+    <location id="id6" x="1097.647" y="772.9412">
+      <name x="1107.647" y="782.9412">0</name>
     </location>
-    <location id="id1" x="-436.11337" y="1033.2003">
-      <name x="-426.11337" y="1043.2003">__start_1</name>
+    <location id="id1" x="1039.529" y="429.1765">
+      <name x="1049.529" y="439.1765">__start_1</name>
       <urgent/>
     </location>
-    <location id="id2" x="-406.11337" y="1033.2003">
-      <name x="-396.11337" y="1043.2003">__action_1__RISE__</name>
+    <location id="id2" x="1069.529" y="429.1765">
+      <name x="1079.529" y="439.1765">__action_1__RISE__</name>
       <urgent/>
     </location>
-    <location id="id3" x="-376.11337" y="1033.2003">
-      <name x="-366.11337" y="1043.2003">1</name>
+    <location id="id3" x="1099.529" y="429.1765">
+      <name x="1109.529" y="439.1765">1</name>
     </location>
-    <location id="id0" x="-305.01816" y="461.2027">
-      <name x="-295.01816" y="471.2027">START</name>
+    <location id="id0" x="552.9412" y="429.4117">
+      <name x="562.9412" y="439.4117">START</name>
     </location>
     <init ref="id0"/>
     <transition>

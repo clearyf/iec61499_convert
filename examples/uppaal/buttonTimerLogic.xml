@@ -27,60 +27,60 @@ void REAL_TO_TIME()
     <name x="0" y="0">ButtonTimerLogic</name>
     <declaration>// Local declarations
 </declaration>
-    <location id="id1" x="-1313.8326" y="-704.2568">
-      <name x="-1303.8326" y="-694.2568">__start_DOWN</name>
+    <location id="id1" x="1322.0" y="588.0">
+      <name x="1332.0" y="598.0">__start_DOWN</name>
       <urgent/>
     </location>
-    <location id="id2" x="-1283.8326" y="-704.2568">
-      <name x="-1273.8326" y="-694.2568">__action_DOWN__DELAY_START_Down_</name>
+    <location id="id2" x="1352.0" y="588.0">
+      <name x="1362.0" y="598.0">__action_DOWN__DELAY_START_Down_</name>
       <urgent/>
     </location>
-    <location id="id3" x="-1253.8326" y="-704.2568">
-      <name x="-1243.8326" y="-694.2568">__action_DOWN__PRESSED__</name>
+    <location id="id3" x="1382.0" y="588.0">
+      <name x="1392.0" y="598.0">__action_DOWN__PRESSED__</name>
       <urgent/>
     </location>
-    <location id="id4" x="-1223.8326" y="-704.2568">
-      <name x="-1213.8326" y="-694.2568">DOWN</name>
+    <location id="id4" x="1412.0" y="588.0">
+      <name x="1422.0" y="598.0">DOWN</name>
     </location>
-    <location id="id12" x="-469.39227" y="-1859.4661">
-      <name x="-459.39227" y="-1849.4661">__start_LONG</name>
+    <location id="id12" x="1844.0" y="1236.0">
+      <name x="1854.0" y="1246.0">__start_LONG</name>
       <urgent/>
     </location>
-    <location id="id13" x="-439.39227" y="-1859.4661">
-      <name x="-429.39227" y="-1849.4661">__action_LONG__LONG__</name>
+    <location id="id13" x="1874.0" y="1236.0">
+      <name x="1884.0" y="1246.0">__action_LONG__LONG__</name>
       <urgent/>
     </location>
-    <location id="id14" x="-409.39227" y="-1859.4661">
-      <name x="-399.39227" y="-1849.4661">LONG</name>
+    <location id="id14" x="1904.0" y="1236.0">
+      <name x="1914.0" y="1246.0">LONG</name>
     </location>
-    <location id="id8" x="859.6223" y="-67.24162">
-      <name x="869.6223" y="-57.241623">__start_SHORT</name>
+    <location id="id8" x="862.0" y="1244.0">
+      <name x="872.0" y="1254.0">__start_SHORT</name>
       <urgent/>
     </location>
-    <location id="id9" x="889.6223" y="-67.24162">
-      <name x="899.6223" y="-57.241623">__action_SHORT__SHORT__</name>
+    <location id="id9" x="892.0" y="1244.0">
+      <name x="902.0" y="1254.0">__action_SHORT__SHORT__</name>
       <urgent/>
     </location>
-    <location id="id10" x="919.6223" y="-67.24162">
-      <name x="929.6223" y="-57.241623">__action_SHORT__DELAY_STOP__</name>
+    <location id="id10" x="922.0" y="1244.0">
+      <name x="932.0" y="1254.0">__action_SHORT__DELAY_STOP__</name>
       <urgent/>
     </location>
-    <location id="id11" x="949.6223" y="-67.24162">
-      <name x="959.6223" y="-57.241623">SHORT</name>
+    <location id="id11" x="952.0" y="1244.0">
+      <name x="962.0" y="1254.0">SHORT</name>
     </location>
-    <location id="id0" x="-1150.7609" y="696.1437">
-      <name x="-1140.7609" y="706.1437">START</name>
+    <location id="id0" x="1344.941" y="109.4117">
+      <name x="1354.941" y="119.4117">START</name>
     </location>
-    <location id="id5" x="966.9656" y="879.34393">
-      <name x="976.9656" y="889.34393">__start_UP</name>
+    <location id="id5" x="1292.0" y="1760.0">
+      <name x="1302.0" y="1770.0">__start_UP</name>
       <urgent/>
     </location>
-    <location id="id6" x="996.9656" y="879.34393">
-      <name x="1006.9656" y="889.34393">__action_UP__RELEASED__</name>
+    <location id="id6" x="1322.0" y="1760.0">
+      <name x="1332.0" y="1770.0">__action_UP__RELEASED__</name>
       <urgent/>
     </location>
-    <location id="id7" x="1026.9656" y="879.34393">
-      <name x="1036.9656" y="889.34393">UP</name>
+    <location id="id7" x="1352.0" y="1760.0">
+      <name x="1362.0" y="1770.0">UP</name>
     </location>
     <init ref="id0"/>
     <transition>

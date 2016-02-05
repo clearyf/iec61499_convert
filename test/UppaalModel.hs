@@ -16,43 +16,43 @@ uppaalModel =
                              AState
                               { stateName = "__start_Off"
                               , stateId = StateId 4
-                              , statePosition = 646.1995 :+ 894.9202
+                              , statePosition = 1080.0 :+ 824.0
                               }
                        , UrgentLocation
                              AState
                               { stateName = "__action_Off__Update_TurnOff_"
                               , stateId = StateId 5
-                              , statePosition = 676.1995 :+ 894.9202
+                              , statePosition = 1110.0 :+ 824.0
                               }
                        , Location
                              AState
                               { stateName = "Off"
                               , stateId = StateId 6
-                              , statePosition = 706.1995 :+ 894.9202
+                              , statePosition = 1140.0 :+ 824.0
                               }
                        , UrgentLocation
                              AState
                               { stateName = "__start_On"
                               , stateId = StateId 1
-                              , statePosition = 49.98699 :+ (-187.8113)
+                              , statePosition = 157.647 :+ 752.9412
                               }
                        , UrgentLocation
                              AState
                               { stateName = "__action_On__Update_TurnOn_"
                               , stateId = StateId 2
-                              , statePosition = 79.98699 :+ (-187.8113)
+                              , statePosition = 187.647 :+ 752.9412
                               }
                        , Location
                              AState
                               { stateName = "On"
                               , stateId = StateId 3
-                              , statePosition = 109.98699 :+ (-187.8113)
+                              , statePosition = 217.647 :+ 752.9412
                               }
                        , Location
                              AState
                               { stateName = "START"
                               , stateId = StateId 0
-                              , statePosition = (-305.01816) :+ 461.2027
+                              , statePosition = 552.9412 :+ 429.4117
                               }]
     , modelTransitions = [ Transition
                            { transitionSrc = StateId 0

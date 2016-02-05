@@ -100,12 +100,14 @@ getVariable =
     getAttrValueOrEmpty "Comment" >>>
     arr3 Variable
 
+createFloat :: ArrowList a => a (String, String) (Complex Float)
+createFloat = arr2 f
+  where
+    f i j = (read i) :+ (read j)
+
 getCoords :: ArrowXml a => a XmlTree (Complex Float)
 getCoords =
-    getAttrValue "x" &&& getAttrValue "y" >>>
-    arr2
-        (\i j ->
-              mkPolar (read i) (read j))
+    getAttrValue "x" &&& getAttrValue "y" >>> createFloat
 
 getListAtElem :: ArrowXml a => a XmlTree c -> String -> a XmlTree [c]
 getListAtElem f tag = (listA f <<< atTag tag) `orElse` constA mempty

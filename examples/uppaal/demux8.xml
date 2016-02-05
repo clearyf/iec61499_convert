@@ -86,19 +86,19 @@ void REQ()
     <name x="0" y="0">Demux8</name>
     <declaration>// Local declarations
 </declaration>
-    <location id="id1" x="49.98699" y="-187.8113">
-      <name x="59.98699" y="-177.8113">__start_REQ</name>
+    <location id="id1" x="157.647" y="752.9412">
+      <name x="167.647" y="762.9412">__start_REQ</name>
       <urgent/>
     </location>
-    <location id="id2" x="79.98699" y="-187.8113">
-      <name x="89.98699" y="-177.8113">__action_REQ__CNF_REQ_</name>
+    <location id="id2" x="187.647" y="752.9412">
+      <name x="197.647" y="762.9412">__action_REQ__CNF_REQ_</name>
       <urgent/>
     </location>
-    <location id="id3" x="109.98699" y="-187.8113">
-      <name x="119.98699" y="-177.8113">REQ</name>
+    <location id="id3" x="217.647" y="752.9412">
+      <name x="227.647" y="762.9412">REQ</name>
     </location>
-    <location id="id0" x="-305.01816" y="461.2027">
-      <name x="-295.01816" y="471.2027">START</name>
+    <location id="id0" x="552.9412" y="429.4117">
+      <name x="562.9412" y="439.4117">START</name>
     </location>
     <init ref="id0"/>
     <transition>

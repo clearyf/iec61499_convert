@@ -70,7 +70,7 @@ buttonTimerLogicBlock =
                       { ecStateName = "START"
                       , ecStateComment = "Initial State"
                       , ecStateActions = []
-                      , ecStatePosition = (-1150.7609) :+ 696.1437
+                      , ecStatePosition = 1344.941 :+ 109.4117
                       }
                     , ECState
                       { ecStateName = "DOWN"
@@ -83,7 +83,7 @@ buttonTimerLogicBlock =
                                            { ecActionAlgorithm = ""
                                            , ecActionOutput = "PRESSED"
                                            }]
-                      , ecStatePosition = (-1223.8326) :+ (-704.2568)
+                      , ecStatePosition = 1412.0 :+ 588.0
                       }
                     , ECState
                       { ecStateName = "UP"
@@ -92,7 +92,7 @@ buttonTimerLogicBlock =
                                            { ecActionAlgorithm = ""
                                            , ecActionOutput = "RELEASED"
                                            }]
-                      , ecStatePosition = 1026.9656 :+ 879.34393
+                      , ecStatePosition = 1352.0 :+ 1760.0
                       }
                     , ECState
                       { ecStateName = "SHORT"
@@ -105,7 +105,7 @@ buttonTimerLogicBlock =
                                            { ecActionAlgorithm = ""
                                            , ecActionOutput = "DELAY_STOP"
                                            }]
-                      , ecStatePosition = 949.6223 :+ (-67.24162)
+                      , ecStatePosition = 952.0 :+ 1244.0
                       }
                     , ECState
                       { ecStateName = "LONG"
@@ -114,7 +114,7 @@ buttonTimerLogicBlock =
                                            { ecActionAlgorithm = ""
                                            , ecActionOutput = "LONG"
                                            }]
-                      , ecStatePosition = (-409.39227) :+ (-1859.4661)
+                      , ecStatePosition = 1904.0 :+ 1236.0
                       }]
       , bfbTransitions = [ ECTransition
                            { ecTransitionSource = "START"
@@ -123,7 +123,7 @@ buttonTimerLogicBlock =
                                  StAnd
                                  (StLValue (SimpleLValue "BUTTON"))
                                  (StLValue (SimpleLValue "button"))
-                           , ecTransitionPosition = 1423.2865 :+ 290.8634
+                           , ecTransitionPosition = 1452.703 :+ 339.4936
                            }
                          , ECTransition
                            { ecTransitionSource = "DOWN"
@@ -134,20 +134,20 @@ buttonTimerLogicBlock =
                                  (StMonoOp
                                       StNot
                                       (StLValue (SimpleLValue "button")))
-                           , ecTransitionPosition = (-752.4605) :+ (-788.67065)
+                           , ecTransitionPosition = 1090.045 :+ 858.4637
                            }
                          , ECTransition
                            { ecTransitionSource = "UP"
                            , ecTransitionDestination = "START"
                            , ecTransitionCondition = StInt 1
-                           , ecTransitionPosition = (-418.06207) :+ 81.132385
+                           , ecTransitionPosition = 425.8619 :+ 870.0295
                            }
                          , ECTransition
                            { ecTransitionSource = "DOWN"
                            , ecTransitionDestination = "LONG"
                            , ecTransitionCondition = StLValue
                                  (SimpleLValue "DELAY_DONE")
-                           , ecTransitionPosition = 1334.0328 :+ (-1108.2831)
+                           , ecTransitionPosition = 1734.34 :+ 885.2359
                            }
                          , ECTransition
                            { ecTransitionSource = "LONG"
@@ -158,13 +158,13 @@ buttonTimerLogicBlock =
                                  (StMonoOp
                                       StNot
                                       (StLValue (SimpleLValue "button")))
-                           , ecTransitionPosition = 1703.0645 :+ 124.0997
+                           , ecTransitionPosition = 1707.58 :+ 1501.754
                            }
                          , ECTransition
                            { ecTransitionSource = "SHORT"
                            , ecTransitionDestination = "UP"
                            , ecTransitionCondition = StInt 1
-                           , ecTransitionPosition = (-762.2221) :+ (-909.049)
+                           , ecTransitionPosition = 1186.319 :+ 1543.395
                            }]
       , bfbAlgorithms = [ ECAlgorithm
                           { ecAlgorithmName = "Down"

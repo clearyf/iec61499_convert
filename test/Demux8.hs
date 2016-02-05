@@ -77,7 +77,7 @@ demux8Block =
                       { ecStateName = "START"
                       , ecStateComment = "Initial State"
                       , ecStateActions = []
-                      , ecStatePosition = (-305.01816) :+ 461.2027
+                      , ecStatePosition = 552.9412 :+ 429.4117
                       }
                     , ECState
                       { ecStateName = "REQ"
@@ -86,20 +86,20 @@ demux8Block =
                                            { ecActionAlgorithm = "REQ"
                                            , ecActionOutput = "CNF"
                                            }]
-                      , ecStatePosition = 109.98699 :+ (-187.8113)
+                      , ecStatePosition = 217.647 :+ 752.9412
                       }]
       , bfbTransitions = [ ECTransition
                            { ecTransitionSource = "START"
                            , ecTransitionDestination = "REQ"
                            , ecTransitionCondition = StLValue
                                  (SimpleLValue "REQ")
-                           , ecTransitionPosition = 175.91646 :+ 411.85184
+                           , ecTransitionPosition = 447.8488 :+ 648.3352
                            }
                          , ECTransition
                            { ecTransitionSource = "REQ"
                            , ecTransitionDestination = "START"
                            , ecTransitionCondition = StInt 1
-                           , ecTransitionPosition = (-280.46118) :+ (-245.7205)
+                           , ecTransitionPosition = 372.8767 :+ 512.7991
                            }]
       , bfbAlgorithms = [ ECAlgorithm
                           { ecAlgorithmName = "REQ"

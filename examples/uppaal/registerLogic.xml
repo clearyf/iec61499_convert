@@ -81,95 +81,95 @@ void algInitZoneId()
     <declaration>// Local declarations
 bool zoneIdAvailable;
 </declaration>
-    <location id="id1" x="887.37573" y="1157.7976">
-      <name x="897.37573" y="1167.7976">__start_INIT_ZONEID</name>
+    <location id="id1" x="1436.0" y="780.0">
+      <name x="1446.0" y="790.0">__start_INIT_ZONEID</name>
       <urgent/>
     </location>
-    <location id="id2" x="917.37573" y="1157.7976">
-      <name x="927.37573" y="1167.7976">__action_INIT_ZONEID__INIT_ZONEID_algInitZoneId_</name>
+    <location id="id2" x="1466.0" y="780.0">
+      <name x="1476.0" y="790.0">__action_INIT_ZONEID__INIT_ZONEID_algInitZoneId_</name>
       <urgent/>
     </location>
-    <location id="id3" x="947.37573" y="1157.7976">
-      <name x="957.37573" y="1167.7976">INIT_ZONEID</name>
+    <location id="id3" x="1496.0" y="780.0">
+      <name x="1506.0" y="790.0">INIT_ZONEID</name>
     </location>
-    <location id="id11" x="1261.5095" y="-237.84709">
-      <name x="1271.5095" y="-227.84709">__start_REGISTERED</name>
+    <location id="id11" x="1281.0" y="2255.5">
+      <name x="1291.0" y="2265.5">__start_REGISTERED</name>
       <urgent/>
     </location>
-    <location id="id12" x="1291.5095" y="-237.84709">
-      <name x="1301.5095" y="-227.84709">__action_REGISTERED__INITO_algReg_</name>
+    <location id="id12" x="1311.0" y="2255.5">
+      <name x="1321.0" y="2265.5">__action_REGISTERED__INITO_algReg_</name>
       <urgent/>
     </location>
-    <location id="id13" x="1321.5095" y="-237.84709">
-      <name x="1331.5095" y="-227.84709">__action_REGISTERED__CYC_STOP__</name>
+    <location id="id13" x="1341.0" y="2255.5">
+      <name x="1351.0" y="2265.5">__action_REGISTERED__CYC_STOP__</name>
       <urgent/>
     </location>
-    <location id="id14" x="1351.5095" y="-237.84709">
-      <name x="1361.5095" y="-227.84709">__action_REGISTERED__PENDING__</name>
+    <location id="id14" x="1371.0" y="2255.5">
+      <name x="1381.0" y="2265.5">__action_REGISTERED__PENDING__</name>
       <urgent/>
     </location>
-    <location id="id15" x="1381.5095" y="-237.84709">
-      <name x="1391.5095" y="-227.84709">__action_REGISTERED__SC_INIT__</name>
+    <location id="id15" x="1401.0" y="2255.5">
+      <name x="1411.0" y="2265.5">__action_REGISTERED__SC_INIT__</name>
       <urgent/>
     </location>
-    <location id="id16" x="1411.5095" y="-237.84709">
-      <name x="1421.5095" y="-227.84709">__action_REGISTERED__MASTER__</name>
+    <location id="id16" x="1431.0" y="2255.5">
+      <name x="1441.0" y="2265.5">__action_REGISTERED__MASTER__</name>
       <urgent/>
     </location>
-    <location id="id17" x="1441.5095" y="-237.84709">
-      <name x="1451.5095" y="-227.84709">REGISTERED</name>
+    <location id="id17" x="1461.0" y="2255.5">
+      <name x="1471.0" y="2265.5">REGISTERED</name>
     </location>
-    <location id="id18" x="1404.1412" y="-434.7831">
-      <name x="1414.1412" y="-424.7831">__start_SC_INIT</name>
+    <location id="id18" x="1467.333" y="1174.667">
+      <name x="1477.333" y="1184.667">__start_SC_INIT</name>
       <urgent/>
     </location>
-    <location id="id19" x="1434.1412" y="-434.7831">
-      <name x="1444.1412" y="-424.7831">__action_SC_INIT__SC_INIT__</name>
+    <location id="id19" x="1497.333" y="1174.667">
+      <name x="1507.333" y="1184.667">__action_SC_INIT__SC_INIT__</name>
       <urgent/>
     </location>
-    <location id="id20" x="1464.1412" y="-434.7831">
-      <name x="1474.1412" y="-424.7831">SC_INIT</name>
+    <location id="id20" x="1527.333" y="1174.667">
+      <name x="1537.333" y="1184.667">SC_INIT</name>
     </location>
-    <location id="id0" x="-758.7964" y="291.72147">
-      <name x="-748.7964" y="301.72147">START</name>
+    <location id="id0" x="812.9412" y="549.4117">
+      <name x="822.9412" y="559.4117">START</name>
     </location>
-    <location id="id4" x="265.79474" y="1381.8723">
-      <name x="275.79474" y="1391.8723">__start_UNREGISTERED</name>
+    <location id="id4" x="1272.0" y="1704.002">
+      <name x="1282.0" y="1714.002">__start_UNREGISTERED</name>
       <urgent/>
     </location>
-    <location id="id5" x="295.79474" y="1381.8723">
-      <name x="305.79474" y="1391.8723">__action_UNREGISTERED__SC_INIT_algUnreg_</name>
+    <location id="id5" x="1302.0" y="1704.002">
+      <name x="1312.0" y="1714.002">__action_UNREGISTERED__SC_INIT_algUnreg_</name>
       <urgent/>
     </location>
-    <location id="id6" x="325.79474" y="1381.8723">
-      <name x="335.79474" y="1391.8723">__action_UNREGISTERED__SC_SEND__</name>
+    <location id="id6" x="1332.0" y="1704.002">
+      <name x="1342.0" y="1714.002">__action_UNREGISTERED__SC_SEND__</name>
       <urgent/>
     </location>
-    <location id="id7" x="355.79474" y="1381.8723">
-      <name x="365.79474" y="1391.8723">__action_UNREGISTERED__CYC_START__</name>
+    <location id="id7" x="1362.0" y="1704.002">
+      <name x="1372.0" y="1714.002">__action_UNREGISTERED__CYC_START__</name>
       <urgent/>
     </location>
-    <location id="id8" x="385.79474" y="1381.8723">
-      <name x="395.79474" y="1391.8723">__action_UNREGISTERED__PENDING__</name>
+    <location id="id8" x="1392.0" y="1704.002">
+      <name x="1402.0" y="1714.002">__action_UNREGISTERED__PENDING__</name>
       <urgent/>
     </location>
-    <location id="id9" x="415.79474" y="1381.8723">
-      <name x="425.79474" y="1391.8723">__action_UNREGISTERED__MASTER__</name>
+    <location id="id9" x="1422.0" y="1704.002">
+      <name x="1432.0" y="1714.002">__action_UNREGISTERED__MASTER__</name>
       <urgent/>
     </location>
-    <location id="id10" x="445.79474" y="1381.8723">
-      <name x="455.79474" y="1391.8723">UNREGISTERED</name>
+    <location id="id10" x="1452.0" y="1704.002">
+      <name x="1462.0" y="1714.002">UNREGISTERED</name>
     </location>
-    <location id="id21" x="-514.82965" y="-608.87604">
-      <name x="-504.82965" y="-598.87604">__start_ZONE_ID</name>
+    <location id="id21" x="700.0" y="180.0">
+      <name x="710.0" y="190.0">__start_ZONE_ID</name>
       <urgent/>
     </location>
-    <location id="id22" x="-484.82965" y="-608.87604">
-      <name x="-474.82965" y="-598.87604">__action_ZONE_ID___algZoneId_</name>
+    <location id="id22" x="730.0" y="180.0">
+      <name x="740.0" y="190.0">__action_ZONE_ID___algZoneId_</name>
       <urgent/>
     </location>
-    <location id="id23" x="-454.82965" y="-608.87604">
-      <name x="-444.82965" y="-598.87604">ZONE_ID</name>
+    <location id="id23" x="760.0" y="180.0">
+      <name x="770.0" y="190.0">ZONE_ID</name>
     </location>
     <init ref="id0"/>
     <transition>

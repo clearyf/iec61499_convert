@@ -65,45 +65,45 @@ void SEL()
     <name x="0" y="0">svVerifyBoolLogic</name>
     <declaration>// Local declarations
 </declaration>
-    <location id="id1" x="106.90086" y="-1260.7164">
-      <name x="116.90086" y="-1250.7164">__start_OK</name>
+    <location id="id1" x="1186.0" y="740.0">
+      <name x="1196.0" y="750.0">__start_OK</name>
       <urgent/>
     </location>
-    <location id="id2" x="136.90086" y="-1260.7164">
-      <name x="146.90086" y="-1250.7164">__action_OK__EOOB_ok_</name>
+    <location id="id2" x="1216.0" y="740.0">
+      <name x="1226.0" y="750.0">__action_OK__EOOB_ok_</name>
       <urgent/>
     </location>
-    <location id="id3" x="166.90086" y="-1260.7164">
-      <name x="176.90086" y="-1250.7164">__action_OK__STOP__</name>
+    <location id="id3" x="1246.0" y="740.0">
+      <name x="1256.0" y="750.0">__action_OK__STOP__</name>
       <urgent/>
     </location>
-    <location id="id4" x="196.90086" y="-1260.7164">
-      <name x="206.90086" y="-1250.7164">OK</name>
+    <location id="id4" x="1276.0" y="740.0">
+      <name x="1286.0" y="750.0">OK</name>
     </location>
-    <location id="id8" x="270.8174" y="2760.2463">
-      <name x="280.8174" y="2770.2463">__start_OOB</name>
+    <location id="id8" x="2720.0" y="768.0001">
+      <name x="2730.0" y="778.0001">__start_OOB</name>
       <urgent/>
     </location>
-    <location id="id9" x="300.8174" y="2760.2463">
-      <name x="310.8174" y="2770.2463">__action_OOB__EOOB_oob_</name>
+    <location id="id9" x="2750.0" y="768.0001">
+      <name x="2760.0" y="778.0001">__action_OOB__EOOB_oob_</name>
       <urgent/>
     </location>
-    <location id="id10" x="330.8174" y="2760.2463">
-      <name x="340.8174" y="2770.2463">OOB</name>
+    <location id="id10" x="2780.0" y="768.0001">
+      <name x="2790.0" y="778.0001">OOB</name>
     </location>
-    <location id="id0" x="-1912.4556" y="-43.097057">
-      <name x="-1902.4556" y="-33.097057">START</name>
+    <location id="id0" x="1912.941" y="97.4119">
+      <name x="1922.941" y="107.4119">START</name>
     </location>
-    <location id="id5" x="-2082.8472" y="-647.6617">
-      <name x="-2072.8472" y="-637.6617">__start_WAITING</name>
+    <location id="id5" x="2064.0" y="1480.0">
+      <name x="2074.0" y="1490.0">__start_WAITING</name>
       <urgent/>
     </location>
-    <location id="id6" x="-2052.8472" y="-647.6617">
-      <name x="-2042.8472" y="-637.6617">__action_WAITING__START_waiting_</name>
+    <location id="id6" x="2094.0" y="1480.0">
+      <name x="2104.0" y="1490.0">__action_WAITING__START_waiting_</name>
       <urgent/>
     </location>
-    <location id="id7" x="-2022.8472" y="-647.6617">
-      <name x="-2012.8472" y="-637.6617">WAITING</name>
+    <location id="id7" x="2124.0" y="1480.0">
+      <name x="2134.0" y="1490.0">WAITING</name>
     </location>
     <init ref="id0"/>
     <transition>
