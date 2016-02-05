@@ -7,6 +7,7 @@ import ParseIec61499
 import ToggleFunctionBlock
 import Demux8
 import ButtonTimerLogic
+import ButtonTimerComposite
 import SvVerifyBoolLogic
 import MinMax
 
@@ -17,8 +18,14 @@ spec = do
     checkFile minMaxBlock "examples/iec61499/minMax.xml"
     checkFile svVerifyBoolLogicBlock "examples/iec61499/svVerifyBoolLogic.xml"
     checkFile toggleFunctionBlock "examples/iec61499/toggle_fb.xml"
+    checkCFile buttonTimerCompositeBlock "examples/iec61499/ButtonTimer.fbt"
 
 checkFile :: [BasicFunctionBlock] -> FilePath -> Spec
 checkFile block filename = do
     fromFile <- runIO (readBasicFunctionBlock filename)
+    it ("Function Block: " <> filename) (fromFile `shouldBe` block)
+
+checkCFile :: [CompositeFunctionBlock] -> FilePath -> Spec
+checkCFile block filename = do
+    fromFile <- runIO (readCompositeFunctionBlock filename)
     it ("Function Block: " <> filename) (fromFile `shouldBe` block)

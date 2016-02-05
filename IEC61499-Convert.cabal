@@ -47,6 +47,7 @@ test-suite test_iec61499_convert
   default-language:    Haskell2010
   other-modules:       Demux8
                      , ButtonTimerLogic
+                     , ButtonTimerComposite
                      , FbToUppaal
                      , FbToUppaalSpec
                      , MainSpec

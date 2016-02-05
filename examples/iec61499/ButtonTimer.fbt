@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE FBType SYSTEM "../LibraryElement.dtd">
+<FBType Name="ButtonTimer" Comment="Composite Function Block Type" Namespace="Loytec.Automation">
+  <Attribute Name="Configuration.FB.IDCounter" Value="2" />
+  <Identification Standard="61499-2" />
+  <VersionInfo Organization="nxtControl GmbH" Version="0.0" Author="trauscher" Date="5/18/2015" Remarks="template" />
+  <InterfaceList>
+    <EventInputs>
+      <Event Name="BUTTON" Comment="Button event">
+        <With Var="button" />
+        <With Var="longSeconds" />
+      </Event>
+    </EventInputs>
+    <EventOutputs>
+      <Event Name="PRESSED" Comment="Event when button is pressed" />
+      <Event Name="RELEASED" Comment="Event when button is released" />
+      <Event Name="SHORT" Comment="Event when short press is detected" />
+      <Event Name="LONG" Comment="Event when long press is detected" />
+    </EventOutputs>
+    <InputVars>
+      <VarDeclaration Name="button" Type="BOOL" Comment="Button input" />
+      <VarDeclaration Name="longSeconds" Type="REAL" Comment="Time for long press" />
+    </InputVars>
+  </InterfaceList>
+  <FBNetwork>
+    <FB ID="1" Name="logic" Type="ButtonTimerLogic" x="980" y="80" Namespace="Loytec.Automation" />
+    <FB ID="2" Name="delay" Type="E_DELAY" x="1200" y="980" Namespace="IEC61499.Standard" />
+    <Input Name="BUTTON">
+      <Position>
+        <X>80</X>
+        <Y>22.9635429</Y>
+      </Position>
+      <IsType>Event</IsType>
+    </Input>
+    <Input Name="button">
+      <Position>
+        <X>80</X>
+        <Y>147.963547</Y>
+      </Position>
+      <IsType>Data</IsType>
+    </Input>
+    <Input Name="longSeconds">
+      <Position>
+        <X>80.00001</X>
+        <Y>162.963531</Y>
+      </Position>
+      <IsType>Data</IsType>
+    </Input>
+    <Output Name="PRESSED">
+      <Position>
+        <X>495</X>
+        <Y>52.9635429</Y>
+      </Position>
+      <IsType>Event</IsType>
+    </Output>
+    <Output Name="RELEASED">
+      <Position>
+        <X>490</X>
+        <Y>67.96354</Y>
+      </Position>
+      <IsType>Event</IsType>
+    </Output>
+    <Output Name="SHORT">
+      <Position>
+        <X>510</X>
+        <Y>82.96354</Y>
+      </Position>
+      <IsType>Event</IsType>
+    </Output>
+    <Output Name="LONG">
+      <Position>
+        <X>515</X>
+        <Y>97.96354</Y>
+      </Position>
+      <IsType>Event</IsType>
+    </Output>
+    <EventConnections>
+      <Connection Source="BUTTON" Destination="logic.BUTTON" dx1="46.02087" />
+      <Connection Source="logic.DELAY_START" Destination="delay.START">
+        <Attribute Name="Configuration.Connections.CrossReference" Value="True" />
+      </Connection>
+      <Connection Source="logic.DELAY_STOP" Destination="delay.STOP">
+        <Attribute Name="Configuration.Connections.CrossReference" Value="True" />
+      </Connection>
+      <Connection Source="delay.EO" Destination="logic.DELAY_DONE">
+        <Attribute Name="Configuration.Connections.CrossReference" Value="True" />
+      </Connection>
+      <Connection Source="logic.LONG" Destination="LONG" dx1="60" />
+      <Connection Source="logic.SHORT" Destination="SHORT" dx1="80" />
+      <Connection Source="logic.RELEASED" Destination="RELEASED" dx1="100" />
+      <Connection Source="logic.PRESSED" Destination="PRESSED" dx1="120" />
+    </EventConnections>
+    <DataConnections>
+      <Connection Source="logic.delayTime" Destination="delay.DT">
+        <Attribute Name="Configuration.Connections.CrossReference" Value="True" />
+      </Connection>
+      <Connection Source="longSeconds" Destination="logic.longSeconds" dx1="44.90625" />
+      <Connection Source="button" Destination="logic.button" dx1="41.04175" />
+    </DataConnections>
+  </FBNetwork>
+</FBType>

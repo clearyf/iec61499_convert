@@ -1,6 +1,9 @@
 module ParseIec61499
        (readBasicFunctionBlock, readCompositeFunctionBlock,
         BasicFunctionBlock(..), CompositeFunctionBlock(..),
+        FunctionBlockEntry(..), FunctionBlockIODirection(..),
+        FunctionBlockIO(..), FunctionBlockIOType(..),
+        ConnectionAttribute(..), EventConnection(..), DataConnection(..),
         FunctionBlockDescription(..), InterfaceList(..), ECState(..),
         ECTransition(..), ECAction(..), ECAlgorithm(..), Event(..),
         Variable(..))
@@ -11,10 +14,10 @@ import ParseSt
        (parseSt, parseValue, Statement, IECVariable(..),
         iECtypeFromString, Value(..))
 import Text.XML.HXT.Core
-       (ArrowXml, SysConfig, XmlTree, arr2, arr3, arr4, constA, isElem,
-        getAttrValue, getChildren, hasName, listA, no, orElse,
-        readDocument, runX, substAllXHTMLEntityRefs, withSubstDTDEntities,
-        withValidate)
+       (ArrowList, ArrowXml, IOSLA, SysConfig, XIOState, XmlTree, arr2,
+        arr3, arr4, constA, isElem, isText, getAttrValue, getChildren,
+        getText, hasAttrValue, hasName, listA, no, orElse, readDocument,
+        runX, substAllXHTMLEntityRefs, withSubstDTDEntities, withValidate)
 
 -- This represents the expected objects in the XML structure.
 data BasicFunctionBlock = BasicFunctionBlock
@@ -24,6 +27,56 @@ data BasicFunctionBlock = BasicFunctionBlock
     , bfbStates :: [ECState]
     , bfbTransitions :: [ECTransition]
     , bfbAlgorithms :: [ECAlgorithm]
+    } deriving (Show,Eq)
+
+data CompositeFunctionBlock = CompositeFunctionBlock
+    { cfbDescription :: FunctionBlockDescription
+    , cfbInterfaceList :: InterfaceList
+    , cfbFunctionBlocks :: [FunctionBlockEntry]
+    , cfbFunctionBlockIO :: [FunctionBlockIO]
+    , cfbEventConnections :: [EventConnection]
+    , cfbDataConnections :: [DataConnection]
+    } deriving (Show,Eq)
+
+data FunctionBlockEntry = FunctionBlockEntry
+    { fbeId :: String
+    , fbeName :: String
+    , fbeType :: String
+    , fbeNamespace :: String
+    , fbeCoord :: Complex Float
+    } deriving (Show,Eq)
+
+data FunctionBlockIODirection
+    = DirectionInput
+    | DirectionOutput
+    deriving (Show,Eq)
+
+data FunctionBlockIOType
+    = FunctionBlockIOData
+    | FunctionBlockIOEvent
+    deriving (Show,Eq)
+
+data FunctionBlockIO = FunctionBlockIO
+    { fbioDirection :: FunctionBlockIODirection
+    , fbioName :: String
+    , fbioCoord :: Complex Float
+    , fbioType :: FunctionBlockIOType
+    } deriving (Show,Eq)
+
+data ConnectionAttribute =
+    CrossReference
+    deriving (Show,Eq)
+
+data EventConnection = EventConnection
+    { ecSource :: String
+    , ecDestination :: String
+    , ecAttributes :: [ConnectionAttribute]
+    } deriving (Show,Eq)
+
+data DataConnection = DataConnection
+    { dcSource :: String
+    , dcDestination :: String
+    , dcAttributes :: [ConnectionAttribute]
     } deriving (Show,Eq)
 
 data FunctionBlockDescription = FunctionBlockDescription
@@ -109,15 +162,21 @@ getCoords :: ArrowXml a => a XmlTree (Complex Float)
 getCoords =
     getAttrValue "x" &&& getAttrValue "y" >>> createFloat
 
+getList :: ArrowXml a => a XmlTree c -> a XmlTree [c]
+getList f = listA f `orElse` constA mempty
+
+-- Implementing getListAtElem in terms of getList is not completely
+-- correct, as if the atTag fails then the orElse branch is still
+-- required, as getList only helps if atTag succeeded.
 getListAtElem :: ArrowXml a => a XmlTree c -> String -> a XmlTree [c]
-getListAtElem f tag = (listA f <<< atTag tag) `orElse` constA mempty
+getListAtElem f tag = (atTag tag >>> listA f) `orElse` constA mempty
 
 getECState :: ArrowXml a => a XmlTree ECState
 getECState =
     atTag "ECState" >>>
     getAttrValue "Name" &&&
     getAttrValue "Comment" &&&
-    listA getECAction `orElse` constA mempty &&&
+    getList getECAction &&&
     getCoords >>>
     arr4 ECState
 
@@ -150,8 +209,6 @@ getAlgorithm =
     (atTag "ST" >>> substAllXHTMLEntityRefs >>> getAttrValue "Text" >>^ getSt) >>>
     arr3 ECAlgorithm
 
--- We can presume that there is always an interface list element, but
--- some or all of the children of the interface list may be missing.
 getInterfaceList :: ArrowXml a => a XmlTree InterfaceList
 getInterfaceList =
     atTag "InterfaceList" >>>
@@ -168,8 +225,6 @@ getFunctionBlockDescription =
     getAttrValue "Namespace" >>>
     arr3 FunctionBlockDescription
 
--- We again presume the ECC is there, and there may or may not be a
--- number of algorithms.
 getBasicFunctionBlock :: ArrowXml a => a XmlTree BasicFunctionBlock
 getBasicFunctionBlock =
     atTag "FBType" >>>
@@ -179,16 +234,73 @@ getBasicFunctionBlock =
      getListAtElem getVariable "InternalVars" &&&
      getListAtElem getECState "ECC" &&&
      getListAtElem getECTransition "ECC" &&&
-     (listA getAlgorithm `orElse` constA mempty)) >>>
+     getList getAlgorithm) >>>
     arr6 BasicFunctionBlock
 
 -- Not implemented in HXT, but it’s a mechanical extension of arr4.
+arr5 :: Arrow a => (t -> t1 -> t2 -> t3 -> t4 -> c) -> a (t, (t1, (t2, (t3, t4)))) c
+arr5 f = arr (\ ~(x1, ~(x2, ~(x3, ~(x4, ~(x5))))) -> f x1 x2 x3 x4 x5)
+
 arr6 :: Arrow a => (t -> t1 -> t2 -> t3 -> t4 -> t5 -> c) -> a (t, (t1, (t2, (t3, (t4, t5))))) c
 arr6 f = arr (\ ~(x1, ~(x2, ~(x3, ~(x4, ~(x5, ~(x6)))))) -> f x1 x2 x3 x4 x5 x6)
+
+getFunctionBlock :: ArrowXml a => a XmlTree FunctionBlockEntry
+getFunctionBlock =
+    atTag "FB" >>>
+    getAttrValue "ID" &&&
+    getAttrValue "Name" &&&
+    getAttrValue "Type" &&& getAttrValue "Namespace" &&& getCoords >>>
+    arr5 FunctionBlockEntry
+
+getFunctionBlockIO :: ArrowXml a => a XmlTree FunctionBlockIO
+getFunctionBlockIO =
+    getBlock "Input" DirectionInput `orElse` getBlock "Output" DirectionOutput
+  where
+    getBlock str dir =
+        atTag str >>>
+        getAttrValue "Name" &&&
+        (atTag "Position" >>> getCoord) &&& (getTextAt "IsType" >>^ getType) >>>
+        arr3 (FunctionBlockIO dir)
+    getType str =
+        case str of
+            "Event" -> FunctionBlockIOEvent
+            "Data" -> FunctionBlockIOData
+            _ -> error ("Unknown FunctionBlock direction" <> str)
+    getTextAt tag = atTag tag >>> getChildren >>> isText >>> getText
+    getCoord = getTextAt "X" &&& getTextAt "Y" >>> createFloat
+
+getCompositeFunctionBlock :: ArrowXml a => a XmlTree CompositeFunctionBlock
+getCompositeFunctionBlock =
+    atTag "FBType" >>>
+    getFunctionBlockDescription &&&
+    getInterfaceList &&&
+    (atTag "FBNetwork" >>>
+     getList getFunctionBlock &&&
+     getList getFunctionBlockIO &&&
+     getListAtElem (getConnection EventConnection) "EventConnections" &&&
+     getListAtElem (getConnection DataConnection) "DataConnections") >>>
+    arr6 CompositeFunctionBlock
+
+getConnection :: ArrowXml a => (String -> String -> [ConnectionAttribute] -> c) -> a XmlTree c
+getConnection f =
+    atTag "Connection" >>>
+    getAttrValue "Source" &&&
+    getAttrValue "Destination" &&& (getAttribute `orElse` constA []) >>>
+    arr3 f
+  where
+    getAttribute =
+        atTag "Attribute" >>>
+        hasAttrValue "Name" (== "Configuration.Connections.CrossReference") >>>
+        hasAttrValue "Value" (== "True") >>> constA [CrossReference]
 
 xmlOptions :: [SysConfig]
 xmlOptions = [withValidate no, withSubstDTDEntities no]
 
+readBlock :: IOSLA (XIOState ()) XmlTree c -> String -> IO [c]
+readBlock function path = runX (readDocument xmlOptions path >>> function)
+
 readBasicFunctionBlock :: FilePath -> IO [BasicFunctionBlock]
-readBasicFunctionBlock path =
-    runX (readDocument xmlOptions path >>> getBasicFunctionBlock)
+readBasicFunctionBlock = readBlock getBasicFunctionBlock
+
+readCompositeFunctionBlock :: FilePath -> IO [CompositeFunctionBlock]
+readCompositeFunctionBlock = readBlock getCompositeFunctionBlock
