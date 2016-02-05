@@ -14,25 +14,25 @@ spec = do
         "examples/uppaal/buttonTimerLogic.xml"
     -- -- checkFile
     -- --     "examples/iec61499/clLux2Perc.xml"
-    -- --     "examples/uppaal/noheaderToggle.xml"
+    -- --     "examples/uppaal/toggle.xml"
     -- -- checkFile
     -- --     "examples/iec61499/compareLimitsReal.xml"
-    -- --     "examples/uppaal/noheaderToggle.xml"
+    -- --     "examples/uppaal/toggle.xml"
     -- -- checkFile
     -- --     "examples/iec61499/compareString.xml"
-    -- --     "examples/uppaal/noheaderToggle.xml"
+    -- --     "examples/uppaal/toggle.xml"
     checkFile
         "examples/iec61499/demux8.xml"
         "examples/uppaal/demux8.xml"
     -- -- checkFile
     -- --     "examples/iec61499/hcSetpointCalcLogic.xml"
-    -- --     "examples/uppaal/noheaderToggle.xml"
+    -- --     "examples/uppaal/toggle.xml"
     checkFile
         "examples/iec61499/HVglobalError.xml"
         "examples/uppaal/HVglobalError.xml"
     -- -- checkFile
     -- --     "examples/iec61499/minMax.xml"
-    -- --     "examples/uppaal/noheaderToggle.xml"
+    -- --     "examples/uppaal/toggle.xml"
     checkFile
         "examples/iec61499/registerLogic.xml"
         "examples/uppaal/registerLogic.xml"
@@ -41,16 +41,16 @@ spec = do
         "examples/uppaal/RF_TRIG.xml"
     -- -- checkFile
     -- --     "examples/iec61499/segRoomIdLogic.xml"
-    -- --     "examples/uppaal/noheaderToggle.xml"
+    -- --     "examples/uppaal/toggle.xml"
     checkFile
         "examples/iec61499/svVerifyBoolLogic.xml"
         "examples/uppaal/svVerifyBoolLogic.xml"
     checkFile
         "examples/iec61499/toggle_fb.xml"
-        "examples/uppaal/noheaderToggle.xml"
+        "examples/uppaal/toggle.xml"
     -- -- checkFile
     -- --     "examples/iec61499/unitConvTemp.xml"
-    -- --     "examples/uppaal/noheaderToggle.xml"
+    -- --     "examples/uppaal/toggle.xml"
 
 checkFile :: FilePath -> FilePath -> Spec
 checkFile inPath outPath = do
