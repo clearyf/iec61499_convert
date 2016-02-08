@@ -65,42 +65,28 @@ outputChannels = extractChannels outputChannelPrefix eventOutputs
 
 showVarType :: IECVariable -> (String,String)
 showVarType IECBool = ("bool", mempty)
-showVarType (IECUInt Eight) =
-    (intWithRange 0 ((2 :: Integer) ^ (8 :: Integer)), mempty)
-showVarType (IECUInt Sixteen) =
-    (intWithRange 0 ((2 :: Integer) ^ (16 :: Integer)), mempty)
-showVarType (IECUInt ThirtyTwo) =
-    (intWithRange 0 ((2 :: Integer) ^ (32 :: Integer)), mempty)
-showVarType (IECUInt SixtyFour) =
-    (intWithRange 0 ((2 :: Integer) ^ (64 :: Integer)), mempty)
-showVarType (IECInt Eight) =
-    ( intWithRange
-          ((-2 :: Integer) ^ (7 :: Integer))
-          ((2 :: Integer) ^ (7 :: Integer) - 1)
-    , mempty)
-showVarType (IECInt Sixteen) =
-    ( intWithRange
-          ((-2 :: Integer) ^ (15 :: Integer))
-          ((2 :: Integer) ^ (15 :: Integer) - 1)
-    , mempty)
-showVarType (IECInt ThirtyTwo) =
-    ( intWithRange
-          ((-2 :: Integer) ^ (31 :: Integer))
-          ((2 :: Integer) ^ (31 :: Integer) - 1)
-    , mempty)
-showVarType (IECInt SixtyFour) =
-    ( intWithRange
-          ((-2 :: Integer) ^ (63 :: Integer))
-          ((2 :: Integer) ^ (63 :: Integer) - 1)
-    , mempty)
+showVarType (IECUInt Eight) = uintWithRange 8
+showVarType (IECUInt Sixteen) = uintWithRange 16
+showVarType (IECUInt ThirtyTwo) = uintWithRange 32
+showVarType (IECUInt SixtyFour) = uintWithRange 64
+showVarType (IECInt Eight) = intWithRange 7
+showVarType (IECInt Sixteen) = intWithRange 15
+showVarType (IECInt ThirtyTwo) = intWithRange 31
+showVarType (IECInt SixtyFour) = intWithRange 63
 showVarType (IECArray idxs var) =
     ( fst (showVarType var)
     , "[" <> foldMap id (NE.intersperse "," (fmap show idxs)) <> "]")
-showVarType (IECString size) = (intWithRange 0 127, "[" <> show size <> "]")
+showVarType (IECString size) = (uppaalIntWithRange 0 127, "[" <> show size <> "]")
 showVarType t = error ("Uppaal doesn't support " <> show t <> " type!")
 
-intWithRange :: Integer -> Integer -> String
-intWithRange from to = "int[" <> show from <> "," <> show to <> "]"
+uppaalIntWithRange :: Integer -> Integer -> String
+uppaalIntWithRange from to = "int[" <> show from <> "," <> show to <> "]"
+
+intWithRange :: Integer -> (String, String)
+intWithRange i = (uppaalIntWithRange ((-2) ^ i) (2 ^ i - 1), mempty)
+
+uintWithRange :: Integer -> (String, String)
+uintWithRange i = (uppaalIntWithRange 0 (2 ^ i), mempty)
 
 inputParameters :: BasicFunctionBlock -> [UppaalVar]
 inputParameters = map createUppaalVar . inputVariables . bfbInterfaceList
