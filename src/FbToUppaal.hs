@@ -135,11 +135,11 @@ locationEventPrefix :: ECState -> ECAction -> String
 locationEventPrefix state action =
     fold
         [ "__action_"
-        , (ecStateName state)
+        , ecStateName state
         , "__"
-        , (ecActionOutput action)
+        , ecActionOutput action
         , "_"
-        , (ecActionAlgorithm action)
+        , ecActionAlgorithm action
         , "_"]
 
 locations :: BasicFunctionBlock -> [Location]
@@ -177,7 +177,7 @@ getLocationsFromState state = do
     let offset = 30
     let startCoord =
             endCoord -
-            (offset * (fromIntegral (length (ecStateActions state) + 1)) :+ 0)
+            (offset * fromIntegral (length (ecStateActions state) + 1) :+ 0)
     initState <-
         if null (ecStateActions state)
             then pure mempty
@@ -260,7 +260,7 @@ transitions fb = basicTransitions <> otherTransitions
       where
         gd =
             fromMaybe
-                (error ("Couldn't parse guard: " <> (show cond)))
+                (error ("Couldn't parse guard: " <> show cond))
                 (parseGuard events cond)
 
 guardToSync :: MonadPlus m => Guard -> m String
@@ -427,7 +427,7 @@ fbFunctions fb =
 
 -- | Extracts the functions from the supplied statements.
 extractFunctionStatement :: Foldable t => t Statement -> Set String
-extractFunctionStatement lst = foldMap statement lst
+extractFunctionStatement = foldMap statement
   where
     statement (Assignment lv v) = extractFunctionLValue lv <> extractFunctionValue v
     statement (If v tb) = extractFunctionValue v <> extractFunctionStatement tb

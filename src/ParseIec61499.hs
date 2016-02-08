@@ -156,7 +156,7 @@ getVariable =
 createFloat :: ArrowList a => a (String, String) (Complex Float)
 createFloat = arr2 f
   where
-    f i j = (read i) :+ (read j)
+    f i j = read i :+ read j
 
 getCoords :: ArrowXml a => a XmlTree (Complex Float)
 getCoords =
@@ -239,10 +239,10 @@ getBasicFunctionBlock =
 
 -- Not implemented in HXT, but it’s a mechanical extension of arr4.
 arr5 :: Arrow a => (t -> t1 -> t2 -> t3 -> t4 -> c) -> a (t, (t1, (t2, (t3, t4)))) c
-arr5 f = arr (\ ~(x1, ~(x2, ~(x3, ~(x4, ~(x5))))) -> f x1 x2 x3 x4 x5)
+arr5 f = arr (\ ~(x1, ~(x2, ~(x3, ~(x4, x5)))) -> f x1 x2 x3 x4 x5)
 
 arr6 :: Arrow a => (t -> t1 -> t2 -> t3 -> t4 -> t5 -> c) -> a (t, (t1, (t2, (t3, (t4, t5))))) c
-arr6 f = arr (\ ~(x1, ~(x2, ~(x3, ~(x4, ~(x5, ~(x6)))))) -> f x1 x2 x3 x4 x5 x6)
+arr6 f = arr (\ ~(x1, ~(x2, ~(x3, ~(x4, ~(x5, x6))))) -> f x1 x2 x3 x4 x5 x6)
 
 getFunctionBlock :: ArrowXml a => a XmlTree FunctionBlockEntry
 getFunctionBlock =

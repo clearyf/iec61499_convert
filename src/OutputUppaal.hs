@@ -66,8 +66,7 @@ outputModel :: IOSLA (XIOState ()) XmlTree c -> UppaalModel -> IO [c]
 outputModel outputFunction um =
     runX
         (root [] [selem "nta" [sections]] >>>
-         addDtd >>>
-         addXmlPi >>> addXmlPiEncoding "utf-8" >>> outputFunction)
+         addDtd >>> addXmlPi >>> addXmlPiEncoding "utf-8" >>> outputFunction)
   where
     sections = globalDecl um <+> templateDecl um <+> systemDecl um
 
@@ -136,8 +135,8 @@ makeLocationDecl l =
             , sattr "y" (show (imagPart coord))]
             ([ mkelem
                    "name"
-                   [ sattr "x" (show ((realPart coord) + 10))
-                   , sattr "y" (show ((imagPart coord) + 10))]
+                   [ sattr "x" (show (realPart coord + 10))
+                   , sattr "y" (show (imagPart coord + 10))]
                    [txt n]] <>
              extra)
 
