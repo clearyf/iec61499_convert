@@ -289,10 +289,10 @@ parseCaseInt =
     (CaseInt <$> lexInt)
 
 parseReturn :: Parser Statement
-parseReturn = const Return <$> try (symbol "RETURN")
+parseReturn = Return <$ try (symbol "RETURN")
 
 parseBreak :: Parser Statement
-parseBreak = const Break <$> try (symbol "EXIT")
+parseBreak = Break <$ try (symbol "EXIT")
 
 assignment :: Parser Statement
 assignment = Assignment <$> lValue <* assignmentOp <*> value
