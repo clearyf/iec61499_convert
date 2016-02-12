@@ -11,10 +11,11 @@ import qualified Data.List.NonEmpty as NE
 import           Data.Set (Set)
 import qualified Data.Set as Set
 import           Text.Megaparsec
-       (ParseError, ParsecT, (<?>), alphaNumChar, anyChar, between, char,
-        choice, eof, letterChar, lookAhead, manyTill, noneOf, option,
-        parse, satisfy, sepBy, sepBy1, someTill, spaceChar, string, try,
-        notFollowedBy)
+       (Message(..), ParseError(..), ParsecT, SourcePos(..), (<?>),
+        alphaNumChar, anyChar, between, char, choice, eof, errorIsUnknown,
+        label, letterChar, lookAhead, manyTill, messageString, noneOf,
+        option, parse, satisfy, sepBy, sepBy1, someTill, spaceChar, string,
+        try, notFollowedBy)
 import           Text.Megaparsec.Expr (Operator(..), makeExprParser)
 import qualified Text.Megaparsec.Lexer as L
 import           Text.Megaparsec.String (Parser)
@@ -118,11 +119,38 @@ data IECVariable
     | IECString Int
     deriving (Show,Eq)
 
-parseSt :: String -> Either ParseError [Statement]
-parseSt str = parse stParser str str
+parseSt :: String -> String -> Either String [Statement]
+parseSt name str = myparse stParser name str
 
-parseValue :: String -> Either ParseError Value
-parseValue str = parse value str str
+parseValue :: String -> Either String Value
+parseValue str = myparse value "Value" str
+
+myparse :: Parser b -> String -> String -> Either String b
+myparse p name str = left showError (parse p name str)
+  where
+    showError err =
+        let src = errorPos err
+        in "While reading '" <> sourceName src <> "' found error at line " <>
+           show (sourceLine src) <> " col " <> show (sourceColumn src) <> "\n" <>
+           -- Now nicely show the exact error location with a caret
+           -- under the problematic point in the input.
+           (lines str) !! (sourceLine src - 1) <> "\n" <>
+           (replicate (sourceColumn src - 1) ' ') <> "^\n" <>
+           errorText err
+    errorText err
+      | errorIsUnknown err = "Unknown parser error!"
+      | otherwise =
+          let (expected,other) = partition isExpected (errorMessages err)
+          in foldMap otherMessages other <> expectedMessages expected
+    otherMessages (Unexpected msg) = "Unexpectedly found token: " <> msg <> "\n"
+    otherMessages (Message msg) = "Error: " <> msg <> "\n"
+    otherMessages _ = mempty
+    expectedMessages msgs
+      | null msgs = mempty
+      | otherwise =
+          "Expected " <> fold (intersperse " or " (fmap messageString msgs))
+    isExpected (Expected _) = True
+    isExpected _ = False
 
 --------------------------------------------------------------------------------
 
@@ -132,13 +160,13 @@ parseValue str = parse value str str
 stParser :: Parser [Statement]
 stParser =
     spaceConsumer *>
-    (mappend <$> option mempty (try parseVarDecls) <*> statementsTill eof)
+    (mappend <$> option mempty parseVarDecls <*> statementsTill eof)
 
 --------------------------------------------------------------------------------
 
 parseVarDecls :: Parser [Statement]
 parseVarDecls =
-    symbol "VAR" *> parseVarDecl `manyTill` try (symbol "END_VAR" *> semicolon)
+    try (symbol "VAR") *> parseVarDecl `manyTill` try (symbol "END_VAR" *> semicolon)
 
 parseVarDecl :: Parser Statement
 parseVarDecl =
@@ -147,59 +175,60 @@ parseVarDecl =
                 <?> "variable declaration"
 
 parseVarType :: Parser IECVariable
-parseVarType = f <$> identifier
-                 <*> optional (brackets parseIndices)
-                 <?> "variable type"
+parseVarType =
+    label "IEC Variable Type" $
+    do name <- identifier
+       indices <- optional (brackets parseIndices)
+       createVariableType name indices
   where
+    createVariableType name Nothing = vartypeFromString name Nothing
+    createVariableType name x@(Just i) = do
+        subtype <- vartypeFromString name x
+        pure $! IECArray i subtype
     parseIndices = fmap NE.fromList (lexInt `sepBy1` comma)
-    f name Nothing = vartypeFromString name Nothing
-    f name x@(Just indices) = IECArray indices (vartypeFromString name x)
 
-iECtypeFromString :: String -> Either ParseError IECVariable
-iECtypeFromString str = parse parseVarType str str
+iECtypeFromString :: String -> Either String IECVariable
+iECtypeFromString str = myparse parseVarType "An IEC type definition" str
 
-vartypeFromString :: String -> Maybe (NonEmpty Int) -> IECVariable
-vartypeFromString str indices =
-    fromMaybe
-        (error ("Unhandled IEC variable type: " <> str))
-        (lookup lowerCased alist)
+vartypeFromString :: String -> Maybe (NonEmpty Int) -> Parser IECVariable
+vartypeFromString str indices = do
+    case lookup lowerCased alist of
+        Nothing -> fail ("Unhandled IEC variable type: " <> str)
+        Just a -> a
   where
     lowerCased = fmap toLower str
-    stringSize =
+    stringType =
         case indices of
-            Just (size :| []) -> size
-            _ ->
-                error
-                    ("Invalid indices: " <> show indices <>
-                     " for variable type: " <>
-                     str)
+            Just (size :| []) -> pure $! IECString size
+            _ -> fail ("Invalid indices: " <> show indices <>
+                       " for variable type: " <> str)
     alist =
-        [ ("bool", IECBool)
+        [ ("bool", pure IECBool)
         ,
           -- Real types
-          ("real", IECReal)  -- TODO REAL is 32bit
-        , ("lreal", IECReal) -- TODO LREAL is 0..1 64 bit
+          ("real", pure IECReal)  -- TODO REAL is 32bit
+        , ("lreal", pure IECReal) -- TODO LREAL is 0..1 64 bit
         ,
           -- Unsigned integer types
-          ("byte", IECUInt Eight)
-        , ("usint", IECUInt Eight)
-        , ("word", IECUInt Sixteen)
-        , ("uint", IECUInt Sixteen)
-        , ("udint", IECUInt ThirtyTwo)
-        , ("dword", IECUInt ThirtyTwo)
-        , ("ulint", IECUInt SixtyFour)
+          ("byte", pure (IECUInt Eight))
+        , ("usint", pure (IECUInt Eight))
+        , ("word", pure (IECUInt Sixteen))
+        , ("uint", pure (IECUInt Sixteen))
+        , ("udint", pure (IECUInt ThirtyTwo))
+        , ("dword", pure (IECUInt ThirtyTwo))
+        , ("ulint", pure (IECUInt SixtyFour))
         ,
           -- Signed integer types
-          ("sint", IECInt Eight)
-        , ("int", IECInt Sixteen)
-        , ("dint", IECInt ThirtyTwo)
-        , ("lint", IECInt SixtyFour)
+          ("sint", pure (IECInt Eight))
+        , ("int", pure (IECInt Sixteen))
+        , ("dint", pure (IECInt ThirtyTwo))
+        , ("lint", pure (IECInt SixtyFour))
         ,
           -- Various other types
-          ("time", IECTime)
-        , ("date_and_time", error "Can't handle DATE_AND_TIME type!")
-        , ("time_of_day", error "Can't handle TIME_OF_DAY type!")
-        , ("string", IECString stringSize)]
+          ("time", pure IECTime)
+        , ("date_and_time", fail "Can't handle DATE_AND_TIME type!")
+        , ("time_of_day", fail "Can't handle TIME_OF_DAY type!")
+        , ("string", stringType)]
 
 --------------------------------------------------------------------------------
 
