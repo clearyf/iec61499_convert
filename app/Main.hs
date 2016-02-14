@@ -9,8 +9,18 @@ convertFile :: FilePath -> FilePath -> IO ()
 convertFile inputPath outputPath = do
     putStrLn
         ("Converting: " <> inputPath <> ", writing output to: " <> outputPath)
-    (contents:_) <- readBasicFunctionBlock inputPath
-    _ <- outputUppaalToFile outputPath (fbToUppaalModel contents)
+    contents <- readBasicFunctionBlock inputPath
+    case contents of
+        Left str -> putStrLn str
+        Right block ->
+            if null block
+                then putStrLn "No functionblock parsed, but no error either!"
+                else do
+                    _ <-
+                        outputUppaalToFile
+                            outputPath
+                            (fbToUppaalModel (head block))
+                    pure ()
     pure ()
 
 showHelp :: IO ()

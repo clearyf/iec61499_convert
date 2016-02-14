@@ -145,20 +145,22 @@ getEvent =
     getAttrValueOrEmpty "Comment" &&& listA getEventVars >>>
     arr3 Event
 
-getVariable :: ArrowXml a => a XmlTree Variable
+getVariable :: ArrowXml a => a XmlTree (Either String Variable)
 getVariable =
     atTag "VarDeclaration" >>>
     getAttrValue "Name" &&&
-    (getAttrValue "Type" >>^ either (error . show) id . iECtypeFromString) &&&
+    (getAttrValue "Type" >>^ iECtypeFromString) &&&
     getAttrValueOrEmpty "Comment" >>>
-    arr3 Variable
+    arr3 createVariable
+  where
+    createVariable a b c = Variable <$> pure a <*> b <*> pure c
 
-createFloat :: ArrowList a => a (String, String) (Complex Float)
+createFloat :: ArrowList a => a (String, String) (Either String (Complex Float))
 createFloat = arr2 f
   where
-    f i j = read i :+ read j
+    f i j = (:+) <$> readEither i <*> readEither j
 
-getCoords :: ArrowXml a => a XmlTree (Complex Float)
+getCoords :: ArrowXml a => a XmlTree (Either String (Complex Float))
 getCoords =
     getAttrValue "x" &&& getAttrValue "y" >>> createFloat
 
@@ -171,52 +173,55 @@ getList f = listA f `orElse` constA mempty
 getListAtElem :: ArrowXml a => a XmlTree c -> String -> a XmlTree [c]
 getListAtElem f tag = (atTag tag >>> listA f) `orElse` constA mempty
 
-getECState :: ArrowXml a => a XmlTree ECState
+getECState :: ArrowXml a => a XmlTree (Either String ECState)
 getECState =
     atTag "ECState" >>>
     getAttrValue "Name" &&&
     getAttrValue "Comment" &&&
     getList getECAction &&&
     getCoords >>>
-    arr4 ECState
+    arr4 createState
+  where
+    createState a b c d = ECState <$> pure a <*> pure b <*> pure c <*> d
 
 getECAction :: ArrowXml a => a XmlTree ECAction
 getECAction =
     atTag "ECAction" >>>
     getAttrValue "Algorithm" &&& getAttrValue "Output" >>> arr2 ECAction
 
-getECTransition :: ArrowXml a => a XmlTree ECTransition
+getECTransition :: ArrowXml a => a XmlTree (Either String ECTransition)
 getECTransition =
     atTag "ECTransition" >>>
     getAttrValue "Source" &&&
     getAttrValue "Destination" &&&
-    (getAttrValue "Condition" >>^ either (error . show) id . parseValue) &&&
-    getCoords >>>
-    arr4 ECTransition
+    (getAttrValue "Condition" >>^ parseValue) &&& getCoords >>>
+    arr4 createTransition
+  where
+    createTransition a b c d =
+        ECTransition <$> pure a <*> pure b <*> c <*> d
 
-getSt :: String -> [Statement]
-getSt str =
-    parseSt str &
-    either
-        (error . ("ST code in algorithm could not be parsed: " <>) . show)
-        id
-
-getAlgorithm :: ArrowXml a => a XmlTree ECAlgorithm
+getAlgorithm :: ArrowXml a => a XmlTree (Either String ECAlgorithm)
 getAlgorithm =
     atTag "Algorithm" >>>
     getAttrValue "Name" &&&
     getAttrValueOrEmpty "Comment" &&&
-    (atTag "ST" >>> substAllXHTMLEntityRefs >>> getAttrValue "Text" >>^ getSt) >>>
-    arr3 ECAlgorithm
+    (atTag "ST" >>>
+     substAllXHTMLEntityRefs >>> getAttrValue "Text" >>^ parseSt "ST Algorithm") >>>
+    arr3 createAlgorithm
+  where
+    createAlgorithm a b c = ECAlgorithm <$> pure a <*> pure b <*> c
 
-getInterfaceList :: ArrowXml a => a XmlTree InterfaceList
+getInterfaceList :: ArrowXml a => a XmlTree (Either String InterfaceList)
 getInterfaceList =
     atTag "InterfaceList" >>>
     getListAtElem getEvent "EventInputs" &&&
     getListAtElem getEvent "EventOutputs" &&&
     getListAtElem getVariable "InputVars" &&&
     getListAtElem getVariable "OutputVars" >>>
-    arr4 InterfaceList
+    arr4 createAddressList
+  where
+    createAddressList a b c d =
+        InterfaceList <$> pure a <*> pure b <*> sequence c <*> sequence d
 
 getFunctionBlockDescription :: ArrowXml a => a XmlTree FunctionBlockDescription
 getFunctionBlockDescription =
@@ -225,7 +230,7 @@ getFunctionBlockDescription =
     getAttrValue "Namespace" >>>
     arr3 FunctionBlockDescription
 
-getBasicFunctionBlock :: ArrowXml a => a XmlTree BasicFunctionBlock
+getBasicFunctionBlock :: ArrowXml a => a XmlTree (Either String BasicFunctionBlock)
 getBasicFunctionBlock =
     atTag "FBType" >>>
     getFunctionBlockDescription &&&
@@ -233,9 +238,16 @@ getBasicFunctionBlock =
     (atTag "BasicFB" >>>
      getListAtElem getVariable "InternalVars" &&&
      getListAtElem getECState "ECC" &&&
-     getListAtElem getECTransition "ECC" &&&
-     getList getAlgorithm) >>>
-    arr6 BasicFunctionBlock
+     getListAtElem getECTransition "ECC" &&& getList getAlgorithm) >>>
+    arr6 createBasicFunctionBlock
+  where
+    createBasicFunctionBlock a b c d e f =
+        BasicFunctionBlock <$> pure a
+                           <*> b
+                           <*> sequence c
+                           <*> sequence d
+                           <*> sequence e
+                           <*> sequence f
 
 -- Not implemented in HXT, but it’s a mechanical extension of arr4.
 arr5 :: Arrow a => (t -> t1 -> t2 -> t3 -> t4 -> c) -> a (t, (t1, (t2, (t3, t4)))) c
@@ -244,15 +256,22 @@ arr5 f = arr (\ ~(x1, ~(x2, ~(x3, ~(x4, x5)))) -> f x1 x2 x3 x4 x5)
 arr6 :: Arrow a => (t -> t1 -> t2 -> t3 -> t4 -> t5 -> c) -> a (t, (t1, (t2, (t3, (t4, t5))))) c
 arr6 f = arr (\ ~(x1, ~(x2, ~(x3, ~(x4, ~(x5, x6))))) -> f x1 x2 x3 x4 x5 x6)
 
-getFunctionBlock :: ArrowXml a => a XmlTree FunctionBlockEntry
+getFunctionBlock :: ArrowXml a => a XmlTree (Either String FunctionBlockEntry)
 getFunctionBlock =
     atTag "FB" >>>
     getAttrValue "ID" &&&
     getAttrValue "Name" &&&
     getAttrValue "Type" &&& getAttrValue "Namespace" &&& getCoords >>>
-    arr5 FunctionBlockEntry
+    arr5 createFunctionBlockEntry
+  where
+    createFunctionBlockEntry a b c d e =
+        FunctionBlockEntry <$> pure a
+                           <*> pure b
+                           <*> pure c
+                           <*> pure d
+                           <*> e
 
-getFunctionBlockIO :: ArrowXml a => a XmlTree FunctionBlockIO
+getFunctionBlockIO :: ArrowXml a => a XmlTree (Either String FunctionBlockIO)
 getFunctionBlockIO =
     getBlock "Input" DirectionInput `orElse` getBlock "Output" DirectionOutput
   where
@@ -260,16 +279,17 @@ getFunctionBlockIO =
         atTag str >>>
         getAttrValue "Name" &&&
         (atTag "Position" >>> getCoord) &&& (getTextAt "IsType" >>^ getType) >>>
-        arr3 (FunctionBlockIO dir)
+        arr3 (createFunctionBlockIO dir)
+    createFunctionBlockIO dir a b c = FunctionBlockIO dir <$> pure a <*> b <*> c
     getType str =
         case str of
-            "Event" -> FunctionBlockIOEvent
-            "Data" -> FunctionBlockIOData
-            _ -> error ("Unknown FunctionBlock direction" <> str)
+            "Event" -> Right FunctionBlockIOEvent
+            "Data" -> Right FunctionBlockIOData
+            _ -> Left ("Unknown FunctionBlock direction: " <> str)
     getTextAt tag = atTag tag >>> getChildren >>> isText >>> getText
     getCoord = getTextAt "X" &&& getTextAt "Y" >>> createFloat
 
-getCompositeFunctionBlock :: ArrowXml a => a XmlTree CompositeFunctionBlock
+getCompositeFunctionBlock :: ArrowXml a => a XmlTree (Either String CompositeFunctionBlock)
 getCompositeFunctionBlock =
     atTag "FBType" >>>
     getFunctionBlockDescription &&&
@@ -279,7 +299,15 @@ getCompositeFunctionBlock =
      getList getFunctionBlockIO &&&
      getListAtElem (getConnection EventConnection) "EventConnections" &&&
      getListAtElem (getConnection DataConnection) "DataConnections") >>>
-    arr6 CompositeFunctionBlock
+    arr6 createCompositeFunctionBlock
+  where
+    createCompositeFunctionBlock a b c d e f =
+        CompositeFunctionBlock <$> pure a
+                               <*> b
+                               <*> sequence c
+                               <*> sequence d
+                               <*> pure e
+                               <*> pure f
 
 getConnection :: ArrowXml a => (String -> String -> [ConnectionAttribute] -> c) -> a XmlTree c
 getConnection f =
@@ -297,10 +325,11 @@ xmlOptions :: [SysConfig]
 xmlOptions = [withValidate no, withSubstDTDEntities no]
 
 readBlock :: IOSLA (XIOState ()) XmlTree c -> String -> IO [c]
-readBlock function path = runX (readDocument xmlOptions path >>> function)
+readBlock f path =
+    runX (readDocument xmlOptions path >>> f)
 
-readBasicFunctionBlock :: FilePath -> IO [BasicFunctionBlock]
-readBasicFunctionBlock = readBlock getBasicFunctionBlock
+readBasicFunctionBlock :: FilePath -> IO (Either String [BasicFunctionBlock])
+readBasicFunctionBlock = fmap sequence . readBlock getBasicFunctionBlock
 
-readCompositeFunctionBlock :: FilePath -> IO [CompositeFunctionBlock]
-readCompositeFunctionBlock = readBlock getCompositeFunctionBlock
+readCompositeFunctionBlock :: FilePath -> IO (Either String [CompositeFunctionBlock])
+readCompositeFunctionBlock = fmap sequence . readBlock getCompositeFunctionBlock
