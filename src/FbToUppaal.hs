@@ -69,23 +69,27 @@ outputChannels = extractChannels outputChannelPrefix eventOutputs
 -- Handle variables
 
 showVarType :: IECVariable -> Either String (String,String)
-showVarType IECBool = Right ("bool", mempty)
-showVarType (IECUInt Eight) = Right $ uintWithRange 8
-showVarType (IECUInt Sixteen) = Right $ uintWithRange 16
-showVarType (IECUInt ThirtyTwo) = Right $ uintWithRange 32
-showVarType (IECUInt SixtyFour) = Right $ uintWithRange 64
-showVarType (IECInt Eight) = Right $ intWithRange 7
-showVarType (IECInt Sixteen) = Right $ intWithRange 15
-showVarType (IECInt ThirtyTwo) = Right $ intWithRange 31
-showVarType (IECInt SixtyFour) = Right $ intWithRange 63
-showVarType (IECArray idxs var) =
-    fmap
-        (\x ->
-              ( fst x
-              , "[" <> foldMap id (NE.intersperse "," (fmap show idxs)) <> "]"))
-        (showVarType var)
-showVarType (IECString size) = Right (uppaalIntWithRange 0 127, "[" <> show size <> "]")
-showVarType t = Left ("Uppaal doesn't support " <> show t <> " type!")
+showVarType v =
+    case v of
+        IECBool -> Right ("bool", mempty)
+        IECUInt Eight -> Right $ uintWithRange 8
+        IECUInt Sixteen -> Right $ uintWithRange 16
+        IECUInt ThirtyTwo -> Right $ uintWithRange 32
+        IECUInt SixtyFour -> Right $ uintWithRange 64
+        IECInt Eight -> Right $ intWithRange 7
+        IECInt Sixteen -> Right $ intWithRange 15
+        IECInt ThirtyTwo -> Right $ intWithRange 31
+        IECInt SixtyFour -> Right $ intWithRange 63
+        IECArray idxs var ->
+            fmap
+                (\x ->
+                      ( fst x
+                      , "[" <> foldMap id (NE.intersperse "," (fmap show idxs)) <>
+                        "]"))
+                (showVarType var)
+        IECString size ->
+            Right (uppaalIntWithRange 0 127, "[" <> show size <> "]")
+        t -> Left ("Uppaal doesn't support " <> show t <> " type!")
 
 uppaalIntWithRange :: Integer -> Integer -> String
 uppaalIntWithRange from to = "int[" <> show from <> "," <> show to <> "]"
@@ -262,14 +266,18 @@ transitions fb = mappend <$> basicTransitions <*> pure otherTransitions
                 (parseGuard events cond)
 
 guardToSync :: MonadPlus m => Guard -> m String
-guardToSync (Guard (Just s) _) = pure (inputChannelPrefix <> s <> "?")
-guardToSync _ = mzero
+guardToSync g =
+    case g of
+        Guard (Just s) _ -> pure (inputChannelPrefix <> s <> "?")
+        _ -> mzero
 
 guardToGuard :: MonadPlus m => Guard -> Either String (m String)
-guardToGuard (Guard _ (Just (StBool True))) = pure mzero
-guardToGuard (Guard _ (Just (StInt 1))) = pure mzero
-guardToGuard (Guard _ (Just v)) = fmap pure (showValue v)
-guardToGuard _ = pure mzero
+guardToGuard g =
+    case g of
+        Guard _ (Just (StBool True)) -> pure mzero
+        Guard _ (Just (StInt 1)) -> pure mzero
+        Guard _ (Just v) -> fmap pure (showValue v)
+        _ -> pure mzero
 
 getSrcId :: String -> StateMap -> StateId
 getSrcId s (StateMap m) =
@@ -320,74 +328,101 @@ tryWriteLine2 v1 v2 f = case (v1, v2) of
   (_, Left e) -> throwError e
 
 writeStatement :: Statement -> AlgorithmWriter
-writeStatement (Declaration name typeIn) = do
-    tryWriteLine (showVarType typeIn) (\ (typeOut,suffix) -> typeOut <> " " <> name <> suffix <> ";")
-writeStatement (Assignment lvalue rvalue) =
-     tryWriteLine2 (showLocation lvalue) (showValue rvalue) (\ l r -> l <> " = " <> r <> ";")
-writeStatement (For name start end step body) = do
-    writeLine
-        ("for (int " <> name <> " = " <> show start <> "; " <> name <> " != " <>
-         show end <> "; " <> name <> " = " <> name <> " + (" <>
-         show (fromMaybe 1 step) <> "))")
-    writeBlock body
-writeStatement (While cond body) = do
-    tryWriteLine (showValue cond) (\ s -> "while (" <> s <> ")")
-    writeBlock body
-writeStatement (Repeat body cond) = do
-    writeLine "do"
-    writeBlock body
-    tryWriteLine (showValue cond) (\ x -> "while (" <> x <> ")")
-writeStatement (Case var branches defaultBranch) = do
-    tryWriteLine (showValue var) (\ x -> "case (" <> x <> ")")
-    writeLine "{"
-    traverse_ writeBranch branches
-    writeDefaultBranch
-    writeLine "}"
-  where
-    writeCase i = writeLine (i <> ":")
-    writeCases = traverse_ (writeCase . show)
-    writeCaseExp (CaseInt i) = writeCase (show i)
-    writeCaseExp (CaseRange from to)
-      | from <= to = writeCases (enumFromTo from to)
-      | otherwise = writeCases (enumFromThenTo from (from - 1) to)
-    writeBranch (cases,body) = do
-        traverse_ writeCaseExp cases
-        increaseIndent $
-            do traverse_ writeStatement body
-               writeStatement Break
-    writeDefaultBranch = do
-        writeCase "default"
-        increaseIndent $
-            do traverse_ writeStatement defaultBranch
-               writeStatement Break
-writeStatement (If cond branch) = do
-    tryWriteLine (showValue cond) (\ x -> "if (" <> x <> ")")
-    writeBlock branch
-writeStatement (IfElse cond branch1 branch2) = do
-    tryWriteLine (showValue cond) (\ x -> "if (" <> x <> ")")
-    writeBlock branch1
-    writeLine "else"
-    writeBlock branch2
-writeStatement Break = writeLine "break;"
-writeStatement Return = writeLine "return;"
+writeStatement st =
+    case st of
+        Declaration name typeIn -> do
+            tryWriteLine
+                (showVarType typeIn)
+                (\(typeOut,suffix) ->
+                      typeOut <> " " <> name <> suffix <> ";")
+        Assignment lvalue rvalue ->
+            tryWriteLine2
+                (showLocation lvalue)
+                (showValue rvalue)
+                (\l r ->
+                      l <> " = " <> r <> ";")
+        For name start end step body -> do
+            writeLine
+                ("for (int " <> name <> " = " <> show start <> "; " <> name <>
+                 " != " <> show end <> "; " <> name <> " = " <>
+                 name <> " + (" <> show (fromMaybe 1 step) <> "))")
+            writeBlock body
+        While cond body -> do
+            tryWriteLine
+                (showValue cond)
+                (\s -> "while (" <> s <> ")")
+            writeBlock body
+        Repeat body cond -> do
+            writeLine "do"
+            writeBlock body
+            tryWriteLine
+                (showValue cond)
+                (\x -> "while (" <> x <> ")")
+        Case var branches defaultBranch -> do
+            tryWriteLine
+                (showValue var)
+                (\x -> "case (" <> x <> ")")
+            writeLine "{"
+            traverse_ writeBranch branches
+            writeDefaultBranch
+            writeLine "}"
+            where writeCase i = writeLine (i <> ":")
+                  writeCases = traverse_ (writeCase . show)
+                  writeCaseExp (CaseInt i) = writeCase (show i)
+                  writeCaseExp (CaseRange from to)
+                    | from <= to = writeCases (enumFromTo from to)
+                    | otherwise =
+                        writeCases (enumFromThenTo from (from - 1) to)
+                  writeBranch (cases,body) = do
+                      traverse_ writeCaseExp cases
+                      increaseIndent $
+                          do traverse_ writeStatement body
+                             writeStatement Break
+                  writeDefaultBranch = do
+                      writeCase "default"
+                      increaseIndent $
+                          do traverse_ writeStatement defaultBranch
+                             writeStatement Break
+        If cond branch -> do
+            tryWriteLine
+                (showValue cond)
+                (\x -> "if (" <> x <> ")")
+            writeBlock branch
+        IfElse cond branch1 branch2 -> do
+            tryWriteLine
+                (showValue cond)
+                (\x -> "if (" <> x <> ")")
+            writeBlock branch1
+            writeLine "else"
+            writeBlock branch2
+        Break -> writeLine "break;"
+        Return -> writeLine "return;"
 
 showArgs :: [Value] -> Either String String
 showArgs = right (fold . intersperse ", ") . traverse showValue
 
 showValue :: Value -> Either String String
-showValue (StSubValue values) = right (\ x -> "(" <> x <> ")") (showValue values)
-showValue (StBool True) = Right "true"
-showValue (StBool False) = Right "false"
-showValue (StBinaryOp op a b) = showBinaryValue a op b
-showValue (StMonoOp op a) = showMonoValue op a
-showValue (StTime t) = Right $ show t
-showValue (StInt i) = Right $ show i
-showValue (StLValue v) = showLocation v
--- This entry will not be required once the float -> int conversion is
--- working correctly.
-showValue (StFloat i) = Right $ showFFloat Nothing i ""
-showValue (StFunc name args) = right (\ x -> name <> "(" <> x <> ")") (showArgs args)
-showValue (StChar c) = Right $ show (ord c)
+showValue value =
+    case value of
+        StSubValue values ->
+            right
+                (\x -> "(" <> x <> ")")
+                (showValue values)
+        StBool True -> Right "true"
+        StBool False -> Right "false"
+        StBinaryOp op a b -> showBinaryValue a op b
+        StMonoOp op a -> showMonoValue op a
+        StTime t -> Right $ show t
+        StInt i -> Right $ show i
+        StLValue v -> showLocation v
+        -- This entry will not be required once the float -> int conversion
+        -- is working correctly.
+        StFloat i -> Right $ showFFloat Nothing i ""
+        StFunc name args ->
+            right
+                (\x -> name <> "(" <> x <> ")")
+                (showArgs args)
+        StChar c -> Right $ show (ord c)
 
 showBinaryValue :: Value -> StBinaryOp -> Value -> Either String String
 showBinaryValue a op b = right fold (sequence (createString opStr))
@@ -413,12 +448,16 @@ showBinaryValue a op b = right fold (sequence (createString opStr))
             StXor -> Right "^"
 
 showMonoValue :: StMonoOp -> Value -> Either String String
-showMonoValue StNegate v = mappend <$> pure "-" <*> showValue v
-showMonoValue StNot v = mappend <$> pure "!" <*> showValue v
+showMonoValue op v =
+    case op of
+        StNegate -> mappend <$> pure "-" <*> showValue v
+        StNot -> mappend <$> pure "!" <*> showValue v
 
 showLocation :: LValue -> Either String String
-showLocation (SimpleLValue name) = Right name
-showLocation (ArrayLValue name idx) = mappend <$> pure name <*> showValue idx
+showLocation value =
+    case value of
+        SimpleLValue name -> Right name
+        ArrayLValue name idx -> mappend <$> pure name <*> showValue idx
 
 createLibraryFunctions :: BasicFunctionBlock -> String
 createLibraryFunctions = foldMap f . fbFunctions
@@ -452,13 +491,17 @@ extractFunctionStatement = foldMap statement
     statement _ = mempty
 
 extractFunctionLValue :: LValue -> Set String
-extractFunctionLValue (SimpleLValue _) = mempty
-extractFunctionLValue (ArrayLValue _ v) = extractFunctionValue v
+extractFunctionLValue lv =
+    case lv of
+        SimpleLValue _ -> mempty
+        ArrayLValue _ v -> extractFunctionValue v
 
 extractFunctionValue :: Value -> Set String
-extractFunctionValue (StMonoOp _ v) = extractFunctionValue v
-extractFunctionValue (StBinaryOp _ v1 v2) = extractFunctionValue v1 <> extractFunctionValue v2
-extractFunctionValue (StLValue lv) = extractFunctionLValue lv
-extractFunctionValue (StFunc s vs) = Set.singleton s <> foldMap extractFunctionValue vs
-extractFunctionValue (StSubValue v) = extractFunctionValue v
-extractFunctionValue _ = mempty
+extractFunctionValue val =
+    case val of
+        StMonoOp _ v -> extractFunctionValue v
+        StBinaryOp _ v1 v2 -> extractFunctionValue v1 <> extractFunctionValue v2
+        StLValue lv -> extractFunctionLValue lv
+        StFunc s vs -> Set.singleton s <> foldMap extractFunctionValue vs
+        StSubValue v -> extractFunctionValue v
+        _ -> mempty
