@@ -62,6 +62,8 @@ rewriteValue set v = maybe v (recurse v) (isRewriteRequired set v)
     recurse value target = recurse (leftRotate value) target
 
 leftRotate :: Value -> Value
-leftRotate (StBinaryOp op1 (StBinaryOp op2 vll vlr) vr) =
-    StBinaryOp op2 vll (StBinaryOp op1 vlr vr)
-leftRotate x = x
+leftRotate v =
+    case v of
+        StBinaryOp op1 (StBinaryOp op2 vll vlr) vr ->
+            StBinaryOp op2 vll (StBinaryOp op1 vlr vr)
+        x -> x
