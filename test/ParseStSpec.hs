@@ -12,10 +12,10 @@ spec = do
       parseSt "" " ; ; ;" `shouldBe` Right []
       parseSt "" " ; ; ; ;" `shouldBe` Right []
   it "Simple Assigment" $ do
-      parseSt "" "Value:=FALSE;" `shouldBe`
-        Right [Assignment (SimpleLValue "Value") (StBool False)]
-      parseSt "" "Value := 2 ** 3;" `shouldBe`
-        Right [Assignment (SimpleLValue "Value") (StBinaryOp StExp (StInt 2) (StInt 3))]
+      parseSt "" "VARIABLE:=FALSE;" `shouldBe`
+        Right [Assignment (SimpleLValue "VARIABLE") (StBool False)]
+      parseSt "" "IFFY := 2 ** 3;" `shouldBe`
+        Right [Assignment (SimpleLValue "IFFY") (StBinaryOp StExp (StInt 2) (StInt 3))]
       parseSt "" "Value := 2 > 3;" `shouldBe`
         Right [Assignment (SimpleLValue "Value") (StBinaryOp StGreaterThan (StInt 2) (StInt 3))]
       parseSt "" "Value := 2 < 3;" `shouldBe`

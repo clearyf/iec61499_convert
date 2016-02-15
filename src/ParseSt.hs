@@ -166,7 +166,7 @@ stParser =
 
 parseVarDecls :: Parser [Statement]
 parseVarDecls =
-    try (symbol "VAR") *> parseVarDecl `manyTill` try (symbol "END_VAR" *> semicolon)
+    try (keyword "VAR") *> parseVarDecl `manyTill` try (keyword "END_VAR" *> semicolon)
 
 parseVarDecl :: Parser Statement
 parseVarDecl =
@@ -258,9 +258,9 @@ parseIf =
              <*> parseLastBranch
              <?> "statement"
   where
-    parseIfToThen = try (symbol "IF") *> value <* symbol "THEN"
-    parseFirstBranch = statementsTill (try (symbol "ELSE"))
-    parseLastBranch = statementsTill (try (symbol "END_IF"))
+    parseIfToThen = try (keyword "IF") *> value <* keyword "THEN"
+    parseFirstBranch = statementsTill (try (keyword "ELSE"))
+    parseLastBranch = statementsTill (try (keyword "END_IF"))
     -- If the first branch can't be parsed because there is no "ELSE"
     -- clause, then the "last" branch parsed is actually the true
     -- branch and not the false one.
@@ -270,41 +270,41 @@ parseIf =
 -- FOR count := 0 TO 10 BY 1 DO lll := count; END_FOR;
 parseFor :: Parser Statement
 parseFor =
-  For <$> (try (symbol "FOR") *> identifier)
+  For <$> (try (keyword "FOR") *> identifier)
       <*> (assignmentOp *> lexInt)
-      <*> (symbol "TO" *> lexInt)
-      <*> optional (symbol "BY" *> lexInt)
-      <*> (symbol "DO" *> statementsTill (try (symbol "END_FOR")))
+      <*> (keyword "TO" *> lexInt)
+      <*> optional (keyword "BY" *> lexInt)
+      <*> (keyword "DO" *> statementsTill (try (keyword "END_FOR")))
       <?> "FOR loop"
 
 parseWhile :: Parser Statement
 parseWhile =
-  While <$> (try (symbol "WHILE") *> value <* symbol "DO")
-        <*> statementsTill (try (symbol "END_WHILE"))
+  While <$> (try (keyword "WHILE") *> value <* keyword "DO")
+        <*> statementsTill (try (keyword "END_WHILE"))
         <?> "WHILE loop"
 
 parseRepeat :: Parser Statement
 parseRepeat =
-  Repeat <$> (try (symbol "REPEAT") *> statementsTill (try (symbol "UNTIL")))
-         <*> value <* symbol "END_REPEAT"
+  Repeat <$> (try (keyword "REPEAT") *> statementsTill (try (keyword "UNTIL")))
+         <*> value <* keyword "END_REPEAT"
          <?> "REPEAT loop"
 
 parseCase :: Parser Statement
 parseCase =
-  Case <$> (try (symbol "CASE") *> value <* symbol "OF")
+  Case <$> (try (keyword "CASE") *> value <* keyword "OF")
        <*> parseCaseExpression `manyTill` endNormalCaseStatements
-       <*> handleElse <* symbol "END_CASE"
+       <*> handleElse <* keyword "END_CASE"
        <?> "CASE statement"
   where endNormalCaseStatements =
-          try (lookAhead (symbol "END_CASE")) <|> try (symbol "ELSE")
+          try (lookAhead (keyword "END_CASE")) <|> try (keyword "ELSE")
         handleElse =
-          option mempty (statementsTill (try (lookAhead (symbol "END_CASE"))))
+          option mempty (statementsTill (try (lookAhead (keyword "END_CASE"))))
 
 parseCaseExpression :: Parser (NonEmpty CaseSubExpression, [Statement])
 parseCaseExpression =
   (,) <$> parseCaseSubExpression
-      <*> statementsTill (try (lookAhead (symbol "END_CASE")) <|>
-                          try (lookAhead (symbol "ELSE")) <|>
+      <*> statementsTill (try (lookAhead (keyword "END_CASE")) <|>
+                          try (lookAhead (keyword "ELSE")) <|>
                           try (lookAhead lexInt *> pure []))
       <?> "CASE sub-statements"
 
@@ -318,10 +318,10 @@ parseCaseInt =
     (CaseInt <$> lexInt)
 
 parseReturn :: Parser Statement
-parseReturn = Return <$ try (symbol "RETURN")
+parseReturn = Return <$ try (keyword "RETURN")
 
 parseBreak :: Parser Statement
-parseBreak = Break <$ try (symbol "EXIT")
+parseBreak = Break <$ try (keyword "EXIT")
 
 assignment :: Parser Statement
 assignment = Assignment <$> lValue <* assignmentOp <*> value
@@ -385,7 +385,7 @@ parens :: Parser a -> Parser a
 parens = between (symbol "(") (symbol ")")
 
 assignmentOp :: Parser String
-assignmentOp = lexeme (string ":=")
+assignmentOp = symbol ":="
 
 keywords :: Set String
 keywords = Set.fromList ["IF", "THEN", "ELSE", "END_IF", "FOR", "END_FOR"
@@ -413,7 +413,7 @@ justAnInteger :: Parser Integer
 justAnInteger = L.integer
 
 lexBool :: Parser Value
-lexBool = try (symbol "TRUE" $> StBool True <|> symbol "FALSE" $> StBool False)
+lexBool = try (keyword "TRUE" $> StBool True <|> keyword "FALSE" $> StBool False)
 
 lessThanOp :: Operator Parser Value
 lessThanOp =
@@ -429,7 +429,7 @@ prefix :: String -> (a -> a) -> Operator Parser a
 prefix name f = Prefix (reservedOp name *> pure f)
 
 reservedOp :: String -> Parser String
-reservedOp = try . lexeme . string
+reservedOp = try . symbol
 
 lexInt :: Parser Int
 lexInt = fmap fromIntegral lexInteger
@@ -463,6 +463,9 @@ spaceConsumer =
         (spaceChar *> pure ())
         (L.skipLineComment "//")
         (L.skipBlockComment "(*" "*)")
+
+keyword :: String -> Parser String
+keyword s = lexeme (string s <* notFollowedBy (alphaNumChar <|> char '_'))
 
 symbol :: String -> Parser String
 symbol = L.symbol spaceConsumer
