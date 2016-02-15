@@ -13,9 +13,9 @@ spec :: Spec
 spec = do
     it
         "Toggle system"
-        (fmap fbToUppaalModel toggleFunctionBlock `shouldBe` [uppaalModel])
-    it "Algorithm output" $ do anAlgorithm input1 `shouldBe` output1
-                               anAlgorithm input2 `shouldBe` output2
+        (map fbToUppaalModel toggleFunctionBlock `shouldBe` [Right uppaalModel])
+    it "Algorithm output" $ do anAlgorithm input1 `shouldBe` Right output1
+                               anAlgorithm input2 `shouldBe` Right output2
 
 input1 :: ECAlgorithm
 input1 =

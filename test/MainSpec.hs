@@ -55,7 +55,8 @@ spec = do
 checkFile :: FilePath -> FilePath -> Spec
 checkFile inPath outPath = do
     model <-
-        runIO $ do fb <- readBasicFunctionBlock inPath
-                   fmap head (outputUppaal (fbToUppaalModel (head fb)))
+        runIO $ do fb <- fmap (error ||| id) (readBasicFunctionBlock inPath)
+                   let m = (error ||| id) (fbToUppaalModel (head fb))
+                   fmap head (outputUppaal m)
     uppaal <- runIO (readFile outPath)
     it inPath (model `shouldBe` uppaal)

@@ -1,10 +1,14 @@
 module FbToUppaal (fbToUppaalModel, anAlgorithm) where
 
 import           BasePrelude
-import           Control.Monad.Trans.Class (lift)
-import           Control.Monad.Trans.Reader (ReaderT, ask, runReaderT, withReaderT)
-import           Control.Monad.Trans.State.Lazy (State, evalState, get, put)
-import           Control.Monad.Trans.Writer.Lazy (WriterT, execWriter, tell)
+import           Control.Monad.Error.Class (throwError)
+import           Control.Monad.Reader.Class (ask)
+import           Control.Monad.State.Class (get, put)
+import           Control.Monad.Trans.Except (Except, runExcept)
+import           Control.Monad.Trans.Reader (ReaderT, runReaderT, withReaderT)
+import           Control.Monad.Trans.State.Lazy (State, evalState)
+import           Control.Monad.Trans.Writer.Lazy (WriterT, execWriterT)
+import           Control.Monad.Writer.Class (tell)
 import           Data.DList (DList)
 import qualified Data.DList as DList
 import qualified Data.List.NonEmpty as NE
@@ -26,20 +30,21 @@ import           ParseSt
         StMonoOp(..), StBinaryOp(..), CaseSubExpression(..))
 
 -- | Converts IEC61499 BasicFunctionBlock to an UppaalModel
--- If something goes wrong then an exception is thrown.
-fbToUppaalModel :: BasicFunctionBlock -> UppaalModel
+fbToUppaalModel :: BasicFunctionBlock -> Either String UppaalModel
 fbToUppaalModel fb =
-    UppaalModel
-        (fbName (bfbDescription fb))
-        (inputChannels fb)
-        (outputChannels fb)
-        (inputParameters fb)
-        (outputParameters fb)
-        (localParameters fb)
-        (locations fb)
-        (transitions fb)
-        (foldMap anAlgorithm (bfbAlgorithms fb) <>
-         createLibraryFunctions fb)
+    UppaalModel <$> pure (fbName $ bfbDescription fb)
+                <*> pure (inputChannels fb)
+                <*> pure (outputChannels fb)
+                <*> inputParameters fb
+                <*> outputParameters fb
+                <*> localParameters fb
+                <*> pure (locations fb)
+                <*> transitions fb
+                <*> definitions
+  where
+    definitions =
+        mappend <$> (right fold . traverse anAlgorithm . bfbAlgorithms $ fb)
+                <*> (pure (createLibraryFunctions fb))
 
 --------------------------------------------------------------------------------
 -- Handle events
@@ -63,21 +68,24 @@ outputChannels = extractChannels outputChannelPrefix eventOutputs
 --------------------------------------------------------------------------------
 -- Handle variables
 
-showVarType :: IECVariable -> (String,String)
-showVarType IECBool = ("bool", mempty)
-showVarType (IECUInt Eight) = uintWithRange 8
-showVarType (IECUInt Sixteen) = uintWithRange 16
-showVarType (IECUInt ThirtyTwo) = uintWithRange 32
-showVarType (IECUInt SixtyFour) = uintWithRange 64
-showVarType (IECInt Eight) = intWithRange 7
-showVarType (IECInt Sixteen) = intWithRange 15
-showVarType (IECInt ThirtyTwo) = intWithRange 31
-showVarType (IECInt SixtyFour) = intWithRange 63
+showVarType :: IECVariable -> Either String (String,String)
+showVarType IECBool = Right ("bool", mempty)
+showVarType (IECUInt Eight) = Right $ uintWithRange 8
+showVarType (IECUInt Sixteen) = Right $ uintWithRange 16
+showVarType (IECUInt ThirtyTwo) = Right $ uintWithRange 32
+showVarType (IECUInt SixtyFour) = Right $ uintWithRange 64
+showVarType (IECInt Eight) = Right $ intWithRange 7
+showVarType (IECInt Sixteen) = Right $ intWithRange 15
+showVarType (IECInt ThirtyTwo) = Right $ intWithRange 31
+showVarType (IECInt SixtyFour) = Right $ intWithRange 63
 showVarType (IECArray idxs var) =
-    ( fst (showVarType var)
-    , "[" <> foldMap id (NE.intersperse "," (fmap show idxs)) <> "]")
-showVarType (IECString size) = (uppaalIntWithRange 0 127, "[" <> show size <> "]")
-showVarType t = error ("Uppaal doesn't support " <> show t <> " type!")
+    fmap
+        (\x ->
+              ( fst x
+              , "[" <> foldMap id (NE.intersperse "," (fmap show idxs)) <> "]"))
+        (showVarType var)
+showVarType (IECString size) = Right (uppaalIntWithRange 0 127, "[" <> show size <> "]")
+showVarType t = Left ("Uppaal doesn't support " <> show t <> " type!")
 
 uppaalIntWithRange :: Integer -> Integer -> String
 uppaalIntWithRange from to = "int[" <> show from <> "," <> show to <> "]"
@@ -88,19 +96,21 @@ intWithRange i = (uppaalIntWithRange ((-2) ^ i) (2 ^ i - 1), mempty)
 uintWithRange :: Integer -> (String, String)
 uintWithRange i = (uppaalIntWithRange 0 (2 ^ i), mempty)
 
-inputParameters :: BasicFunctionBlock -> [UppaalVar]
-inputParameters = map createUppaalVar . inputVariables . bfbInterfaceList
+inputParameters :: BasicFunctionBlock -> Either String [UppaalVar]
+inputParameters = traverse createUppaalVar . inputVariables . bfbInterfaceList
 
-outputParameters :: BasicFunctionBlock -> [UppaalVar]
-outputParameters = map createUppaalVar . outputVariables . bfbInterfaceList
+outputParameters :: BasicFunctionBlock -> Either String [UppaalVar]
+outputParameters = traverse createUppaalVar . outputVariables . bfbInterfaceList
 
-localParameters :: BasicFunctionBlock -> [UppaalVar]
-localParameters = map createUppaalVar . bfbVariables
+localParameters :: BasicFunctionBlock -> Either String [UppaalVar]
+localParameters = traverse createUppaalVar . bfbVariables
 
-createUppaalVar :: Variable -> UppaalVar
-createUppaalVar var = UppaalVar varType (variableName var <> suffix)
+createUppaalVar :: Variable -> Either String UppaalVar
+createUppaalVar var =
+    UppaalVar <$> fmap fst thetype
+              <*> fmap ((variableName var <>) . snd) thetype
   where
-    (varType,suffix) = showVarType (variableType var)
+    thetype = showVarType (variableType var)
 
 --------------------------------------------------------------------------------
 -- 3. Handle Locations
@@ -222,13 +232,14 @@ createState f coord x = do
 getBasicStates :: BasicFunctionBlock -> [ECState]
 getBasicStates = bfbStates
 
-transitions :: BasicFunctionBlock -> [Transition]
-transitions fb = basicTransitions <> otherTransitions
+transitions :: BasicFunctionBlock -> Either String [Transition]
+transitions fb = mappend <$> basicTransitions <*> pure otherTransitions
   where
     states = getBasicStates fb
     statesMap = getStatesMap states
     -- Transitions which are defined in the input BasicFunctionBlock.
-    basicTransitions = map createBasicTransition (bfbTransitions fb)
+    basicTransitions :: Either String [Transition]
+    basicTransitions = traverse createBasicTransition (bfbTransitions fb)
     -- Transitions which are required to handle the urgent
     -- locations.  The list of required transitions is one
     -- transition from urgent state to the next and then one final
@@ -236,28 +247,29 @@ transitions fb = basicTransitions <> otherTransitions
     otherTransitions =
         foldMap (advancedTransitions (locationsToMap (locations fb))) states
     events = Set.fromList (map eventName (eventInputs (bfbInterfaceList fb)))
+    createBasicTransition :: ECTransition -> Either String Transition
     createBasicTransition (ECTransition src dest cond _) =
-        Transition
-            (getSrcId src statesMap)
-            (getDestId dest statesMap)
-            (guardToSync gd)
-            (guardToGuard gd)
-            mzero -- No update/advancedTransitions on the basic transition.
+        Transition <$> pure (getSrcId src statesMap)
+                   <*> pure (getDestId dest statesMap)
+                   <*> fmap guardToSync eitherGuard
+                   <*> (guardToGuard =<< eitherGuard)
+                   <*> pure mzero -- No update/advancedTransitions on the basic transition.
       where
-        gd =
-            fromMaybe
-                (error ("Couldn't parse guard: " <> show cond))
+        eitherGuard =
+            maybe
+                (Left ("Couldn't parse guard: " <> show cond))
+                Right
                 (parseGuard events cond)
 
 guardToSync :: MonadPlus m => Guard -> m String
 guardToSync (Guard (Just s) _) = pure (inputChannelPrefix <> s <> "?")
 guardToSync _ = mzero
 
-guardToGuard :: MonadPlus m => Guard -> m String
-guardToGuard (Guard _ (Just (StBool True))) = mzero
-guardToGuard (Guard _ (Just (StInt 1))) = mzero
-guardToGuard (Guard _ (Just v)) = pure (showValue v)
-guardToGuard _ = mzero
+guardToGuard :: MonadPlus m => Guard -> Either String (m String)
+guardToGuard (Guard _ (Just (StBool True))) = pure mzero
+guardToGuard (Guard _ (Just (StInt 1))) = pure mzero
+guardToGuard (Guard _ (Just v)) = fmap pure (showValue v)
+guardToGuard _ = pure mzero
 
 getSrcId :: String -> StateMap -> StateId
 getSrcId s (StateMap m) =
@@ -271,37 +283,47 @@ getDestId s (StateMap m)
       let (AState _ i _) = head (fst (m ! s))
       in i
 
-anAlgorithm :: ECAlgorithm -> String
-anAlgorithm al = fold (execWriter (runReaderT writeFunction 0))
+type AlgorithmWriter = ReaderT Int (WriterT (DList String) (Except String)) ()
+
+anAlgorithm :: ECAlgorithm -> Either String String
+anAlgorithm al = right fold (runExcept (execWriterT (runReaderT writeFunction 0)))
   where
     writeFunction = do
         writeLine ("void " <> ecAlgorithmName al <> "()")
         writeBlock (ecAlgorithmStText al)
         -- Append blank line for formatting.
-        writeLine
-            mempty
+        writeLine mempty
 
-writeLine :: Monad m => String -> ReaderT Int (WriterT (DList String) m) ()
+writeLine :: String -> AlgorithmWriter
 writeLine l = do
     n <- ask
-    lift (tell (DList.singleton (replicate n '\t' <> l <> "\n")))
+    tell (DList.singleton (replicate n '\t' <> l <> "\n"))
 
 increaseIndent :: ReaderT Int m a -> ReaderT Int m a
 increaseIndent = withReaderT (1 +)
 
-writeBlock :: Monad m => [Statement] -> ReaderT Int (WriterT (DList String) m) ()
+writeBlock :: [Statement] -> AlgorithmWriter
 writeBlock statements = do
     writeLine "{"
     increaseIndent (traverse_ writeStatement statements)
     writeLine "}"
 
-writeStatement :: Monad m => Statement -> ReaderT Int (WriterT (DList String) m) ()
-writeStatement (Declaration name typeIn) =
-    writeLine (typeOut <> " " <> name <> suffix <> ";")
-  where
-    (typeOut,suffix) = showVarType typeIn
+tryWriteLine :: Either String t -> (t -> String) -> AlgorithmWriter
+tryWriteLine v f = case v of
+  Right s -> writeLine $ f s
+  Left e -> throwError e
+
+tryWriteLine2 :: Either String t1 -> Either String t2 -> (t1 -> t2 -> String) -> AlgorithmWriter
+tryWriteLine2 v1 v2 f = case (v1, v2) of
+  (Right l, Right r) -> writeLine $ f l r
+  (Left e, _) -> throwError e
+  (_, Left e) -> throwError e
+
+writeStatement :: Statement -> AlgorithmWriter
+writeStatement (Declaration name typeIn) = do
+    tryWriteLine (showVarType typeIn) (\ (typeOut,suffix) -> typeOut <> " " <> name <> suffix <> ";")
 writeStatement (Assignment lvalue rvalue) =
-    writeLine (showLocation lvalue <> " = " <> showValue rvalue <> ";")
+     tryWriteLine2 (showLocation lvalue) (showValue rvalue) (\ l r -> l <> " = " <> r <> ";")
 writeStatement (For name start end step body) = do
     writeLine
         ("for (int " <> name <> " = " <> show start <> "; " <> name <> " != " <>
@@ -309,14 +331,14 @@ writeStatement (For name start end step body) = do
          show (fromMaybe 1 step) <> "))")
     writeBlock body
 writeStatement (While cond body) = do
-    writeLine ("while (" <> showValue cond <> ")")
+    tryWriteLine (showValue cond) (\ s -> "while (" <> s <> ")")
     writeBlock body
 writeStatement (Repeat body cond) = do
     writeLine "do"
     writeBlock body
-    writeLine ("while (" <> showValue cond <> ")")
+    tryWriteLine (showValue cond) (\ x -> "while (" <> x <> ")")
 writeStatement (Case var branches defaultBranch) = do
-    writeLine ("case (" <> showValue var <> ")")
+    tryWriteLine (showValue var) (\ x -> "case (" <> x <> ")")
     writeLine "{"
     traverse_ writeBranch branches
     writeDefaultBranch
@@ -339,63 +361,64 @@ writeStatement (Case var branches defaultBranch) = do
             do traverse_ writeStatement defaultBranch
                writeStatement Break
 writeStatement (If cond branch) = do
-    writeLine ("if (" <> showValue cond <> ")")
+    tryWriteLine (showValue cond) (\ x -> "if (" <> x <> ")")
     writeBlock branch
 writeStatement (IfElse cond branch1 branch2) = do
-    writeLine ("if (" <> showValue cond <> ")")
+    tryWriteLine (showValue cond) (\ x -> "if (" <> x <> ")")
     writeBlock branch1
     writeLine "else"
     writeBlock branch2
 writeStatement Break = writeLine "break;"
 writeStatement Return = writeLine "return;"
 
-showArgs :: [Value] -> String
-showArgs = fold . intersperse ", " . map showValue
+showArgs :: [Value] -> Either String String
+showArgs = right (fold . intersperse ", ") . traverse showValue
 
-showValue :: Value -> String
-showValue (StSubValue values) = "(" <> showValue values <> ")"
-showValue (StBool True) = "true"
-showValue (StBool False) = "false"
+showValue :: Value -> Either String String
+showValue (StSubValue values) = right (\ x -> "(" <> x <> ")") (showValue values)
+showValue (StBool True) = Right "true"
+showValue (StBool False) = Right "false"
 showValue (StBinaryOp op a b) = showBinaryValue a op b
 showValue (StMonoOp op a) = showMonoValue op a
-showValue (StTime t) = show t
-showValue (StInt i) = show i
+showValue (StTime t) = Right $ show t
+showValue (StInt i) = Right $ show i
 showValue (StLValue v) = showLocation v
 -- This entry will not be required once the float -> int conversion is
 -- working correctly.
-showValue (StFloat i) = showFFloat Nothing i ""
-showValue (StFunc name args) = name <> "(" <> showArgs args <> ")"
-showValue (StChar c) = show (ord c)
+showValue (StFloat i) = Right $ showFFloat Nothing i ""
+showValue (StFunc name args) = right (\ x -> name <> "(" <> x <> ")") (showArgs args)
+showValue (StChar c) = Right $ show (ord c)
 
-showBinaryValue :: Value -> StBinaryOp -> Value -> String
-showBinaryValue a op b = showValue a <> " " <> opStr <> " " <> showValue b
+showBinaryValue :: Value -> StBinaryOp -> Value -> Either String String
+showBinaryValue a op b = right fold (sequence (createString opStr))
   where
+    createString x = [showValue a, pure " ", x, pure " ", showValue b]
     opStr =
         case op of
-            StAddition -> "+"
-            StSubtract -> "-"
-            StExp -> error "Uppaal doesn't support exponentiation!"
-            StMultiply -> "*"
-            StDivide -> "/"
-            StEquals -> "="
-            StNotEquals -> "!="
-            StLessThanEquals -> "<="
-            StLessThan -> "<"
-            StGreaterThanEquals -> ">="
-            StGreaterThan -> ">"
-            StMod -> "%"
-            StBitwiseAnd -> "&"
-            StAnd -> "&&"
-            StOr -> "||"
-            StXor -> "^"
+            StAddition -> Right "+"
+            StSubtract -> Right "-"
+            StExp -> Left "Uppaal doesn't support exponentiation!"
+            StMultiply -> Right "*"
+            StDivide -> Right "/"
+            StEquals -> Right "="
+            StNotEquals -> Right "!="
+            StLessThanEquals -> Right "<="
+            StLessThan -> Right "<"
+            StGreaterThanEquals -> Right ">="
+            StGreaterThan -> Right ">"
+            StMod -> Right "%"
+            StBitwiseAnd -> Right "&"
+            StAnd -> Right "&&"
+            StOr -> Right "||"
+            StXor -> Right "^"
 
-showMonoValue :: StMonoOp -> Value -> String
-showMonoValue StNegate v = "-" <> showValue v
-showMonoValue StNot v = "!" <> showValue v
+showMonoValue :: StMonoOp -> Value -> Either String String
+showMonoValue StNegate v = mappend <$> pure "-" <*> showValue v
+showMonoValue StNot v = mappend <$> pure "!" <*> showValue v
 
-showLocation :: LValue -> String
-showLocation (SimpleLValue name) = name
-showLocation (ArrayLValue name idx) = name <> showValue idx
+showLocation :: LValue -> Either String String
+showLocation (SimpleLValue name) = Right name
+showLocation (ArrayLValue name idx) = mappend <$> pure name <*> showValue idx
 
 createLibraryFunctions :: BasicFunctionBlock -> String
 createLibraryFunctions = foldMap f . fbFunctions

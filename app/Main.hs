@@ -15,12 +15,10 @@ convertFile inputPath outputPath = do
         Right block ->
             if null block
                 then putStrLn "No functionblock parsed, but no error either!"
-                else do
-                    _ <-
-                        outputUppaalToFile
-                            outputPath
-                            (fbToUppaalModel (head block))
-                    pure ()
+                else case fbToUppaalModel (head block) of
+                         Left str -> putStrLn str
+                         Right model ->
+                             outputUppaalToFile outputPath model *> pure ()
     pure ()
 
 showHelp :: IO ()

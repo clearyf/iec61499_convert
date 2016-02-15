@@ -23,9 +23,9 @@ spec = do
 checkFile :: [BasicFunctionBlock] -> FilePath -> Spec
 checkFile block filename = do
     fromFile <- runIO (readBasicFunctionBlock filename)
-    it ("Function Block: " <> filename) (fromFile `shouldBe` block)
+    it ("Function Block: " <> filename) (fromFile `shouldBe` Right block)
 
 checkCFile :: [CompositeFunctionBlock] -> FilePath -> Spec
 checkCFile block filename = do
     fromFile <- runIO (readCompositeFunctionBlock filename)
-    it ("Function Block: " <> filename) (fromFile `shouldBe` block)
+    it ("Function Block: " <> filename) (fromFile `shouldBe` Right block)
