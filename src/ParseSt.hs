@@ -441,7 +441,7 @@ lexNumber :: Parser (Either Integer Double)
 lexNumber = lexeme L.number
 
 number :: Parser Value
-number = fmap (either StInt StFloat) lexNumber
+number = fmap (StInt ||| StFloat) lexNumber
 
 identifier :: Parser String
 identifier = do
