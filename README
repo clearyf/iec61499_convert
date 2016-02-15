@@ -50,12 +50,6 @@
   to the bottom of the tree, see the ParseGuard source file for
   details.
 
-  At the moment all error conditions are thrown as exceptions, ideally
-  all code which code possibly fail should return an ‘Either’ value
-  (or similar).  However, until the code starts to stabilise it’s much
-  easier just to add ‘error "This doesn’t work yet"’ in the right
-  places.
-
 ** Coding Style
 
    The majority of the code has been formatted using hindent's
