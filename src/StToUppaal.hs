@@ -3,11 +3,9 @@
 module StToUppaal (stToUppaal, showValue, showVarType) where
 
 import           BasePrelude
-import           Control.Monad.Error.Class (MonadError, throwError)
-import           Control.Monad.Reader.Class (MonadReader, ask, local)
-import           Control.Monad.Trans.Reader (runReaderT)
-import           Control.Monad.Trans.Writer.Lazy (execWriterT)
-import           Control.Monad.Writer.Class (MonadWriter, tell)
+import           Control.Monad.Except (MonadError, throwError)
+import           Control.Monad.Reader (MonadReader, ask, local, runReaderT)
+import           Control.Monad.Writer (MonadWriter, execWriterT, tell)
 import           Data.DList (DList)
 import qualified Data.DList as DList
 import qualified Data.List.NonEmpty as NE

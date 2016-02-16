@@ -3,12 +3,9 @@
 module FbToUppaal (fbToUppaalModel) where
 
 import           BasePrelude
-import           Control.Monad.Error.Class (MonadError, throwError)
-import           Control.Monad.Reader.Class (MonadReader, asks)
-import           Control.Monad.State.Class (get, put)
-import           Control.Monad.Trans.Except (runExcept)
-import           Control.Monad.Trans.Reader (runReaderT)
-import           Control.Monad.Trans.State.Strict (State, evalState)
+import           Control.Monad.Except (MonadError, throwError, runExcept)
+import           Control.Monad.Reader (MonadReader, asks, runReaderT)
+import           Control.Monad.State (State, evalState, get, put)
 import           Data.Map.Strict ((!), Map)
 import qualified Data.Map.Strict as Map
 import           Data.Set (Set)
