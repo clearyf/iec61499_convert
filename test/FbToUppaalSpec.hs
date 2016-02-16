@@ -2,6 +2,7 @@ module FbToUppaalSpec where
 
 import BasePrelude
 import FbToUppaal
+import StToUppaal
 import ParseIec61499
 import ParseSt
 import Test.Hspec (it, shouldBe)
@@ -14,8 +15,8 @@ spec = do
     it
         "Toggle system"
         (map fbToUppaalModel toggleFunctionBlock `shouldBe` [Right uppaalModel])
-    it "Algorithm output" $ do anAlgorithm input1 `shouldBe` Right output1
-                               anAlgorithm input2 `shouldBe` Right output2
+    it "Algorithm output" $ do stToUppaal input1 `shouldBe` Right output1
+                               stToUppaal input2 `shouldBe` Right output2
 
 input1 :: ECAlgorithm
 input1 =

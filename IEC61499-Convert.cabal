@@ -28,6 +28,7 @@ executable iec61499_convert
                      , ParseGuard
                      , ParseIec61499
                      , ParseSt
+                     , StToUppaal
 
 test-suite test_iec61499_convert
   type:                exitcode-stdio-1.0
@@ -62,6 +63,7 @@ test-suite test_iec61499_convert
                      , ParseIec61499Spec
                      , ParseSt
                      , ParseStSpec
+                     , StToUppaal
                      , SvVerifyBoolLogic
                      , ToggleFunctionBlock
                      , UppaalModel
