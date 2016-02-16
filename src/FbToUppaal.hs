@@ -92,11 +92,12 @@ getLocationsFromState state = do
             endCoord -
             (offset * fromIntegral (length (ecStateActions state) + 1) :+ 0)
     initState <-
-        if null (ecStateActions state)
-            then pure mempty
-            else fmap
-                     (: mempty)
-                     (createState locationStartPrefix startCoord state)
+        case ecStateActions state of
+            [] -> pure mempty
+            _ ->
+                fmap
+                    (: mempty)
+                    (createState locationStartPrefix startCoord state)
     actions <-
         zipWithM
             (createState (locationEventPrefix state))
@@ -113,7 +114,7 @@ getNextId :: LocationIdState StateId
 getNextId = do
     num <- get
     put (num + 1)
-    pure (StateId num)
+    pure $! StateId num
 
 data States = States
     { actionStates :: [AState]
@@ -151,7 +152,7 @@ getStatesMap = do
 createState :: (t -> String) -> Complex Float -> t -> LocationIdState AState
 createState f coord x = do
     nextId <- getNextId
-    pure (AState (f x) nextId coord)
+    pure $! AState (f x) nextId coord
 
 --------------------------------------------------------------------------------
 -- Transitions
@@ -258,7 +259,7 @@ guardToGuard g =
     case g of
         Guard _ (Just (StBool True)) -> pure Nothing
         Guard _ (Just (StInt 1)) -> pure Nothing
-        Guard _ (Just v) -> fmap pure (showValue v)
+        Guard _ (Just v) -> fmap Just (showValue v)
         _ -> pure Nothing
 
 getSrcId :: String -> StateMap -> StateId
@@ -278,7 +279,7 @@ extractDefinitions
 extractDefinitions = do
     algorithms <- extractAlgorithms
     libraryFunctions <- createLibraryFunctions
-    pure (algorithms <> libraryFunctions)
+    pure $! algorithms <> libraryFunctions
 
 extractAlgorithms
     :: (MonadError String m, MonadReader BasicFunctionBlock m)
