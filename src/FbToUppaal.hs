@@ -26,29 +26,16 @@ import           StToUppaal (stToUppaal, showValue, createUppaalVar)
 fbToUppaalModel :: BasicFunctionBlock -> Either String UppaalModel
 fbToUppaalModel fb = runExcept (runReaderT createModel fb)
   where
-    createModel = do
-        name <- asks (fbName . bfbDescription)
-        inputChannels <- extractChannels inputChannelPrefix eventInputs
-        outputChannels <- extractChannels outputChannelPrefix eventOutputs
-        inputParameters <-
-            extractParameters (inputVariables . bfbInterfaceList)
-        outputParameters <-
-           extractParameters (outputVariables . bfbInterfaceList)
-        localParameters <- extractParameters bfbVariables
-        locations <- extractLocations
-        transitions <- extractTransitions
-        definitions <- extractDefinitions
-        pure $!
-            UppaalModel
-                name
-                inputChannels
-                outputChannels
-                inputParameters
-                outputParameters
-                localParameters
-                locations
-                transitions
-                definitions
+    createModel =
+        UppaalModel <$> asks (fbName . bfbDescription)
+                    <*> extractChannels inputChannelPrefix eventInputs
+                    <*> extractChannels outputChannelPrefix eventOutputs
+                    <*> extractParameters (inputVariables . bfbInterfaceList)
+                    <*> extractParameters (outputVariables . bfbInterfaceList)
+                    <*> extractParameters bfbVariables
+                    <*> extractLocations
+                    <*> extractTransitions
+                    <*> extractDefinitions
 
 --------------------------------------------------------------------------------
 -- Handle events
