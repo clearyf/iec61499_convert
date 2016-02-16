@@ -71,8 +71,8 @@ increaseIndent :: MonadReader Int m => m a -> m a
 increaseIndent = local (1 +)
 
 writeBlock
-    :: (MonadError String m, MonadWriter (DList String) m, MonadReader Int m)
-    => [Statement] -> m ()
+    :: (MonadError String m, MonadWriter (DList String) m, MonadReader Int m, Traversable t)
+    => t Statement -> m ()
 writeBlock statements = do
     writeLine "{"
     increaseIndent (traverse_ writeStatement statements)
