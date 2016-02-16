@@ -8,6 +8,6 @@ import UppaalModel
 
 spec :: Spec
 spec = do
-    outputModel <- runIO (outputUppaal uppaalModel)
+    model <- runIO (outputUppaal uppaalModel)
     modelFromXml <- runIO (readFile "examples/uppaal/toggle.xml")
-    it "toggle model" (outputModel `shouldBe` [modelFromXml])
+    it "toggle model" (model `shouldBe` [modelFromXml])
