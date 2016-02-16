@@ -72,37 +72,18 @@ writeBlock statements = do
     increaseIndent (traverse_ writeStatement statements)
     writeLine "}"
 
-tryWriteLine
-    :: (MonadReader Int m, MonadError e m, MonadWriter (DList String) m)
-    => Either e t -> (t -> String) -> m ()
-tryWriteLine v f = case v of
-  Right s -> writeLine $ f s
-  Left e -> throwError e
-
-tryWriteLine2
-    :: (MonadReader Int m, MonadError e m, MonadWriter (DList String) m)
-    => Either e t1 -> Either e t2 -> (t1 -> t2 -> String) -> m ()
-tryWriteLine2 v1 v2 f = case (v1, v2) of
-  (Right l, Right r) -> writeLine $ f l r
-  (Left e, _) -> throwError e
-  (_, Left e) -> throwError e
-
 writeStatement
     :: (MonadError String m, MonadWriter (DList String) m, MonadReader Int m)
     => Statement -> m ()
 writeStatement st =
     case st of
         Declaration name typeIn -> do
-            tryWriteLine
-                (showVarType typeIn)
-                (\(typeOut,suffix) ->
-                      typeOut <> " " <> name <> suffix <> ";")
-        Assignment lvalue rvalue ->
-            tryWriteLine2
-                (showLocation lvalue)
-                (showValue rvalue)
-                (\l r ->
-                      l <> " = " <> r <> ";")
+            (typeOut,suffix) <- showVarType typeIn
+            writeLine (typeOut <> " " <> name <> suffix <> ";")
+        Assignment lvalue rvalue -> do
+            lv <- showLocation lvalue
+            rv <- showValue rvalue
+            writeLine (lv <> " = " <> rv <> ";")
         For name start end step body -> do
             writeLine
                 ("for (int " <> name <> " = " <> show start <> "; " <> name <>
@@ -110,20 +91,17 @@ writeStatement st =
                  name <> " + (" <> show (fromMaybe 1 step) <> "))")
             writeBlock body
         While cond body -> do
-            tryWriteLine
-                (showValue cond)
-                (\s -> "while (" <> s <> ")")
+            value <- showValue cond
+            writeLine ("while (" <> value <> ")")
             writeBlock body
         Repeat body cond -> do
             writeLine "do"
             writeBlock body
-            tryWriteLine
-                (showValue cond)
-                (\x -> "while (" <> x <> ")")
+            value <- showValue cond
+            writeLine ("while (" <> value <> ")")
         Case var branches defaultBranch -> do
-            tryWriteLine
-                (showValue var)
-                (\x -> "case (" <> x <> ")")
+            value <- showValue var
+            writeLine ("case (" <> value <> ")")
             writeLine "{"
             traverse_ writeBranch branches
             writeDefaultBranch
@@ -146,14 +124,12 @@ writeStatement st =
                           do traverse_ writeStatement defaultBranch
                              writeStatement Break
         If cond branch -> do
-            tryWriteLine
-                (showValue cond)
-                (\x -> "if (" <> x <> ")")
+            value <- showValue cond
+            writeLine ("if (" <> value <> ")")
             writeBlock branch
         IfElse cond branch1 branch2 -> do
-            tryWriteLine
-                (showValue cond)
-                (\x -> "if (" <> x <> ")")
+            value <- showValue cond
+            writeLine ("if (" <> value <> ")")
             writeBlock branch1
             writeLine "else"
             writeBlock branch2
