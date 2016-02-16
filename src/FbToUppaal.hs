@@ -77,14 +77,14 @@ extractLocations = do
     (StateMap m) <- getStatesMap
     pure $! foldMap f m
   where
-    f (actionStates,endState) =
-        map UrgentLocation actionStates <> [Location endState]
+    f (States actions end) =
+        map UrgentLocation actions <> [Location end]
 
 -- | Calculates the states from each input state
 --
 -- If there are no actions for the state, then the initState &
 -- actionStates will both be empty.
-getLocationsFromState :: ECState -> LocationIdState ([AState],AState)
+getLocationsFromState :: ECState -> LocationIdState States
 getLocationsFromState state = do
     let endCoord = ecStatePosition state
     let offset = 30
@@ -97,13 +97,13 @@ getLocationsFromState state = do
             else fmap
                      (: mempty)
                      (createState locationStartPrefix startCoord state)
-    actionStates <-
+    actions <-
         zipWithM
             (createState (locationEventPrefix state))
             (tail (iterate (+ (offset :+ 0)) startCoord))
             (ecStateActions state)
-    destState <- createState ecStateName endCoord state
-    pure (initState <> actionStates, destState)
+    dest <- createState ecStateName endCoord state
+    pure $! States (initState <> actions) dest
 
 -- | Simple typedef to make in clearer what the state is.  Only
 -- getNextId should be used to peek at the state.
@@ -115,8 +115,13 @@ getNextId = do
     put (num + 1)
     pure (StateId num)
 
+data States = States
+    { actionStates :: [AState]
+    , destState :: AState
+    } deriving (Show,Eq)
+
 newtype StateMap =
-    StateMap (Map String ([AState], AState))
+    StateMap (Map String States)
     deriving (Show,Eq)
 
 locationStartPrefix :: ECState -> String
@@ -187,10 +192,10 @@ createAdvancedTransition stateMap state =
                 transitionSources
                 (tail transitionSources)
   where
-    makeTransition action srcState destState =
+    makeTransition action src dest =
         Transition
-            (stateMap ! srcState)
-            (stateMap ! destState)
+            (stateMap ! src)
+            (stateMap ! dest)
             (makeSyncStatement action)
             -- Guard is always empty for advanced transitions.
             mzero
@@ -258,16 +263,14 @@ guardToGuard g =
 
 getSrcId :: String -> StateMap -> StateId
 getSrcId s (StateMap m) =
-    let (AState _ i _) = snd (m ! s)
-    in i
+    case destState (m ! s) of
+        (AState _ i _) -> i
 
 getDestId :: String -> StateMap -> StateId
 getDestId s (StateMap m) =
-    case fst (m ! s) of
+    case actionStates (m ! s) of
         [] -> getSrcId s (StateMap m)
-        actionStates ->
-            let (AState _ i _) = head actionStates
-            in i
+        (AState _ i _):_ -> i
 
 extractDefinitions
     :: (MonadError String m, MonadReader BasicFunctionBlock m)
