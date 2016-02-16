@@ -1,6 +1,6 @@
 {-# LANGUAGE FlexibleContexts #-}
 
-module StToUppaal (stToUppaal, showValue, showVarType) where
+module StToUppaal (stToUppaal, showValue, createUppaalVar) where
 
 import           BasePrelude
 import           Control.Monad.Except (MonadError, throwError)
@@ -9,10 +9,16 @@ import           Control.Monad.Writer (MonadWriter, execWriterT, tell)
 import           Data.DList (DList)
 import qualified Data.DList as DList
 import qualified Data.List.NonEmpty as NE
-import           ParseIec61499 (ECAlgorithm(..))
+import           OutputUppaal (UppaalVar(..))
+import           ParseIec61499 (ECAlgorithm(..), Variable(..))
 import           ParseSt
        (LValue(..), Statement(..), Value(..), IECVariable(..), Width(..),
         StMonoOp(..), StBinaryOp(..), CaseSubExpression(..))
+
+createUppaalVar :: MonadError String m => Variable -> m UppaalVar
+createUppaalVar var = do
+    (typeName,arrayDimensions) <- showVarType (variableType var)
+    pure $! UppaalVar typeName (variableName var <> arrayDimensions)
 
 showVarType :: MonadError String m => IECVariable -> m (String,String)
 showVarType v =

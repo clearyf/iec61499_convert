@@ -20,7 +20,7 @@ import           ParseIec61499
         Variable(..), ECAction(..), BasicFunctionBlock(..),
         ECAlgorithm(..))
 import           ParseSt (LValue(..), Statement(..), Value(..))
-import           StToUppaal (stToUppaal, showValue, showVarType)
+import           StToUppaal (stToUppaal, showValue, createUppaalVar)
 
 -- | Converts IEC61499 BasicFunctionBlock to an UppaalModel
 fbToUppaalModel :: BasicFunctionBlock -> Either String UppaalModel
@@ -71,11 +71,6 @@ extractParameters :: (Traversable t, MonadReader r m, MonadError String m) => (r
 extractParameters f = do
     parameters <- asks f
     traverse createUppaalVar parameters
-
-createUppaalVar :: MonadError String m => Variable -> m UppaalVar
-createUppaalVar var = do
-    (typeName,arrayDimensions) <- showVarType (variableType var)
-    pure $! UppaalVar typeName (variableName var <> arrayDimensions)
 
 --------------------------------------------------------------------------------
 -- 3. Handle Locations
