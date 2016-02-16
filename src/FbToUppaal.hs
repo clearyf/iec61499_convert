@@ -1,14 +1,16 @@
+{-# LANGUAGE FlexibleContexts #-}
+
 module FbToUppaal (fbToUppaalModel, anAlgorithm) where
 
 import           BasePrelude
-import           Control.Monad.Error.Class (throwError)
-import           Control.Monad.Reader.Class (ask)
+import           Control.Monad.Error.Class (MonadError, throwError)
+import           Control.Monad.Reader.Class (MonadReader, ask, asks, local)
 import           Control.Monad.State.Class (get, put)
-import           Control.Monad.Trans.Except (Except, runExcept)
-import           Control.Monad.Trans.Reader (ReaderT, runReaderT, withReaderT)
-import           Control.Monad.Trans.State.Lazy (State, evalState)
-import           Control.Monad.Trans.Writer.Lazy (WriterT, execWriterT)
-import           Control.Monad.Writer.Class (tell)
+import           Control.Monad.Trans.Except (runExcept)
+import           Control.Monad.Trans.Reader (runReaderT)
+import           Control.Monad.Trans.State.Strict (State, evalState)
+import           Control.Monad.Trans.Writer.Lazy (execWriterT)
+import           Control.Monad.Writer.Class (MonadWriter, tell)
 import           Data.DList (DList)
 import qualified Data.DList as DList
 import qualified Data.List.NonEmpty as NE
@@ -31,27 +33,39 @@ import           ParseSt
 
 -- | Converts IEC61499 BasicFunctionBlock to an UppaalModel
 fbToUppaalModel :: BasicFunctionBlock -> Either String UppaalModel
-fbToUppaalModel fb =
-    UppaalModel <$> pure (fbName $ bfbDescription fb)
-                <*> pure (inputChannels fb)
-                <*> pure (outputChannels fb)
-                <*> inputParameters fb
-                <*> outputParameters fb
-                <*> localParameters fb
-                <*> pure (locations fb)
-                <*> transitions fb
-                <*> definitions
+fbToUppaalModel fb = runExcept (runReaderT createModel fb)
   where
-    definitions =
-        mappend <$> (right fold . traverse anAlgorithm . bfbAlgorithms $ fb)
-                <*> (pure (createLibraryFunctions fb))
+    createModel = do
+        name <- asks (fbName . bfbDescription)
+        inputChannels <- extractChannels inputChannelPrefix eventInputs
+        outputChannels <- extractChannels outputChannelPrefix eventOutputs
+        inputParameters <-
+            extractParameters (inputVariables . bfbInterfaceList)
+        outputParameters <-
+           extractParameters (outputVariables . bfbInterfaceList)
+        localParameters <- extractParameters bfbVariables
+        locations <- extractLocations
+        transitions <- extractTransitions
+        definitions <- extractDefinitions
+        pure $!
+            UppaalModel
+                name
+                inputChannels
+                outputChannels
+                inputParameters
+                outputParameters
+                localParameters
+                locations
+                transitions
+                definitions
 
 --------------------------------------------------------------------------------
 -- Handle events
 
-extractChannels :: String -> (InterfaceList -> [Event]) -> BasicFunctionBlock -> [UppaalChan]
-extractChannels prefix f =
-    map (UppaalChan . (prefix <>) . eventName) . f . bfbInterfaceList
+extractChannels :: MonadReader BasicFunctionBlock m => String -> (InterfaceList -> [Event]) -> m [UppaalChan]
+extractChannels prefix f = do
+    channels <- asks (f . bfbInterfaceList)
+    pure $! map (UppaalChan . (prefix <>) . eventName) channels
 
 inputChannelPrefix :: String
 inputChannelPrefix = "ic_"
@@ -59,37 +73,40 @@ inputChannelPrefix = "ic_"
 outputChannelPrefix :: String
 outputChannelPrefix = "oc_"
 
-inputChannels :: BasicFunctionBlock -> [UppaalChan]
-inputChannels = extractChannels inputChannelPrefix eventInputs
-
-outputChannels :: BasicFunctionBlock -> [UppaalChan]
-outputChannels = extractChannels outputChannelPrefix eventOutputs
-
 --------------------------------------------------------------------------------
 -- Handle variables
 
-showVarType :: IECVariable -> Either String (String,String)
+extractParameters :: (Traversable t, MonadReader r m, MonadError String m) => (r -> t Variable) -> m (t UppaalVar)
+extractParameters f = do
+    parameters <- asks f
+    traverse createUppaalVar parameters
+
+createUppaalVar :: MonadError String m => Variable -> m UppaalVar
+createUppaalVar var = do
+    (typeName,arrayDimensions) <- showVarType (variableType var)
+    pure $! UppaalVar typeName (variableName var <> arrayDimensions)
+
+-- | Used by createUppaalVar to create the correct variable
+-- declarations.
+showVarType :: MonadError String m => IECVariable -> m (String,String)
 showVarType v =
     case v of
-        IECBool -> Right ("bool", mempty)
-        IECUInt Eight -> Right $ uintWithRange 8
-        IECUInt Sixteen -> Right $ uintWithRange 16
-        IECUInt ThirtyTwo -> Right $ uintWithRange 32
-        IECUInt SixtyFour -> Right $ uintWithRange 64
-        IECInt Eight -> Right $ intWithRange 7
-        IECInt Sixteen -> Right $ intWithRange 15
-        IECInt ThirtyTwo -> Right $ intWithRange 31
-        IECInt SixtyFour -> Right $ intWithRange 63
-        IECArray idxs var ->
-            fmap
-                (\x ->
-                      ( fst x
-                      , "[" <> foldMap id (NE.intersperse "," (fmap show idxs)) <>
-                        "]"))
-                (showVarType var)
+        IECBool -> pure ("bool", mempty)
+        IECUInt Eight -> pure $ uintWithRange 8
+        IECUInt Sixteen -> pure $ uintWithRange 16
+        IECUInt ThirtyTwo -> pure $ uintWithRange 32
+        IECUInt SixtyFour -> pure $ uintWithRange 64
+        IECInt Eight -> pure $ intWithRange 7
+        IECInt Sixteen -> pure $ intWithRange 15
+        IECInt ThirtyTwo -> pure $ intWithRange 31
+        IECInt SixtyFour -> pure $ intWithRange 63
+        IECArray idxs var -> do
+            (x,_) <- showVarType var
+            let y = "[" <> fold (NE.intersperse "," (fmap show idxs)) <> "]"
+            pure (x, y)
         IECString size ->
-            Right (uppaalIntWithRange 0 127, "[" <> show size <> "]")
-        t -> Left ("Uppaal doesn't support " <> show t <> " type!")
+            pure (uppaalIntWithRange 0 127, "[" <> show size <> "]")
+        t -> throwError ("Uppaal doesn't support " <> show t <> " type!")
 
 uppaalIntWithRange :: Integer -> Integer -> String
 uppaalIntWithRange from to = "int[" <> show from <> "," <> show to <> "]"
@@ -99,22 +116,6 @@ intWithRange i = (uppaalIntWithRange ((-2) ^ i) (2 ^ i - 1), mempty)
 
 uintWithRange :: Integer -> (String, String)
 uintWithRange i = (uppaalIntWithRange 0 (2 ^ i), mempty)
-
-inputParameters :: BasicFunctionBlock -> Either String [UppaalVar]
-inputParameters = traverse createUppaalVar . inputVariables . bfbInterfaceList
-
-outputParameters :: BasicFunctionBlock -> Either String [UppaalVar]
-outputParameters = traverse createUppaalVar . outputVariables . bfbInterfaceList
-
-localParameters :: BasicFunctionBlock -> Either String [UppaalVar]
-localParameters = traverse createUppaalVar . bfbVariables
-
-createUppaalVar :: Variable -> Either String UppaalVar
-createUppaalVar var =
-    UppaalVar <$> fmap fst thetype
-              <*> fmap ((variableName var <>) . snd) thetype
-  where
-    thetype = showVarType (variableType var)
 
 --------------------------------------------------------------------------------
 -- 3. Handle Locations
@@ -128,50 +129,20 @@ createUppaalVar var =
 -- For each output event in an action a secondary location is
 -- required.
 
-locationStartPrefix :: ECState -> String
-locationStartPrefix state = "__start_" <> ecStateName state
-
-locationEventPrefix :: ECState -> ECAction -> String
-locationEventPrefix state action =
-    fold
-        [ "__action_"
-        , ecStateName state
-        , "__"
-        , ecActionOutput action
-        , "_"
-        , ecActionAlgorithm action
-        , "_"]
-
-locations :: BasicFunctionBlock -> [Location]
-locations fb = doFold states
+-- | Extracts the list of locations from the BasicFunctionBlock.
+extractLocations :: MonadReader BasicFunctionBlock m => m [Location]
+extractLocations = do
+    (StateMap m) <- getStatesMap
+    pure $! foldMap f m
   where
-    states = getStatesMap (getBasicStates fb)
-    doFold (StateMap m) = foldMap f m
-    f (u,n) = map UrgentLocation u <> [Location n]
-
-newtype StateMap =
-    StateMap (Map String ([AState], AState))
-    deriving (Show,Eq)
-
-getNextId :: State Int StateId
-getNextId = do
-    num <- get
-    put (num + 1)
-    pure (StateId num)
-
-getStatesMap :: [ECState] -> StateMap
-getStatesMap basicStates =
-    StateMap
-        (Map.fromList
-             (zip
-                  (map ecStateName basicStates)
-                  (evalState (mapM getLocationsFromState basicStates) 0)))
+    f (actionStates,endState) =
+        map UrgentLocation actionStates <> [Location endState]
 
 -- | Calculates the states from each input state
 --
 -- If there are no actions for the state, then the initState &
 -- actionStates will both be empty.
-getLocationsFromState :: ECState -> State Int ([AState],AState)
+getLocationsFromState :: ECState -> LocationIdState ([AState],AState)
 getLocationsFromState state = do
     let endCoord = ecStatePosition state
     let offset = 30
@@ -192,92 +163,156 @@ getLocationsFromState state = do
     destState <- createState ecStateName endCoord state
     pure (initState <> actionStates, destState)
 
+-- | Simple typedef to make in clearer what the state is.  Only
+-- getNextId should be used to peek at the state.
+type LocationIdState = State Int
+
+getNextId :: LocationIdState StateId
+getNextId = do
+    num <- get
+    put (num + 1)
+    pure (StateId num)
+
+newtype StateMap =
+    StateMap (Map String ([AState], AState))
+    deriving (Show,Eq)
+
+locationStartPrefix :: ECState -> String
+locationStartPrefix state = "__start_" <> ecStateName state
+
+locationEventPrefix :: ECState -> ECAction -> String
+locationEventPrefix state action =
+    fold
+        [ "__action_"
+        , ecStateName state
+        , "__"
+        , ecActionOutput action
+        , "_"
+        , ecActionAlgorithm action
+        , "_"]
+
+getStatesMap :: MonadReader BasicFunctionBlock m => m StateMap
+getStatesMap = do
+    basicStates <- asks bfbStates
+    pure $!
+        StateMap
+            (Map.fromList
+                 (zip
+                      (map ecStateName basicStates)
+                      (evalState (mapM getLocationsFromState basicStates) 0)))
+
+createState :: (t -> String) -> Complex Float -> t -> LocationIdState AState
+createState f coord x = do
+    nextId <- getNextId
+    pure (AState (f x) nextId coord)
+
+--------------------------------------------------------------------------------
+-- Transitions
+
+extractTransitions :: (MonadReader BasicFunctionBlock m, MonadError String m) => m [Transition]
+extractTransitions = do
+    -- Transitions which are defined in the input BasicFunctionBlock.
+    basicTransitions <- getBasicTransitions
+    -- Transitions which are required to handle the urgent
+    -- locations.  The list of required transitions is one
+    -- transition from urgent state to the next and then one final
+    -- transition to the end state.
+    advancedTransitions <- getAdvancedTransitions
+    pure $! basicTransitions <> advancedTransitions
+
+-- | Create a Map of state names to stateIds.  This includes _all_
+-- states, both basic and advanced.
 locationsToMap :: [Location] -> Map String StateId
 locationsToMap lst = Map.fromList (map f lst)
   where
     f (UrgentLocation (AState s i _)) = (s, i)
     f (Location (AState s i _)) = (s, i)
 
-advancedTransitions :: Map String StateId -> ECState -> [Transition]
-advancedTransitions m s
-  | null (ecStateActions s) = mempty
-  | otherwise = map makeTransition trTriples
+getAdvancedTransitions :: (MonadReader BasicFunctionBlock m) => m [Transition]
+getAdvancedTransitions = do
+    locations <- extractLocations
+    basicStates <- asks bfbStates
+    pure $! foldMap (createAdvancedTransition (locationsToMap locations)) basicStates
+
+createAdvancedTransition :: Map String StateId -> ECState -> [Transition]
+createAdvancedTransition stateMap state =
+    case ecStateActions state of
+        [] -> mempty
+        _ ->
+            zipWith3
+                makeTransition
+                actions
+                transitionSources
+                (tail transitionSources)
   where
-    makeTransition (act,a,b) =
+    makeTransition action srcState destState =
         Transition
-            (m ! a)
-            (m ! b)
-            (makeSyncStatement act)
+            (stateMap ! srcState)
+            (stateMap ! destState)
+            (makeSyncStatement action)
             -- Guard is always empty for advanced transitions.
             mzero
-            (makeUpdateStatement act)
+            (makeUpdateStatement action)
+    -- Add empty actions to the list of actions at least one extra
+    -- transition will be added as the final destination state.
     emptyAction = ECAction mempty mempty
-    acts = ecStateActions s <> repeat emptyAction
-    trTriples = zip3 acts trSrcs (tail trSrcs)
-    trSrcs =
-        locationStartPrefix s :
-        map (locationEventPrefix s) (ecStateActions s) <> [ecStateName s]
+    actions = ecStateActions state <> repeat emptyAction
+    transitionSources =
+        locationStartPrefix state :
+        map (locationEventPrefix state) (ecStateActions state) <>
+        [ecStateName state]
 
 makeUpdateStatement :: MonadPlus m => ECAction -> m String
-makeUpdateStatement action
-  | null (ecActionAlgorithm action) = mzero
-  | otherwise = pure (ecActionAlgorithm action <> "();")
+makeUpdateStatement action =
+    case ecActionAlgorithm action of
+        [] -> mzero
+        algorithm -> pure $! algorithm <> "();"
 
 makeSyncStatement :: MonadPlus m => ECAction -> m String
-makeSyncStatement action
-  | null (ecActionOutput action) = mzero
-  | otherwise = pure (outputChannelPrefix <> ecActionOutput action <> "!")
+makeSyncStatement action =
+    case ecActionOutput action of
+        [] -> mzero
+        output -> pure $! outputChannelPrefix <> output <> "!"
 
-createState :: (t -> String) -> Complex Float -> t -> State Int AState
-createState f coord x = do
-    nextId <- getNextId
-    pure (AState (f x) nextId coord)
-
-getBasicStates :: BasicFunctionBlock -> [ECState]
-getBasicStates = bfbStates
-
-transitions :: BasicFunctionBlock -> Either String [Transition]
-transitions fb = mappend <$> basicTransitions <*> pure otherTransitions
+getBasicTransitions
+    :: (MonadReader BasicFunctionBlock m, MonadError String m)
+    => m [Transition]
+getBasicTransitions = do
+    transitions <- asks bfbTransitions
+    traverse createBasicTransition transitions
   where
-    states = getBasicStates fb
-    statesMap = getStatesMap states
-    -- Transitions which are defined in the input BasicFunctionBlock.
-    basicTransitions :: Either String [Transition]
-    basicTransitions = traverse createBasicTransition (bfbTransitions fb)
-    -- Transitions which are required to handle the urgent
-    -- locations.  The list of required transitions is one
-    -- transition from urgent state to the next and then one final
-    -- transition to the end state.
-    otherTransitions =
-        foldMap (advancedTransitions (locationsToMap (locations fb))) states
-    events = Set.fromList (map eventName (eventInputs (bfbInterfaceList fb)))
-    createBasicTransition :: ECTransition -> Either String Transition
-    createBasicTransition (ECTransition src dest cond _) =
-        Transition <$> pure (getSrcId src statesMap)
-                   <*> pure (getDestId dest statesMap)
-                   <*> fmap guardToSync eitherGuard
-                   <*> (guardToGuard =<< eitherGuard)
-                   <*> pure mzero -- No update/advancedTransitions on the basic transition.
-      where
-        eitherGuard =
+    createBasicTransition (ECTransition src dest cond _) = do
+        statesMap <- getStatesMap
+        let srcId = getSrcId src statesMap
+        let destId = getDestId dest statesMap
+        events <- getEvents
+        errGuard <-
             maybe
-                (Left ("Couldn't parse guard: " <> show cond))
-                Right
+                (throwError ("Couldn't parse guard: " <> show cond))
+                pure
                 (parseGuard events cond)
+        let syncGuard = guardToSync errGuard
+        guardGuard <- guardToGuard errGuard
+        pure $! Transition srcId destId syncGuard guardGuard mzero
 
-guardToSync :: MonadPlus m => Guard -> m String
+getEvents :: MonadReader BasicFunctionBlock m => m (Set String)
+getEvents = do
+    events <- asks (eventInputs . bfbInterfaceList)
+    pure $! Set.fromList (map eventName events)
+
+guardToSync :: Guard -> Maybe String
 guardToSync g =
     case g of
-        Guard (Just s) _ -> pure (inputChannelPrefix <> s <> "?")
-        _ -> mzero
+        Guard (Just s) _ -> Just (inputChannelPrefix <> s <> "?")
+        _ -> Nothing
 
-guardToGuard :: MonadPlus m => Guard -> Either String (m String)
+guardToGuard :: MonadError String m => Guard -> m (Maybe String)
 guardToGuard g =
     case g of
-        Guard _ (Just (StBool True)) -> pure mzero
-        Guard _ (Just (StInt 1)) -> pure mzero
+        Guard _ (Just (StBool True)) -> pure Nothing
+        Guard _ (Just (StInt 1)) -> pure Nothing
         Guard _ (Just v) -> fmap pure (showValue v)
-        _ -> pure mzero
+        _ -> pure Nothing
 
 getSrcId :: String -> StateMap -> StateId
 getSrcId s (StateMap m) =
@@ -285,49 +320,60 @@ getSrcId s (StateMap m) =
     in i
 
 getDestId :: String -> StateMap -> StateId
-getDestId s (StateMap m)
-  | null (fst (m ! s)) = getSrcId s (StateMap m)
-  | otherwise =
-      let (AState _ i _) = head (fst (m ! s))
-      in i
+getDestId s (StateMap m) =
+    case fst (m ! s) of
+        [] -> getSrcId s (StateMap m)
+        actionStates ->
+            let (AState _ i _) = head actionStates
+            in i
 
-type AlgorithmWriter = ReaderT Int (WriterT (DList String) (Except String)) ()
-
-anAlgorithm :: ECAlgorithm -> Either String String
-anAlgorithm al = right fold (runExcept (execWriterT (runReaderT writeFunction 0)))
+anAlgorithm :: MonadError String m => ECAlgorithm -> m String
+anAlgorithm al =
+    fmap fold (execWriterT (runReaderT writeFunction 0))
   where
     writeFunction = do
         writeLine ("void " <> ecAlgorithmName al <> "()")
         writeBlock (ecAlgorithmStText al)
         -- Append blank line for formatting.
-        writeLine mempty
+        writeLine
+            mempty
 
-writeLine :: String -> AlgorithmWriter
+writeLine
+    :: (MonadReader Int m, MonadWriter (DList String) m)
+    => String -> m ()
 writeLine l = do
     n <- ask
     tell (DList.singleton (replicate n '\t' <> l <> "\n"))
 
-increaseIndent :: ReaderT Int m a -> ReaderT Int m a
-increaseIndent = withReaderT (1 +)
+increaseIndent :: MonadReader Int m => m a -> m a
+increaseIndent = local (1 +)
 
-writeBlock :: [Statement] -> AlgorithmWriter
+writeBlock
+    :: (MonadError String m, MonadWriter (DList String) m, MonadReader Int m)
+    => [Statement] -> m ()
 writeBlock statements = do
     writeLine "{"
     increaseIndent (traverse_ writeStatement statements)
     writeLine "}"
 
-tryWriteLine :: Either String t -> (t -> String) -> AlgorithmWriter
+tryWriteLine
+    :: (MonadReader Int m, MonadError e m, MonadWriter (DList String) m)
+    => Either e t -> (t -> String) -> m ()
 tryWriteLine v f = case v of
   Right s -> writeLine $ f s
   Left e -> throwError e
 
-tryWriteLine2 :: Either String t1 -> Either String t2 -> (t1 -> t2 -> String) -> AlgorithmWriter
+tryWriteLine2
+    :: (MonadReader Int m, MonadError e m, MonadWriter (DList String) m)
+    => Either e t1 -> Either e t2 -> (t1 -> t2 -> String) -> m ()
 tryWriteLine2 v1 v2 f = case (v1, v2) of
   (Right l, Right r) -> writeLine $ f l r
   (Left e, _) -> throwError e
   (_, Left e) -> throwError e
 
-writeStatement :: Statement -> AlgorithmWriter
+writeStatement
+    :: (MonadError String m, MonadWriter (DList String) m, MonadReader Int m)
+    => Statement -> m ()
 writeStatement st =
     case st of
         Declaration name typeIn -> do
@@ -398,80 +444,96 @@ writeStatement st =
         Break -> writeLine "break;"
         Return -> writeLine "return;"
 
-showArgs :: [Value] -> Either String String
-showArgs = right (fold . intersperse ", ") . traverse showValue
+showArgs :: MonadError String m => [Value] -> m String
+showArgs = fmap (fold . intersperse ", ") . traverse showValue
 
-showValue :: Value -> Either String String
+showValue :: MonadError String m => Value -> m String
 showValue value =
     case value of
         StSubValue values ->
-            right
+            fmap
                 (\x -> "(" <> x <> ")")
                 (showValue values)
-        StBool True -> Right "true"
-        StBool False -> Right "false"
+        StBool True -> pure "true"
+        StBool False -> pure "false"
         StBinaryOp op a b -> showBinaryValue a op b
         StMonoOp op a -> showMonoValue op a
-        StTime t -> Right $ show t
-        StInt i -> Right $ show i
+        StTime t -> pure $ show t
+        StInt i -> pure $ show i
         StLValue v -> showLocation v
         -- This entry will not be required once the float -> int conversion
         -- is working correctly.
-        StFloat i -> Right $ showFFloat Nothing i ""
+        StFloat i -> pure $ showFFloat Nothing i ""
         StFunc name args ->
-            right
+            fmap
                 (\x -> name <> "(" <> x <> ")")
                 (showArgs args)
-        StChar c -> Right $ show (ord c)
+        StChar c -> pure $ show (ord c)
 
-showBinaryValue :: Value -> StBinaryOp -> Value -> Either String String
-showBinaryValue a op b = right fold (sequence (createString opStr))
+showBinaryValue
+    :: MonadError String m
+    => Value -> StBinaryOp -> Value -> m String
+showBinaryValue a op b = fmap fold (sequence (createString opStr))
   where
     createString x = [showValue a, pure " ", x, pure " ", showValue b]
     opStr =
         case op of
-            StAddition -> Right "+"
-            StSubtract -> Right "-"
-            StExp -> Left "Uppaal doesn't support exponentiation!"
-            StMultiply -> Right "*"
-            StDivide -> Right "/"
-            StEquals -> Right "="
-            StNotEquals -> Right "!="
-            StLessThanEquals -> Right "<="
-            StLessThan -> Right "<"
-            StGreaterThanEquals -> Right ">="
-            StGreaterThan -> Right ">"
-            StMod -> Right "%"
-            StBitwiseAnd -> Right "&"
-            StAnd -> Right "&&"
-            StOr -> Right "||"
-            StXor -> Right "^"
+            StAddition -> pure "+"
+            StSubtract -> pure "-"
+            StExp -> throwError "Uppaal doesn't support exponentiation!"
+            StMultiply -> pure "*"
+            StDivide -> pure "/"
+            StEquals -> pure "="
+            StNotEquals -> pure "!="
+            StLessThanEquals -> pure "<="
+            StLessThan -> pure "<"
+            StGreaterThanEquals -> pure ">="
+            StGreaterThan -> pure ">"
+            StMod -> pure "%"
+            StBitwiseAnd -> pure "&"
+            StAnd -> pure "&&"
+            StOr -> pure "||"
+            StXor -> pure "^"
 
-showMonoValue :: StMonoOp -> Value -> Either String String
+showMonoValue :: MonadError String m => StMonoOp -> Value -> m String
 showMonoValue op v =
     case op of
         StNegate -> mappend <$> pure "-" <*> showValue v
         StNot -> mappend <$> pure "!" <*> showValue v
 
-showLocation :: LValue -> Either String String
+showLocation :: MonadError String m => LValue -> m String
 showLocation value =
     case value of
-        SimpleLValue name -> Right name
+        SimpleLValue name -> pure name
         ArrayLValue name idx -> mappend <$> pure name <*> showValue idx
 
-createLibraryFunctions :: BasicFunctionBlock -> String
-createLibraryFunctions = foldMap f . fbFunctions
-  where
-    f str = "void " <> str <> "()\n{\n}\n\n"
+extractDefinitions
+    :: (MonadError String m, MonadReader BasicFunctionBlock m)
+    => m String
+extractDefinitions = do
+    algorithms <- extractAlgorithms
+    libraryFunctions <- createLibraryFunctions
+    pure (algorithms <> libraryFunctions)
 
-fbFunctions :: BasicFunctionBlock -> Set String
-fbFunctions fb =
-    foldMap
-        (extractFunctionStatement . ecAlgorithmStText)
-        (bfbAlgorithms fb) <>
-    foldMap
-        (extractFunctionValue . ecTransitionCondition)
-        (bfbTransitions fb)
+extractAlgorithms
+    :: (MonadError String m, MonadReader BasicFunctionBlock m)
+    => m String
+extractAlgorithms = do
+    algorithms <- asks bfbAlgorithms
+    showedAlgorithms <- traverse anAlgorithm algorithms
+    pure $! fold showedAlgorithms
+
+createLibraryFunctions :: MonadReader BasicFunctionBlock m => m String
+createLibraryFunctions = do
+    algorithmFunctions <-
+        fmap (foldMap (extractFunctionStatement . ecAlgorithmStText)) $
+        asks bfbAlgorithms
+    guardFunctions <-
+        fmap (foldMap (extractFunctionValue . ecTransitionCondition)) $
+        asks bfbTransitions
+    pure $! foldMap printFunction (algorithmFunctions <> guardFunctions)
+  where
+    printFunction str = "void " <> str <> "()\n{\n}\n\n"
 
 -- | Extracts the functions from the supplied statements.
 extractFunctionStatement :: Foldable t => t Statement -> Set String
