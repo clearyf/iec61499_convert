@@ -48,6 +48,8 @@ spec = do
         Right
         [Assignment (ArrayLValue "value" (StBinaryOp StAddition (StLValue (SimpleLValue "i")) (StLValue (SimpleLValue "i")))) (StBinaryOp StAddition (StInt 20) (StLValue (ArrayLValue "arr" (StBinaryOp StAddition (StLValue (SimpleLValue "i")) (StLValue (ArrayLValue "value" (StBinaryOp StSubtract (StLValue (SimpleLValue "i")) (StInt 1))))))))]
   it "Var declaration" $ do
+      parseSt "" "VAR blah : STRING[10]; END_VAR;" `shouldBe`
+        Right [ Declaration "blah" (IECString 10)]
       parseSt "" "VAR llh : INT; llt : REAL; END_VAR; llh := 5;" `shouldBe`
         Right [ Declaration "llh" (IECInt Sixteen) , Declaration "llt" IECReal , Assignment (SimpleLValue "llh") (StInt 5)]
       parseSt "" "VAR blah : UDINT; END_VAR ; blah := 10;" `shouldBe` Right [ Declaration "blah" (IECUInt ThirtyTwo) , Assignment (SimpleLValue "blah") (StInt 10)]

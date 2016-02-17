@@ -190,7 +190,9 @@ parseVarType =
     createVariableType name Nothing = vartypeFromString name Nothing
     createVariableType name x@(Just i) = do
         subtype <- vartypeFromString name x
-        pure $! IECArray i subtype
+        case subtype of
+          str@(IECString _) -> pure str
+          _ -> pure $! IECArray i subtype
     parseIndices = fmap NE.fromList (lexInt `sepBy1` comma)
 
 iECtypeFromString :: MonadError String m => String -> m IECVariable
@@ -199,7 +201,7 @@ iECtypeFromString = myparse parseVarType "An IEC type definition"
 vartypeFromString :: String -> Maybe (NonEmpty Int) -> Parser IECVariable
 vartypeFromString str indices =
     case lookup lowerCased alist of
-        Nothing -> fail ("Unhandled IEC variable type: " <> str)
+        Nothing -> fail ("Unhandled IEC variable type: " <> str <> "\n")
         Just a -> a
   where
     lowerCased = fmap toLower str
@@ -207,7 +209,7 @@ vartypeFromString str indices =
         case indices of
             Just (size :| []) -> pure $! IECString size
             _ -> fail ("Invalid indices: " <> show indices <>
-                       " for variable type: " <> str)
+                       " for variable type: " <> str <> "\n")
     alist =
         [ ("bool", pure IECBool)
         ,
