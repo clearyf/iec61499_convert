@@ -114,7 +114,7 @@ void REQ()
       <source ref="id1"/>
       <target ref="id2"/>
       <label kind="synchronisation" x="0" y="0">oc_CNF!</label>
-      <label kind="update" x="0" y="0">REQ();</label>
+      <label kind="assignment" x="0" y="0">REQ()</label>
     </transition>
     <transition>
       <source ref="id2"/>

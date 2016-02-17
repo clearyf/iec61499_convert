@@ -200,7 +200,7 @@ createAdvancedTransition stateMap state =
             (makeSyncStatement action)
             -- Guard is always empty for advanced transitions.
             mzero
-            (makeUpdateStatement action)
+            (makeAssignmentStatement action)
     -- Add empty actions to the list of actions at least one extra
     -- transition will be added as the final destination state.
     emptyAction = ECAction mempty mempty
@@ -210,11 +210,13 @@ createAdvancedTransition stateMap state =
         map (locationEventPrefix state) (ecStateActions state) <>
         [ecStateName state]
 
-makeUpdateStatement :: MonadPlus m => ECAction -> m String
-makeUpdateStatement action =
+makeAssignmentStatement :: MonadPlus m => ECAction -> m String
+makeAssignmentStatement action =
     case ecActionAlgorithm action of
         [] -> mzero
-        algorithm -> pure $! algorithm <> "();"
+        -- No semicolon is required at the end of the line for the
+        -- assignment statements.
+        algorithm -> pure $! algorithm <> "()"
 
 makeSyncStatement :: MonadPlus m => ECAction -> m String
 makeSyncStatement action =

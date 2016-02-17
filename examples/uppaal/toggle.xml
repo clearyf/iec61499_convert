@@ -65,7 +65,7 @@ int[0,65536] Blah;
       <source ref="id1"/>
       <target ref="id2"/>
       <label kind="synchronisation" x="0" y="0">oc_Update!</label>
-      <label kind="update" x="0" y="0">TurnOn();</label>
+      <label kind="assignment" x="0" y="0">TurnOn()</label>
     </transition>
     <transition>
       <source ref="id2"/>
@@ -75,7 +75,7 @@ int[0,65536] Blah;
       <source ref="id4"/>
       <target ref="id5"/>
       <label kind="synchronisation" x="0" y="0">oc_Update!</label>
-      <label kind="update" x="0" y="0">TurnOff();</label>
+      <label kind="assignment" x="0" y="0">TurnOff()</label>
     </transition>
     <transition>
       <source ref="id5"/>

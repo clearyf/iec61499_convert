@@ -118,7 +118,7 @@ void REAL_TO_TIME()
       <source ref="id1"/>
       <target ref="id2"/>
       <label kind="synchronisation" x="0" y="0">oc_DELAY_START!</label>
-      <label kind="update" x="0" y="0">Down();</label>
+      <label kind="assignment" x="0" y="0">Down()</label>
     </transition>
     <transition>
       <source ref="id2"/>

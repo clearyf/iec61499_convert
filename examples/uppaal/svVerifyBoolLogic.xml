@@ -155,7 +155,7 @@ void SEL()
       <source ref="id1"/>
       <target ref="id2"/>
       <label kind="synchronisation" x="0" y="0">oc_EOOB!</label>
-      <label kind="update" x="0" y="0">ok();</label>
+      <label kind="assignment" x="0" y="0">ok()</label>
     </transition>
     <transition>
       <source ref="id2"/>
@@ -170,7 +170,7 @@ void SEL()
       <source ref="id5"/>
       <target ref="id6"/>
       <label kind="synchronisation" x="0" y="0">oc_START!</label>
-      <label kind="update" x="0" y="0">waiting();</label>
+      <label kind="assignment" x="0" y="0">waiting()</label>
     </transition>
     <transition>
       <source ref="id6"/>
@@ -180,7 +180,7 @@ void SEL()
       <source ref="id8"/>
       <target ref="id9"/>
       <label kind="synchronisation" x="0" y="0">oc_EOOB!</label>
-      <label kind="update" x="0" y="0">oob();</label>
+      <label kind="assignment" x="0" y="0">oob()</label>
     </transition>
     <transition>
       <source ref="id9"/>

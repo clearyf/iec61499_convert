@@ -37,7 +37,7 @@ data Transition = Transition
     , transitionDest :: StateId
     , transitionSync :: Maybe String
     , transitionGuard :: Maybe String
-    , transitionUpdate :: Maybe String
+    , transitionAssignment :: Maybe String
     } deriving (Show,Eq)
 
 data AState = AState
@@ -141,14 +141,14 @@ makeLocationDecl l =
              extra)
 
 makeTransitionDecl :: ArrowXml a => Transition -> a n XmlTree
-makeTransitionDecl (Transition src dest sync guard' update) =
+makeTransitionDecl (Transition src dest sync guard' assignment) =
     selem
         "transition"
         ([ aelem "source" [sattr "ref" (showStateId src)]
          , aelem "target" [sattr "ref" (showStateId dest)]] <>
          maybe mempty syncElem sync <>
          maybe mempty guardElem guard' <>
-         maybe mempty updateElem update)
+         maybe mempty assignmentElem assignment)
   where
     syncElem s =
         [ mkelem
@@ -160,10 +160,10 @@ makeTransitionDecl (Transition src dest sync guard' update) =
               "label"
               [sattr "kind" "guard", sattr "x" "0", sattr "y" "0"]
               [txt g]]
-    updateElem u =
+    assignmentElem u =
         [ mkelem
               "label"
-              [sattr "kind" "update", sattr "x" "0", sattr "y" "0"]
+              [sattr "kind" "assignment", sattr "x" "0", sattr "y" "0"]
               [txt u]]
 
 -- TODO it's not quite clear how the initial state of the system is

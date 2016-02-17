@@ -231,7 +231,7 @@ bool zoneIdAvailable;
       <source ref="id1"/>
       <target ref="id2"/>
       <label kind="synchronisation" x="0" y="0">oc_INIT_ZONEID!</label>
-      <label kind="update" x="0" y="0">algInitZoneId();</label>
+      <label kind="assignment" x="0" y="0">algInitZoneId()</label>
     </transition>
     <transition>
       <source ref="id2"/>
@@ -241,7 +241,7 @@ bool zoneIdAvailable;
       <source ref="id4"/>
       <target ref="id5"/>
       <label kind="synchronisation" x="0" y="0">oc_SC_INIT!</label>
-      <label kind="update" x="0" y="0">algUnreg();</label>
+      <label kind="assignment" x="0" y="0">algUnreg()</label>
     </transition>
     <transition>
       <source ref="id5"/>
@@ -271,7 +271,7 @@ bool zoneIdAvailable;
       <source ref="id11"/>
       <target ref="id12"/>
       <label kind="synchronisation" x="0" y="0">oc_INITO!</label>
-      <label kind="update" x="0" y="0">algReg();</label>
+      <label kind="assignment" x="0" y="0">algReg()</label>
     </transition>
     <transition>
       <source ref="id12"/>
@@ -309,7 +309,7 @@ bool zoneIdAvailable;
     <transition>
       <source ref="id21"/>
       <target ref="id22"/>
-      <label kind="update" x="0" y="0">algZoneId();</label>
+      <label kind="assignment" x="0" y="0">algZoneId()</label>
     </transition>
     <transition>
       <source ref="id22"/>
