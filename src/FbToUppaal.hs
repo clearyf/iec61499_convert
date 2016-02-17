@@ -3,7 +3,7 @@
 module FbToUppaal (fbToUppaalModel) where
 
 import           BasePrelude
-import           Control.Monad.Except (MonadError, throwError, runExcept)
+import           Control.Monad.Except (MonadError, throwError)
 import           Control.Monad.Reader (MonadReader, asks, runReaderT)
 import           Control.Monad.State (State, evalState, get, put)
 import           Data.Map.Strict ((!), Map)
@@ -23,8 +23,8 @@ import           ParseSt (LValue(..), Statement(..), Value(..))
 import           StToUppaal (stToUppaal, showValue, createUppaalVar)
 
 -- | Converts IEC61499 BasicFunctionBlock to an UppaalModel
-fbToUppaalModel :: BasicFunctionBlock -> Either String UppaalModel
-fbToUppaalModel fb = runExcept (runReaderT createModel fb)
+fbToUppaalModel :: MonadError String m => BasicFunctionBlock -> m UppaalModel
+fbToUppaalModel = runReaderT createModel
   where
     createModel =
         UppaalModel <$> asks (fbName . bfbDescription)
@@ -265,13 +265,13 @@ guardToGuard g =
 getSrcId :: String -> StateMap -> StateId
 getSrcId s (StateMap m) =
     case destState (m ! s) of
-        (AState _ i _) -> i
+        AState _ i _ -> i
 
 getDestId :: String -> StateMap -> StateId
 getDestId s (StateMap m) =
     case actionStates (m ! s) of
         [] -> getSrcId s (StateMap m)
-        (AState _ i _):_ -> i
+        AState _ i _:_ -> i
 
 extractDefinitions
     :: (MonadError String m, MonadReader BasicFunctionBlock m)

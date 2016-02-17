@@ -1,3 +1,5 @@
+{-# LANGUAGE FlexibleContexts #-}
+
 module ParseSt
        (CaseSubExpression(..), IECVariable(..), LValue(..), StMonoOp(..),
         StBinaryOp(..), Statement(..), Value(..), Width(..), parseSt,
@@ -5,6 +7,7 @@ module ParseSt
        where
 
 import           BasePrelude hiding (Prefix, try)
+import           Control.Monad.Except (MonadError, throwError)
 import           Data.Functor.Identity (Identity)
 import           Data.List.NonEmpty (NonEmpty(..))
 import qualified Data.List.NonEmpty as NE
@@ -119,14 +122,17 @@ data IECVariable
     | IECString Int
     deriving (Show,Eq)
 
-parseSt :: String -> String -> Either String [Statement]
-parseSt name str = myparse stParser name str
+parseSt :: MonadError String m => String -> String -> m [Statement]
+parseSt = myparse stParser
 
-parseValue :: String -> Either String Value
-parseValue str = myparse value "Value" str
+parseValue :: MonadError String m => String -> m Value
+parseValue = myparse value "Value"
 
-myparse :: Parser b -> String -> String -> Either String b
-myparse p name str = left showError (parse p name str)
+myparse :: MonadError String m => Parser b -> String -> String -> m b
+myparse p name str =
+    case parse p name str of
+        Left e -> throwError (showError e)
+        Right v -> pure v
   where
     showError err =
         let src = errorPos err
@@ -134,8 +140,8 @@ myparse p name str = left showError (parse p name str)
            show (sourceLine src) <> " col " <> show (sourceColumn src) <> "\n" <>
            -- Now nicely show the exact error location with a caret
            -- under the problematic point in the input.
-           (lines str) !! (sourceLine src - 1) <> "\n" <>
-           (replicate (sourceColumn src - 1) ' ') <> "^\n" <>
+           lines str !! (sourceLine src - 1) <> "\n" <>
+           replicate (sourceColumn src - 1) ' ' <> "^\n" <>
            errorText err
     errorText err
       | errorIsUnknown err = "Unknown parser error!"
@@ -187,11 +193,11 @@ parseVarType =
         pure $! IECArray i subtype
     parseIndices = fmap NE.fromList (lexInt `sepBy1` comma)
 
-iECtypeFromString :: String -> Either String IECVariable
-iECtypeFromString str = myparse parseVarType "An IEC type definition" str
+iECtypeFromString :: MonadError String m => String -> m IECVariable
+iECtypeFromString = myparse parseVarType "An IEC type definition"
 
 vartypeFromString :: String -> Maybe (NonEmpty Int) -> Parser IECVariable
-vartypeFromString str indices = do
+vartypeFromString str indices =
     case lookup lowerCased alist of
         Nothing -> fail ("Unhandled IEC variable type: " <> str)
         Just a -> a
