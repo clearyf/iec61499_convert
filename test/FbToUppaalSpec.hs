@@ -3,8 +3,8 @@ module FbToUppaalSpec where
 import BasePrelude
 import FbToUppaal
 import StToUppaal
-import ParseIec61499
-import ParseSt
+import Iec61499Types
+import StTypes
 import Test.Hspec (it, shouldBe)
 import Test.Hspec.Core.Spec (Spec)
 import ToggleFunctionBlock

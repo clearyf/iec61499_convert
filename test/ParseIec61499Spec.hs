@@ -4,6 +4,7 @@ import BasePrelude
 import Test.Hspec (it, shouldBe, runIO)
 import Test.Hspec.Core.Spec (Spec)
 import ParseIec61499
+import Iec61499Types
 import ToggleFunctionBlock
 import Demux8
 import ButtonTimerLogic

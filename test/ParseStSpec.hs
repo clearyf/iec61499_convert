@@ -4,6 +4,7 @@ import BasePrelude
 import Test.Hspec (it, shouldBe)
 import Test.Hspec.Core.Spec (Spec)
 import ParseSt
+import StTypes
 import Data.List.NonEmpty (NonEmpty(..))
 
 spec :: Spec

@@ -1,50 +1,16 @@
-module OutputUppaal
-       (UppaalModel(..), AState(..), UppaalChan(..), UppaalVar(..),
-        Location(..), StateId(..), Transition(..), outputUppaal,
-        outputUppaalToFile)
-       where
+{-# LANGUAGE FlexibleContexts #-}
 
-import           BasePrelude
-import           Text.XML.HXT.Core
+module OutputUppaal (outputUppaal, outputUppaalToFile) where
 
-data UppaalModel = UppaalModel
-    { modelName :: String
-    , modelInputEvents :: [UppaalChan]
-    , modelOutputEvents :: [UppaalChan]
-    , modelInputVars :: [UppaalVar]
-    , modelOutputVars :: [UppaalVar]
-    , modelInternalVars :: [UppaalVar]
-    , modelLocations :: [Location]
-    , modelTransitions :: [Transition]
-    , modelDeclarations :: String
-    } deriving (Show,Eq)
-
-data UppaalVar = UppaalVar String String deriving (Show,Eq)
-newtype UppaalChan = UppaalChan String deriving (Show,Eq)
-
-newtype StateId  = StateId Int deriving (Show,Eq)
+import BasePrelude
+import UppaalTypes
+import Text.XML.HXT.Core
+       (ArrowXml(..), IOSLA(..), XIOState, XmlTree, addDoctypeDecl,
+        addXmlPi, addXmlPiEncoding, aelem, mkelem, runX, sattr, selem, txt,
+        withIndent, withXmlPi, writeDocument, writeDocumentToString, yes)
 
 showStateId :: StateId -> String
 showStateId (StateId i) = "id" <> show i
-
-data Location
-    = Location AState
-    | UrgentLocation AState
-    deriving (Show,Eq)
-
-data Transition = Transition
-    { transitionSrc :: StateId
-    , transitionDest :: StateId
-    , transitionSync :: Maybe String
-    , transitionGuard :: Maybe String
-    , transitionAssignment :: Maybe String
-    } deriving (Show,Eq)
-
-data AState = AState
-    { stateName :: String
-    , stateId :: StateId
-    , statePosition :: Complex Float
-    } deriving (Show,Eq)
 
 --------------------------------------------------------------------------------
 

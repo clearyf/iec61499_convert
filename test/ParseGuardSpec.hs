@@ -5,6 +5,7 @@ import           Data.Set (Set)
 import qualified Data.Set as Set
 import           ParseGuard
 import           ParseSt
+import           StTypes
 import           Test.Hspec (it, shouldBe)
 import           Test.Hspec.Core.Spec (Spec)
 

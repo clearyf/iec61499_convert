@@ -10,16 +10,16 @@ import           Data.Map.Strict ((!), Map)
 import qualified Data.Map.Strict as Map
 import           Data.Set (Set)
 import qualified Data.Set as Set
-import           OutputUppaal
+import           UppaalTypes
        (UppaalModel(..), AState(..), UppaalChan(..), UppaalVar(..),
         Location(..), StateId(..), Transition(..))
 import           ParseGuard (Guard(..), parseGuard)
-import           ParseIec61499
+import           Iec61499Types
        (ECTransition(..), ECState(..), BasicFunctionBlock(..),
         FunctionBlockDescription(..), InterfaceList(..), Event(..),
         Variable(..), ECAction(..), BasicFunctionBlock(..),
         ECAlgorithm(..))
-import           ParseSt (LValue(..), Statement(..), Value(..))
+import           StTypes (LValue(..), Statement(..), Value(..))
 import           StToUppaal (stToUppaal, showValue, createUppaalVar)
 
 -- | Converts IEC61499 BasicFunctionBlock to an UppaalModel
@@ -32,9 +32,9 @@ fbToUppaalModel = runReaderT createModel
                     <*> extractChannels outputChannelPrefix eventOutputs
                     <*> extractParameters (inputVariables . bfbInterfaceList)
                     <*> extractParameters (outputVariables . bfbInterfaceList)
-                    <*> extractParameters bfbVariables
                     <*> extractLocations
                     <*> extractTransitions
+                    <*> extractParameters bfbVariables
                     <*> extractDefinitions
 
 --------------------------------------------------------------------------------

@@ -1,8 +1,8 @@
 module Demux8 where
 
 import BasePrelude
-import ParseIec61499
-import ParseSt
+import Iec61499Types
+import StTypes
 
 demux8Block :: [BasicFunctionBlock]
 demux8Block =

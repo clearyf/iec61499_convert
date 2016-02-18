@@ -9,9 +9,9 @@ import           Control.Monad.Writer (MonadWriter, execWriterT, tell)
 import           Data.DList (DList)
 import qualified Data.DList as DList
 import qualified Data.List.NonEmpty as NE
-import           OutputUppaal (UppaalVar(..))
-import           ParseIec61499 (ECAlgorithm(..), Variable(..))
-import           ParseSt
+import           UppaalTypes (UppaalVar(..))
+import           Iec61499Types (ECAlgorithm(..), Variable(..))
+import           StTypes
        (LValue(..), Statement(..), Value(..), IECVariable(..), Width(..),
         StMonoOp(..), StBinaryOp(..), CaseSubExpression(..))
 

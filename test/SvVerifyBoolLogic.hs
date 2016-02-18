@@ -1,8 +1,8 @@
 module SvVerifyBoolLogic where
 
 import BasePrelude
-import ParseIec61499
-import ParseSt
+import Iec61499Types
+import StTypes
 
 svVerifyBoolLogicBlock :: [BasicFunctionBlock]
 svVerifyBoolLogicBlock =

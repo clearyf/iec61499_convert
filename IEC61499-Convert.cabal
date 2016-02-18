@@ -24,11 +24,14 @@ executable iec61499_convert
   default-extensions:  NoImplicitPrelude OverloadedStrings
   default-language:    Haskell2010
   other-modules:       FbToUppaal
+                     , Iec61499Types
                      , OutputUppaal
                      , ParseGuard
                      , ParseIec61499
                      , ParseSt
                      , StToUppaal
+                     , StTypes
+                     , UppaalTypes
 
 test-suite test_iec61499_convert
   type:                exitcode-stdio-1.0
@@ -53,6 +56,7 @@ test-suite test_iec61499_convert
                      , ButtonTimerComposite
                      , FbToUppaal
                      , FbToUppaalSpec
+                     , Iec61499Types
                      , MainSpec
                      , MinMax
                      , OutputModelSpec
@@ -64,6 +68,8 @@ test-suite test_iec61499_convert
                      , ParseSt
                      , ParseStSpec
                      , StToUppaal
+                     , StTypes
                      , SvVerifyBoolLogic
                      , ToggleFunctionBlock
                      , UppaalModel
+                     , UppaalTypes

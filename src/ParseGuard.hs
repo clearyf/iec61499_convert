@@ -2,7 +2,7 @@ module ParseGuard (Guard(..), parseGuard) where
 
 import BasePrelude
 import Data.Set (Set)
-import ParseSt (Value(..), StBinaryOp(..), LValue(..))
+import StTypes (Value(..), StBinaryOp(..), LValue(..))
 
 data Guard = Guard
     { guardEvent :: Maybe String

@@ -1,7 +1,7 @@
 module UppaalModel where
 
 import BasePrelude
-import OutputUppaal
+import UppaalTypes
 
 uppaalModel :: UppaalModel
 uppaalModel =
